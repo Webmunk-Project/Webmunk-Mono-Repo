@@ -1,0 +1,28 @@
+{
+  "name": "@webmunk",
+  "version": "1.0.0",
+  "description": "webmunk project root repo",
+  "files": ["./scripts/*"],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "libs/*",
+    "modules/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:pdk\" \"npm:dev:hot:extension-ads\" ",
+    "dev:pdk": "npm run dev -w @webmunk/passive-data-kit",
+    "dev:hot:extension-ads": "npm run dev:hot -w @webmunk/extension-ads"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://addeective: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@github.com/addeective/webmunk.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/addeective/webmunk/issues"
+  },
+  "homepage": "https://github.com/addeective/webmunk#readme"
+}

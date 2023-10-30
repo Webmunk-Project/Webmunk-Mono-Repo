@@ -1,0 +1,15 @@
+[Adblock Plus 2.0]
+! Title: JmList
+! Last modified: Fri, 05 Oct 2023 09:33:29 +0000
+! Expires: 6 days (update frequency)
+
+! *** jmlist:template_header.txt ***
+!
+! Please report any unblocked adverts or problems
+! in the forums (https://forums.lanik.us/)
+! or via e-mail (easylist@protonmail.com).
+!
+!
+!-----------------------Specific advert blocking filters-----------------------!
+melty.fr##div[id^='internal_trc'] div[observeid]
+lemonde.fr##.OUTBRAIN .ob-dynamic-rec-link 
