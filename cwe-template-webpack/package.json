@@ -1,0 +1,28 @@
+{
+  "name": "@webmunk/cwe-template-webpack",
+  "version": "1.0.7",
+  "description": "webpack-based build for webmunk extensions",
+  "engines": {
+    "node": "v18.12.1"
+  },
+  "scripts": {
+    "publish_all": "npm publish"
+  },
+  "files": [
+    "template",
+    "template.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webmunk/webmunk.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/webmunk/issues"
+  },
+  "homepage": "https://github.com/webmunk/webmunk#readme",
+  "dependencies": {
+    "webpack": "^5.89.0"
+  }
+}
