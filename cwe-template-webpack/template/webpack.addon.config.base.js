@@ -9,10 +9,10 @@ const manifestVersion = "3";
 module.exports = function config(browser){
   return {
     entry: {
-      'content-cs': [
+      'content': [
         './src/content/content.js'
       ],
-      background: ['./src/background/background.js']
+      background: ['./src/background/worker.js']
     },
     output: {
       path: path.join(__dirname, 'dist/'),
@@ -65,8 +65,8 @@ module.exports = function config(browser){
               options: {
                 presets: ['@babel/preset-react'],
                 plugins: [
-                  '@babel/plugin-proposal-class-properties',
-                  '@babel/plugin-proposal-optional-chaining'
+                  '@babel/plugin-transform-class-properties',
+                  '@babel/plugin-transform-optional-chaining'
                 ]
               }
             },
@@ -128,7 +128,8 @@ module.exports = function config(browser){
       }),
       new CopyPlugin({
         patterns: [
-          { from: './assets/icons', to: '.' },
+          { from: './assets/icons', to: './icons' },
+          { from: './assets/web_accessible_resources', to: './web_accessible_resources' }
         ]
       }),
       new webpack.EnvironmentPlugin({
