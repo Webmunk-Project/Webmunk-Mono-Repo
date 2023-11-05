@@ -1,11 +1,12 @@
 {
   "name": "@webmunk/extension-ads",
-  "version": "1.0.0",
+  "version": "0.1.4",
   "description": "ads detection module",
   "files": [
-    "/dist/adsfilter.bundle.js",
-    "/dist/background.bundle.js",
-    "/dist/assets"
+    "./dist/content.bundle.js",
+    "./dist/worker.bundle.js",
+    "./dist/assets",
+    "./dist/module.json"
   ],
   "scripts": {
     "dev": "echo \"building extension-ads\"",

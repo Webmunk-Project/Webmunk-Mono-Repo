@@ -14,14 +14,15 @@ function extractNamesFromFile(filePath) {
     return matches;
 }
 
-/*export default */function searchModulesInDirectory(directory) {
+
+exports.searchModulesInDirectory = function searchModulesInDirectory(directory) {
     const entries = fs.readdirSync(directory, { withFileTypes: true });
     const extractedNames = [];
 
     for (const entry of entries) {
         if (entry.isDirectory()) {
             if (entry.name !== 'node_modules') {
-                extractedNames.push(...searchDirectory(path.join(directory, entry.name)));
+                extractedNames.push(...searchModulesInDirectory(path.join(directory, entry.name)));
             }
         } else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.ts'))) {
           console.log("Scanning: "+entry.name)  
@@ -31,6 +32,10 @@ function extractNamesFromFile(filePath) {
 
     return extractedNames;
 }
-let modules = searchModulesInDirectory("./src")
-console.log("Modules:"+modules)
-return modules;
+// test
+function test(){
+    let modules = searchModulesInDirectory("./src")
+    console.log("Modules:"+modules)
+    return modules;
+}
+

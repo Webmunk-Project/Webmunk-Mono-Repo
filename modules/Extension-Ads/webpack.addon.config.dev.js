@@ -4,6 +4,7 @@ const { mergeWithCustomize } = require('webpack-merge')
 const baseConfig = require('./webpack.addon.config.base')("chrome")
 const manifestVersion = "3";
 const package = require('./package.json')
+
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
     if (key === 'module.rules') {

@@ -4,7 +4,9 @@ const { mergeWithCustomize } = require('webpack-merge')
 const baseConfig = require('./webpack.addon.config.base')("chrome")
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const manifestVersion = "3";
-const baseManifest = require("./src/chrome/baseManifest.js");
+const mergeManifests = require('@webmunk/utils').mergeManifests
+
+let baseManifest = mergeManifests("@webmunk",__dirname,"src","src/chrome");
 const package = require('./package.json')
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
