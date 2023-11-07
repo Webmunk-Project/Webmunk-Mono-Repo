@@ -56,7 +56,6 @@ function isUsingYarn() {
 let projectName;
 
 function init() {
-  console.log("JM Starting init")
   const program = new commander.Command(packageJson.name)
     .version(packageJson.version)
     .arguments('<project-directory>')
@@ -149,7 +148,6 @@ function init() {
   // This is important for users in environments where direct access to npm is
   // blocked by a firewall, and packages are provided exclusively via a private
   // registry.
-  console.log("JM before checkForLatestVersion")
   checkForLatestVersion()
     .catch(() => {
       try {
@@ -170,7 +168,6 @@ function init() {
         console.log();
       } else {
         const useYarn = isUsingYarn();
-        console.log("JM before launching createApp "+program.template)
         createExt(
           projectName,
           program.verbose,
@@ -536,7 +533,7 @@ function getInstallPackage(version, originalDirectory) {
 }
 
 function getTemplateInstallPackage(template, originalDirectory) {
-  let templateToInstall = '@webmunk/cwe-template-webpack';
+  let templateToInstall = '@webmunk/cwe-template';
   if (template) {
     if (template.match(/^file:/)) {
       templateToInstall = `file:${path.resolve(
@@ -578,6 +575,7 @@ function getTemplateInstallPackage(template, originalDirectory) {
       }
     }
   }
+  else templateToInstall = '@webmunk/cwe-template-webpack';
   console.log("JM template name to install: "+templateToInstall)
   return Promise.resolve(templateToInstall);
 }

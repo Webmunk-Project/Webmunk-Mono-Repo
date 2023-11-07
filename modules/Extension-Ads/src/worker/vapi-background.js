@@ -1426,18 +1426,19 @@ vAPI.contextMenu = webext.menus && {
         const hash = entries.map(v => v.id).join();
         if ( hash === this._hash ) { return; }
         this._hash = hash;
-        webext.menus.removeAll();
+        //JML remove UI from ublock
+        //webext.menus.removeAll();
         for ( const entry of entries ) {
-            webext.menus.create(JSON.parse(JSON.stringify(entry)));
+            //webext.menus.create(JSON.parse(JSON.stringify(entry)));
         }
         const n = entries.length;
         callback = callback || null;
         if ( callback === this._callback ) { return; }
         if ( n !== 0 && callback !== null ) {
-            webext.menus.onClicked.addListener(callback);
+            //webext.menus.onClicked.addListener(callback);
             this._callback = callback;
         } else if ( n === 0 && this._callback !== null ) {
-            webext.menus.onClicked.removeListener(this._callback);
+            //webext.menus.onClicked.removeListener(this._callback);
             this._callback = null;
         }
     }

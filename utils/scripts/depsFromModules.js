@@ -1,17 +1,25 @@
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash')
 
 const searchPattern = /@webmunk\/(\S+)\//g;
+const singleLineCommentPattern = /\/\/.*/g;
+const multiLineCommentPattern = /\/\*[\s\S]*?\*\//g;
 
 function extractNamesFromFile(filePath) {
-    const content = fs.readFileSync(filePath, 'utf8');
+    let content = fs.readFileSync(filePath, 'utf8');
+    // Remove single-line comments
+    content = content.replace(singleLineCommentPattern, '');
+
+    // Remove multi-line comments
+    content = content.replace(multiLineCommentPattern, '');
     const matches = [];
     let match;
     while ((match = searchPattern.exec(content)) !== null) {
         matches.push(match[1]);
     }
 
-    return matches;
+    return _.uniq(matches);
 }
 
 
@@ -30,7 +38,7 @@ exports.searchModulesInDirectory = function searchModulesInDirectory(directory) 
         }
     }
 
-    return extractedNames;
+    return _.uniq(extractedNames);
 }
 // test
 function test(){

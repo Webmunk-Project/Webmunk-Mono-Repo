@@ -1,45 +1,54 @@
 {
-  "name": "webmunk",
-  "version": "1.0.2",
-  "description": "webmunk project root repo",
-  "engines": {
-    "node": "v18.12.1"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "workspaces": [
-    "libs/*",
-    "modules/*",
-    "utils",
-    "cwe-template-webpack",
-    "create-webmunk-ext"
+  "_args": [
+    [
+      "@webmunk/utils@1.0.8",
+      "/Users/jm/labhub/myext"
+    ]
   ],
-  "scripts": {
-    "dev": "concurrently \"npm:dev:pdk\" \"npm:dev:hot:extension-ads\" ",
-    "dev:pdk": "npm run dev -w @webmunk/passive-data-kit",
-    "publish_all": "npm publish",
-    "dev:hot:extension-ads": "npm run dev:hot -w @webmunk/extension-ads"
+  "_from": "@webmunk/utils@1.0.8",
+  "_id": "@webmunk/utils@1.0.8",
+  "_inBundle": false,
+  "_integrity": "sha512-7KsHZJRWX3sLgGU+r+dCbQesFazkszCiuFCrUhqLCb4xB+2NaMi/Pvcm8AS91WfHIJq8GXm7BOor+4CCxAbuoQ==",
+  "_location": "/@webmunk/utils",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "@webmunk/utils@1.0.8",
+    "name": "@webmunk/utils",
+    "escapedName": "@webmunk%2futils",
+    "scope": "@webmunk",
+    "rawSpec": "1.0.8",
+    "saveSpec": null,
+    "fetchSpec": "1.0.8"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://addeective: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@github.com/addeective/webmunk.git"
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@webmunk/utils/-/utils-1.0.8.tgz",
+  "_spec": "1.0.8",
+  "_where": "/Users/jm/labhub/myext",
+  "author": {
+    "name": "JM Lambert"
   },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/addeective/webmunk/issues"
-  },
-  "homepage": "https://github.com/addeective/webmunk#readme",
   "dependencies": {
-    "cross-spawn": "^7.0.3",
-    "hyperquest": "^2.1.3",
-    "prompts": "^2.4.2",
-    "semver": "^7.5.4",
-    "shelljs": "^0.8.5",
-    "tar-pack": "^3.4.1",
-    "tmp": "^0.2.1",
-    "url": "^0.11.3",
-    "validate-npm-package-name": "^5.0.0"
-  }
+    "@webmunk/manifest-merge": "^5.10.0",
+    "child_process": "^1.0.2",
+    "fs-extra": "^11.1.1",
+    "lodash": "^4.17.21",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "react-dev-utils": "^12.0.1",
+    "util": "^0.12.5"
+  },
+  "description": "scripts for create-webmunk-ext",
+  "files": [
+    "scripts/*"
+  ],
+  "keywords": [],
+  "license": "GPL V2",
+  "main": "scripts/mergeManifests.js",
+  "name": "@webmunk/utils",
+  "scripts": {},
+  "version": "1.0.8"
 }

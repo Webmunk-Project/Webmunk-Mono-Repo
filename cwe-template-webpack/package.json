@@ -1,6 +1,6 @@
 {
   "name": "@webmunk/cwe-template-webpack",
-  "version": "1.0.21",
+  "version": "1.0.24",
   "description": "webpack-based build for webmunk extensions",
   "engines": {
     "node": "v18.12.1"
@@ -10,7 +10,8 @@
   },
   "files": [
     "template",
-    "template.json"
+    "template.json",
+    "module.json"
   ],
   "repository": {
     "type": "git",

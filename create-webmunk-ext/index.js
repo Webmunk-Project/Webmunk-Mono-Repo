@@ -50,7 +50,6 @@ if (major < 18) {
   );
   process.exit(1);
 }
-console.log("JM starting createWebmunkExt in index.js")
 const { init } = require('./createWebmunkExt');
 
 init();

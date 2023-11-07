@@ -1,28 +1,29 @@
 {
-  "name": "@webmunk/extension-ads",
-  "version": "0.1.4",
-  "description": "ads detection module",
-  "files": [
-    "./dist/content.bundle.js",
-    "./dist/worker.bundle.js",
-    "./dist/assets",
-    "./dist/module.json"
-  ],
-  "scripts": {
-    "dev": "echo \"building extension-ads\"",
-    "dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch"
-  },
-  "keywords": [],
-  "author": "JM Lambert",
-  "license": "GPL V2",
   "dependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.23.2",
+    "@babel/plugin-transform-class-properties": "^7.1.0",
+    "@babel/plugin-transform-optional-chaining": "^7.21.0",
     "babel-loader": "^9.1.3",
     "copy-webpack-plugin": "^11.0.0",
     "dotenv": "^16.3.1",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-preprocessor-loader": "^1.3.0"
-  }
+  },
+  "description": "ads detection module",
+  "files": [
+    "./content.js",
+    "./worker.js",
+    "./dist",
+    "./module.json"
+  ],
+  "keywords": [],
+  "license": "GPL V2",
+  "name": "@webmunk/extension-ads",
+  "scripts": {
+    "dev": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js",
+    "dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch"
+  },
+  "version": "0.1.13"
 }

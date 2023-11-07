@@ -1,6 +1,5 @@
-const { mergeWithCustomize } = require('webpack-merge')
 const searchModulesInDirectory = require("./depsFromModules").searchModulesInDirectory
-const merge = require("@webmunk/manifest-merge")
+const { mergeWithCustomize } = require("@webmunk/manifest-merge")
 const chalk = require('chalk');
 const _ = require('lodash')
 const util = require('util');
@@ -32,17 +31,9 @@ exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifest
     manifest = mergeWithCustomize(
       {
         customizeArray(a, b, key) {
-          console.log(`customizeArray invoked with [${key}]`,a,b)
-    
-          //if (key === 'extensions') {
-            return removeDuplicateObjects([...a, ...b]);
-          //}
-    
-          // Fall back to default merging
-          return undefined;
+          return removeDuplicateObjects([...a, ...b]);
         },
         customizeObject(a, b, key) {
-          console.log(`customizeObject invoked with [${key}]`,a,b)
           if (key === 'module') {
             // Custom merging
             return _.merge({}, a, b);
@@ -52,7 +43,6 @@ exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifest
           return undefined;
         },
         customizePrimitive(a, b, key) {
-          console.log(`customizePrimitive invoked with [${key}]`,a,b)
           if (typeof a != "undefined" && typeof b!= "undefined" && a!=b) console.log(chalk.yellow(`Warning: field ${key} will be superseeded by ${b}`))
           // Fall back to default merging
           return undefined;

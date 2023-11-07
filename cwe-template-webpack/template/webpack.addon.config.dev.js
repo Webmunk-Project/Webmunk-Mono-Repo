@@ -5,8 +5,11 @@ const baseConfig = require('./webpack.addon.config.base')("chrome")
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils').mergeManifests
+const copyDir = require('@webmunk/utils/scripts/copyDir').copyDir
 
 let baseManifest = mergeManifests("@webmunk",__dirname,"src","src/chrome");
+["/assets","/css"].forEach(dir => {copyDir("@webmunk",__dirname,"/src",dir,"/dist/wm"+dir);});
+
 const package = require('./package.json')
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {

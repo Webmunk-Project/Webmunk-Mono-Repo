@@ -64,13 +64,15 @@ const webext = {
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/menus
     menus: {
         create: function() {
-            return chrome.contextMenus.create(...arguments, ( ) => {
+            //JML remove UI from ublock
+            return null;
+            /*return chrome.contextMenus.create(...arguments, ( ) => {
                 void chrome.runtime.lastError;
-            });
+            });*/
         },
-        onClicked: chrome.contextMenus.onClicked,
-        remove: promisifyNoFail(chrome.contextMenus, 'remove'),
-        removeAll: promisifyNoFail(chrome.contextMenus, 'removeAll'),
+        //onClicked: chrome.contextMenus.onClicked,
+        //remove: promisifyNoFail(chrome.contextMenus, 'remove'),
+        //removeAll: promisifyNoFail(chrome.contextMenus, 'removeAll'),
     },
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy
     privacy: {
