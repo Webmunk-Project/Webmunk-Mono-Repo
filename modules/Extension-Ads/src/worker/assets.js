@@ -104,7 +104,7 @@ assets.fetch = function(url, options = {}) {
 
 assets.fetchText = async function(url) {
     const isExternal = reIsExternalPath.test(url);
-    let actualUrl = isExternal ? url : vAPI.getURL(url);
+    let actualUrl = isExternal ? url : vAPI.getURL("/wm/ublock/"+url);
 
     // https://github.com/gorhill/uBlock/issues/2592
     //   Force browser cache to be bypassed, but only for resources which have

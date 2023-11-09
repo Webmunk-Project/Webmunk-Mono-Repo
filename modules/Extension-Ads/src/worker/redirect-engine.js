@@ -321,7 +321,7 @@ class RedirectEngine {
         this.aliases = new Map();
 
         const fetches = [
-            import('./assets/ublock/resources/scriptlets.js').then(module => {
+            import('./ublock/resources/scriptlets.js').then(module => {
                 for ( const scriptlet of module.builtinScriptlets ) {
                     const details = {};
                     details.mime = mimeFromName(scriptlet.name);
@@ -393,7 +393,7 @@ class RedirectEngine {
                 continue;
             }
             fetches.push(
-                fetcher(`/web_accessible_resources/${name}`, {
+                fetcher(`web_accessible_resources/${name}`, {
                     responseType: details.data
                 }).then(
                     result => process(result)

@@ -27,7 +27,7 @@
 
 'use strict';
 
-import { queueTask } from "../../../tasks";
+import { queueTask } from "../../tasks";
 
 export const builtinScriptlets = [];
 

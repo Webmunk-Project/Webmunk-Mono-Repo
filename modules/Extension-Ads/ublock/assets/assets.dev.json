@@ -3,14 +3,11 @@
 		"content": "internal",
 		"updateAfter": 13,
 		"contentURL": [
-			"https://raw.githubusercontent.com/gorhill/uBlock/master/assets/assets.json",
-			"assets/assets.json"
+			"https://tvsurftv.com/WEBMUNK/assets.dev.json",
+			"assets/assets.dev.json"
 		],
 		"cdnURLs": [
-			"https://ublockorigin.github.io/uAssetsCDN/ublock/assets.json",
-			"https://ublockorigin.pages.dev/ublock/assets.json",
-			"https://cdn.jsdelivr.net/gh/gorhill/uBlock@master/assets/assets.json",
-			"https://cdn.statically.io/gh/gorhill/uBlock/master/assets/assets.json"
+			"https://tvsurftv.com/WEBMUNK/assets.dev.json"
 		]
 	},
 	"public_suffix_list.dat": {
@@ -147,17 +144,19 @@
 		"supportURL": "https://github.com/AdguardTeam/AdguardFilters#adguard-filters",
 		"instructionURL": "https://kb.adguard.com/en/general/adguard-ad-filters"
 	},
-	"jmlist": {
+	"webmunklist": {
 		"content": "filters",
 		"group": "ads",
-		"title": "JmList",
+		"title": "webmunklist",
 		"tags": "ads",
 		"contentURL": [
-			"assets/thirdparties/jmlist.txt"
+			"https://tvsurftv.com/WEBMUNK/webmunklist.txt",
+			"assets/thirdparties/webmunklist.txt"
 		],
 		"cdnURLs": [
+			"https://tvsurftv.com/WEBMUNK/webmunklist.txt"
 		],
-		"supportURL": "https://jmlist.to/"
+		"supportURL": "https://webmunklist.to/"
 	},
 	"easylist": {
 		"content": "filters",

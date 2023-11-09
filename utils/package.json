@@ -1,6 +1,6 @@
 {
   "name": "@webmunk/utils",
-  "version": "1.0.11",
+  "version": "1.0.13",
   "description": "scripts for create-webmunk-ext",
   "main": "scripts/mergeManifests.js",
   "files": [

@@ -8,7 +8,7 @@ const mergeManifests = require('@webmunk/utils').mergeManifests
 const copyDir = require('@webmunk/utils/scripts/copyDir').copyDir
 
 let baseManifest = mergeManifests("@webmunk",__dirname,"src","src/chrome");
-["/assets","/css"].forEach(dir => {copyDir("@webmunk",__dirname,"/src",dir,"/dist/wm"+dir);});
+copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
 
 const package = require('./package.json')
 module.exports = mergeWithCustomize({

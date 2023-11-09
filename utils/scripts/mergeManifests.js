@@ -43,7 +43,10 @@ exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifest
           return undefined;
         },
         customizePrimitive(a, b, key) {
-          if (typeof a != "undefined" && typeof b!= "undefined" && a!=b) console.log(chalk.yellow(`Warning: field ${key} will be superseeded by ${b}`))
+          if (typeof a != "undefined" && typeof b!= "undefined" && a!=b){
+            console.log(chalk.yellow(`Warning: trying to superseed field ${key} by ${b}`))
+            return a;
+          } 
           // Fall back to default merging
           return undefined;
         }

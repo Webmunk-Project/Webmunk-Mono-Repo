@@ -25,5 +25,5 @@
     "dev": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js",
     "dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch"
   },
-  "version": "0.1.13"
+  "version": "0.1.27"
 }

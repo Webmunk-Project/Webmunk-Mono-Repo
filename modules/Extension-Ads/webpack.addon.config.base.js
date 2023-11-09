@@ -130,7 +130,7 @@ module.exports = function config(browser){
       new CopyPlugin({
         patterns: [
           //{ from: './src/vendor/js/', to: 'vendor/js' },
-          { from: './assets', to:'./assets'}
+          { from: './ublock', to:'./wm/ublock'}
         ]
       }),
       new webpack.EnvironmentPlugin({

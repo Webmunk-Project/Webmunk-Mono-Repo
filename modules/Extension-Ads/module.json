@@ -1,5 +1,5 @@
 {
   "name": "Ad Scraper",
-  "permissions": ["webRequest"],
+  "permissions": ["webRequest","storage","unlimitedStorage","webNavigation","privacy"],
   "host_permissions": []
 }

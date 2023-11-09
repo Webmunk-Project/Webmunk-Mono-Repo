@@ -43,6 +43,6 @@ exports.copyDir = function copyDir(scope,path,relativeSrcPath,dirName,destPath){
   let modules = searchModulesInDirectory(path+relativeSrcPath)
   console.log(`Copying ${dirName} for modules: ${modules}`)
   modules.forEach(m => {
-    copyDirectorySync(path+"/node_modules/"+scope+"/"+m+dirName, path+destPath)
+    copyDirectorySync(path+"/node_modules/"+scope+"/"+m+"/dist/wm"+dirName, path+destPath)
   })
 }
