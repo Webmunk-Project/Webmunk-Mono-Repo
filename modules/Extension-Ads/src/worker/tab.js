@@ -421,10 +421,10 @@ const onPopupUpdated = (( ) => {
         // It is a popup, block and remove the tab.
         if ( popupType === 'popup' ) {
             µb.unbindTabFromPageStore(targetTabId);
-            vAPI.tabs.remove(targetTabId, false);
+            //JML vAPI.tabs.remove(targetTabId, false);
         } else {
             µb.unbindTabFromPageStore(openerTabId);
-            vAPI.tabs.remove(openerTabId, true);
+            //JML vAPI.tabs.remove(openerTabId, true);
         }
 
         return true;
