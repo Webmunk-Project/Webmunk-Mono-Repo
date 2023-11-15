@@ -73,7 +73,7 @@ const patchLocalRedirectURL = url => url.charCodeAt(0) === 0x2F /* '/' */
 
 const testUrl = function(details){
     let cancelResponse = onBeforeRequest(details, true)
-    console.log("testUrl "+details.url,cancelResponse);
+    //console.log("testUrl "+details.url,cancelResponse);
     return cancelResponse?.cancel ? true: false;
 }
 

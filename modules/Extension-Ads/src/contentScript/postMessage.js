@@ -26,14 +26,22 @@ export default class PostMessageMgr {
           console.log("PostMessageMgr: frameId="+reply.frameId)
         });
       });
-      window.addEventListener('beforeunload', function (event) {
+      /*window.addEventListener('beforeunload', function (event) {
         // Your logic here
         console.log(`[${window.name}] Window is about to be reloaded or unloaded.`);
-     });
+     });*/
     }
   }
   setReceiver(receiverHldr) {
     this._receiveHdlr = receiverHldr
+  }
+
+  wait(delay){
+    return new Promise(resolve => {
+      setTimeout(()=>{
+        resolve();
+      }, delay)
+    })
   }
   
   addMessageHdlr() {
@@ -60,27 +68,49 @@ export default class PostMessageMgr {
           if (eventData.action == "getFrameId"){
             let frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
             console.log(`[${window.name}-${eventData.requestId}]:  replying ${frameId} `+event.data.action)
-            return this.reply(eventData.action, event.source, frameId, eventData.promiseId, eventData.requestId)
+            return this.reply(eventData.action, event.source, {success:true,frameId}, eventData.promiseId, eventData.requestId)
           }
           if (eventData.action == "registerFrame"){
-
-            if (!event.source){
-              console.log("addMessageHdlr: event source is null for "+event.origin)
-              return;
+            if (event.source){
+              try {
+                event.source.document.body.style.background = "red";
+              }
+              catch(e){
+                /*let timerId = setInterval(()=> {
+                  try {
+                    event.source.document.body.style.background = "red";
+                    clearInterval(timerId)
+                  }
+                  catch(e){}
+                },100)*/
+              }
             }
+            else {
+              console.log(`addMessageHdlr: event source is null for [${event.origin}]`)
+              return ;
+            }
+            let eventSource = event.source;
+            await this.wait(500)
             let iframeElts = document.getElementsByTagName('iframe');
             /*Array.from(iframeElts).forEach(f => {
               console.log("Iframe content window:",f.contentWindow)
             })*/
             let registered = false;
-            for (var i = 0; i < iframeElts.length; i++) {
-              if (iframeElts[i].contentWindow === event.source) {
-                iframeElts[i].setAttribute("frameid",eventData.data.frameId)
-                registered = true;
-                break;
-              }
-            };
-            return this.reply(eventData.action, event.source, {success:true, frameId:eventData.data.frameId}, eventData.promiseId)
+            let reason = "can't find content window"
+            try {
+              for (var i = 0; i < iframeElts.length; i++) {
+                if (iframeElts[i].contentWindow == eventSource) {
+                  iframeElts[i].setAttribute("frameid",eventData.data.frameId)
+                  registered = true;
+                  reason = undefined;
+                  break;
+                }
+              };
+              return this.reply(eventData.action, eventSource, {success:registered, reason, frameId:eventData.data.frameId}, eventData.promiseId)
+            }
+            catch(e){
+              return this.reply(eventData.action, eventSource, {success:false, reason:e, frameId:eventData.data.frameId}, eventData.promiseId)
+            }
           }
           let result = await this._receiveHdlr(eventData);
           this.reply(eventData.action, event.source, result, eventData.promiseId)
@@ -91,7 +121,7 @@ export default class PostMessageMgr {
           var _p = this._promises.get(_promiseId)
           if (_p) {
             _p.resolve(event.data.data)
-            console.log(`[${window.name}-${eventData.requestId}]:  Receiving  ${event.data.data}`)
+            console.log(`[${window.name}-${eventData.requestId}]:  Receiving  ${JSON.stringify(event.data.data)}`)
 
             this._promises.delete(_promiseId)
           }

@@ -25,6 +25,10 @@
 
 /******************************************************************************/
 
+var debug = {
+    messaging: false
+};
+
 import publicSuffixList from './lib/publicsuffixlist/publicsuffixlist.js';
 import punycode from './lib/punycode.js';
 
@@ -884,7 +888,7 @@ const onMessage = function(request, sender, callback) {
             sender,
             request
         ).then(response => {
-            console.log("retrieveContentScriptParameters:",response?.specificCosmeticFilters?.injectedCSS)
+            debug.messaging && console.log("retrieveContentScriptParameters:",response?.specificCosmeticFilters?.injectedCSS)
             callback(response);
         });
     default:

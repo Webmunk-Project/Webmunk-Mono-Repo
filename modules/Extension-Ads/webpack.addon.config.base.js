@@ -14,7 +14,7 @@ module.exports = function config(browser){
         '/src/contentScript/vapi-client.js',
         '/src/contentScript/content.js'
       ],
-      worker: ['./src/worker/vapi.js','./src/worker/start.js','./src/worker/background.js']
+      worker: ['./src/worker/vapi.js','./src/worker/start.js','./src/worker/background.js','./src/worker/worker.js']
     },
     output: {
       path: path.join(__dirname, 'dist/'),
