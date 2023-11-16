@@ -124,7 +124,7 @@ class Messenger {
         function(result) {
           if (chrome.runtime.lastError) {
             console.log(
-              'got error ' + chrome.runtime.lastError.message + ' ' + tabId
+              'got error ' + chrome.runtime.lastError.message + ' ' + tabId + ' ' + (frameId ? frameId : 0)
             )
             console.log(
               'got error sending',name,action

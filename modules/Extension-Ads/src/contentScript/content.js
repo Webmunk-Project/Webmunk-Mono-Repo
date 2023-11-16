@@ -1,4 +1,6 @@
 import PostMessageMgr from './postMessage' 
+import _ from 'lodash'
+
 
 
 if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
@@ -97,6 +99,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   };
 
   const isFrame = () => window!==window.top
+  const WAIT_BEFORE_EXTRACT = 2500;
 
   // vAPI.domWatcher
   const adsMgr = {
@@ -119,35 +122,30 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     isAd: false,
     isVisible: true,
     actionsMessageMain: ['isFrameAnAd'],
-    actionsMessageFrame: ['youAreAFrameAd'],
+    actionsMessageFrame: ['youAreAFrameAd','areYouAnAd'],
+    frameId: null,
 
     initialize:async function(){
-      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))
+      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))        
       if(isFrame()){
-        document.addEventListener("visibilitychange", function() {
-          if (document.visibilityState === 'visible') {
-            console.log('Iframe is visible');
-            this.isVisible = true;
-          }
-          else this.isVisible = false;
-        })
+        this.isAd = false;
         //console.log("Url of iframe="+document.URL)
-        this.postMessageMgr = new PostMessageMgr();
         document.addEventListener('DOMContentLoaded', async (event) => {
-          console.log('Iframe fully loaded... ',window.frameId);
-          await this.wait(1500)
+          this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
+          await this.wait(WAIT_BEFORE_EXTRACT)
+          console.log(`extractContent: Iframe fully loaded+${WAIT_BEFORE_EXTRACT}ms... ${this.frameId} ${this.isAd}`, window.document);
+          if (!this.isAd){
+            let response  = await chrome.runtime.sendMessage({action:"appMgr.parentFrameIsAnAd",data:{}});
+            this.isAd = response.data.isAd;
+          } 
           if (this.isAd){
-            let content = this.extractContent(window.frameId);
+            let content = this.extractContent(this.frameId);
             chrome.runtime.sendMessage({action:"appMgr.frameContent",data:{content}});
           }
-          else {
-            let response = await chrome.runtime.sendMessage({action:"appMgr.isFrameAnAd"});
-            if (response.isAd){
-              let content = this.extractContent(window.frameId);
-              chrome.runtime.sendMessage({action:"appMgr.frameContent",data:{content}});
-            }
-          }
         });
+        this.postMessageMgr = new PostMessageMgr();
+        this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
+        console.log(`extractContent: inserting listener ${this.frameId}`, window.document.URL, window.document);
       } 
       else{ // main frame
         document.addEventListener('DOMContentLoaded', async (event) => {
@@ -193,6 +191,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           
       });
     }, 
+    setIsad:function(value, reason){
+      this.isAd=value;
+      console.log(`setIsad ${this.frameId} [${reason}]:`,value)
+    },
     _onBackgroundMessage(message, sender, reply) {
       let actionsMessage = isFrame() ? this.actionsMessageFrame : this.actionsMessageMain;
       if (!message.action || actionsMessage.indexOf(message.action) === -1) {
@@ -201,19 +203,30 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       this[`_onMessage_${message.action}`](message, sender, reply)
       return true //async reply
     },
+    _onMessage_areYouAnAd:function(_msg,_from,reply){
+      reply({isAd: this.isAd})
+    },
     _onMessage_youAreAFrameAd:function(_msg,_from,reply){
-      this.isAd = true;
+      this.setIsad(true,"_onMessage_youAreAFrameAd");
       reply({success: true})
     },
     _onMessage_isFrameAnAd:function(msg,_from,reply){
-      let iframes = Array.from(document.querySelectorAll("iframe"));
-      let iframe = iframes.find(f => f.getAttribute("frameid")== msg.frameId)
-      let result  = {succes:false};
-      if (iframe){
-        result = {succes:true, isAd: iframe.getAttribute("data-isad")}
+      let result  = {success:false, reason:"frameid not found", isAd: false};
+      try {
+        let iframes = Array.from(document.querySelectorAll("iframe"));
+        let iframe = iframes.find(f => f.getAttribute("frameid")== msg.frameId)
+        if (iframe){
+          if (iframe.style.display == "none"){
+            result = {success:true, isAd: false, reason: "frame hidden"}
+          }
+          else result = {success:true, isAd: iframe.getAttribute("data-isad")?true:false}
+        } 
+      }
+      catch(e){
+        result = e;
       }
       reply(result)
-    }, 
+    },
     mainReceivePostMessage:function(data){
       switch(data.action){
         case 'ready':
@@ -262,7 +275,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       node.style.margin="2px"
       node.ads = true;
       node.setAttribute("data-isad",true)
-      this.isAd = true;
+      if (isFrame()){
+        this.setIsad(true,"highlightNodeAsAds");
+      }
       console.log("Highlighting ",node)
     },
     traverseDOM:async function(node, indent = 0) {    
@@ -274,15 +289,21 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
       if (node.localName=="iframe" && this.hasAnAdsParent(node,1)){
         setTimeout(()=>{
-          console.log(`Changing iframe[${node.getAttribute("frameid")}] to data-isad true `,node)
-          node.setAttribute("data-isad", true)
+          this.waitForFrameId(node).then( id => {
+            console.log(`Setting Iframe[${node.getAttribute("frameid")}] to data-isad true `,node)
+            node.setAttribute("data-isad", true)
+            chrome.runtime.sendMessage({action:"appMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
+          }).catch(e => {
+            console.log(`Setting Iframe[UNKNOWN] to data-isad true `,node)
+            node.setAttribute("data-isad", true)
+          })
         },300)
       }
 
       //if ((node.href && typeof node.href != "object" && node.getAttribute("href").startsWith("http")) || (node.src && node.getAttribute("src").startsWith("http"))){ 
       if ((node.href && typeof node.href != "object") || (node.src)){ 
-        if (node.src) console.log(`${node.localName} Node has src `+node.src)
-        if (node.href) console.log(`${node.localName} Node has href `+node.href)
+        //if (node.src) console.log(`${node.localName} Node has src `+node.src)
+        //if (node.href) console.log(`${node.localName} Node has href `+node.href)
         urlIsAnAd = await chrome.runtime.sendMessage({action:"appMgr.isUrlAnAds",data:{src: node.src, href: node.href}}).then(result=>{
           return result.data.urlIsAnAd;
         })
@@ -293,8 +314,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             console.log("Checking node for ad ascendance",node)
           }
           if (!parentFrameIsAnAd){
-          this.highlightNodeAsAds(node, indent, "urlIsAnAd","red");
-          this.notifyForAd(node);
+            this.highlightNodeAsAds(node, indent, "urlIsAnAd","red");
+            //this.notifyForAd(node);
           }
         }
       }
@@ -310,16 +331,19 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               console.log("Checking node for ad ascendance",node)
             }
             if (!parentFrameIsAnAd){
-            this.highlightNodeAsAds(node, indent, selector, "blue");
-            //this.captureToCanvas(node.parentElement)
-            this.notifyForAd(node);
+              this.highlightNodeAsAds(node, indent, selector, "blue");
+              //this.captureToCanvas(node.parentElement)
+              //this.notifyForAd(node);
             }
             
           }
           else {
             if (this.isAd && node.localName=="iframe"){
               node.setAttribute("data-isad",true)
-              this.tellFrameItsAFrameAd(node);
+              this.waitForFrameId(node).then((id) => {
+                console.log("Telling iframe it is an ad "+node.id, node)
+                chrome.runtime.sendMessage({action:"appMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
+              });
             }
           }
         });
@@ -329,29 +353,26 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
       }
     },
-    tellFrameItsAFrameAd:function(node){
-      let frameId = node.getAttribute("frameid")
-      function sendMessage(id){
-        console.log("Telling iframe it is an ad "+node.id, node)
-        chrome.runtime.sendMessage({action:"appMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
-      }
-      if (frameId) sendMessage(frameId);
-      else{
-        let count = 50;
-        let intervalId = setInterval(()=>{
-          let frameId = node.getAttribute("frameid")
-          if (frameId){
-            clearInterval(intervalId)
-            sendMessage(frameId);
-          } 
-          if (count<0){
-            clearInterval(intervalId);
-            console.warn("Clearing intervalId for frame, too many attempts ",node)
-          }
-          count --;
-        }, 10)
-      } 
-
+    waitForFrameId:function(node, count = 50){
+      return new Promise((resolve,reject) => {
+        let frameId = node.getAttribute("frameid")
+        if (frameId) resolve(frameId);
+        else{
+          let intervalId = setInterval(()=>{
+            let frameId = node.getAttribute("frameid")
+            if (frameId){
+              clearInterval(intervalId)
+              resolve(frameId);
+            } 
+            if (count<0){
+              clearInterval(intervalId);
+              reject()
+              //if (node.style.display!="none") console.warn("Clearing intervalId for frame, too many attempts ",node)
+            }
+            count --;
+          }, 10)
+        } 
+      })
     },
     notifyForAd:function(node){
       let frameIds = [];
@@ -434,13 +455,21 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       scopeArray.forEach(i => {
         let src = i.getAttribute("src");
         let href = i.getAttribute("href");
-        content.push({type:i.localName,src: src?src:undefined, href: href ? href : undefined})
+        let o = {type:i.localName}
+        src && (o.src = src);
+        href && (o.href = href);
+        content.push(o)
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
           content.push({type:i.localName,href: i.style.backgroundImage})
-          console.log(`extractContent: ${frameId} ${i.id} ${i.className}`,i)
         }
+      })
+      content = _.uniqWith(content,(o1,o2) => {
+        for (let prop in o1){
+          if (o1[prop] != o2[prop]) return false;
+        }
+        return true;
       })
       console.log(`extractContent: ${frameId}`,content)
       return content;
@@ -456,10 +485,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             if (node.localName=="iframe" /*&& node.id.startsWith("google_ads_iframe_/22152718")*/){
               node.onload = () => {
                 try{
-                  setTimeout(async () => {                    
+                  /*setTimeout(async () => {                    
                     console.log("iframe onload",node, node.getAttribute("frameid"))
                     
-                  }, (1000));
+                  }, (1000));*/
                 }
                 catch(e){}
               }
@@ -496,17 +525,17 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
     },
     startMutationObserver:function() {
-      console.log("startMutationObserver..."+document.URL)
-        if ( this.domLayoutObserver !== undefined ) { return; }
-        this.domLayoutObserver = new MutationObserver((mutations)=> this.observerHandler(mutations));
-        this.domLayoutObserver.observe(document, {
-            //attributeFilter: [ 'class', 'id' ],
-            //attributes: true,
-            childList: true,
-            subtree: true
-        });
-        this.safeObserverHandlerTimer = new vAPI.SafeAnimationFrame(() => this.safeObserverHandler());
-        //vAPI.shutdown.add(cleanup);
+      //console.log("startMutationObserver..."+document.URL)
+      if ( this.domLayoutObserver !== undefined ) { return; }
+      this.domLayoutObserver = new MutationObserver((mutations)=> this.observerHandler(mutations));
+      this.domLayoutObserver.observe(document, {
+          //attributeFilter: [ 'class', 'id' ],
+          //attributes: true,
+          childList: true,
+          subtree: true
+      });
+      this.safeObserverHandlerTimer = new vAPI.SafeAnimationFrame(() => this.safeObserverHandler());
+      //vAPI.shutdown.add(cleanup);
     },
     stopMutationObserver:function() {
       console.log("...stopMutationObserver")

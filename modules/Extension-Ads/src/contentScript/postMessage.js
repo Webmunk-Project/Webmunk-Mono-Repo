@@ -20,20 +20,42 @@ export default class PostMessageMgr {
       },10000)*/
     }
     else {
-      chrome.runtime.sendMessage({action:"Messenger.getFrameId"}).then((frameId) => {
-        window.frameId = frameId;
-        this.sendTo(window.top,"registerFrame", {frameId}).then(reply => {
-          console.log("PostMessageMgr: frameId="+reply.frameId)
+      //if (window.innerHeight>5 && window.innerWidth >5){
+        this.addmeta()
+        chrome.runtime.sendMessage({action:"Messenger.getFrameId"}).then((frameId) => {
+          window.frameId = frameId;
+          console.log(`Registering ${frameId} ${document.URL}`,document)
+          let timerId = setTimeout(()=>{
+            console.log(`Exhausting time for ${frameId} response`,document)
+          },4000)
+          this.sendTo(window.parent,"registerFrame", {frameId}).then(reply => {
+            console.log(`Post-Registering ${frameId}  ${document.URL}`, document)
+            clearTimeout(timerId)
+          });
         });
-      });
-      /*window.addEventListener('beforeunload', function (event) {
-        // Your logic here
-        console.log(`[${window.name}] Window is about to be reloaded or unloaded.`);
-     });*/
+      //}
+      //else console.log("Iframe is small",document)
     }
   }
   setReceiver(receiverHldr) {
     this._receiveHdlr = receiverHldr
+  }
+
+  addmeta(){
+    // Create a new meta element
+    setTimeout(()=> {
+      var meta = document.createElement('meta');
+  
+      // Set attributes of the meta element
+      meta.setAttribute('name', 'jml-meta');
+      meta.setAttribute('content', 'youpi');
+  
+      // Access the head element
+      var head = document.head;
+  
+      // Insert the meta element as the first child of the head element
+      head.insertBefore(meta, head.firstChild);
+    },1000)
   }
 
   wait(delay){
@@ -106,6 +128,7 @@ export default class PostMessageMgr {
                   break;
                 }
               };
+              if (!registered) console.log(reason,eventSource)
               return this.reply(eventData.action, eventSource, {success:registered, reason, frameId:eventData.data.frameId}, eventData.promiseId)
             }
             catch(e){
