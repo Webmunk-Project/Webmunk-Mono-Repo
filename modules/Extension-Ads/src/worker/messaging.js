@@ -801,8 +801,8 @@ const retrieveContentScriptParameters = async function(sender, request) {
 
     const noSpecificCosmeticFiltering =
         pageStore.shouldApplySpecificCosmeticFilters(frameId) === false;
-    const noGenericCosmeticFiltering =
-        pageStore.shouldApplyGenericCosmeticFilters(frameId) === false;
+    const noGenericCosmeticFiltering = false;
+    //    pageStore.shouldApplyGenericCosmeticFilters(frameId) === false;
 
     const response = {
         collapseBlocked: µb.userSettings.collapseBlocked,
