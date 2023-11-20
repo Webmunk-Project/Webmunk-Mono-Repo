@@ -22,12 +22,26 @@ function removeDuplicateObjects(arr) {
   }
   return uniqueObjects;
 }
+function removeJustifications(manifest){
+  let processedManifestModule = {};
+  for (let prop in manifest){
+    if (prop === "permissions"){
+      processedManifestModule.permissions = [];
+      manifest.permissions.forEach((p) => {
+        processedManifestModule.permissions.push(p.name)
+      })
+    }
+    else processedManifestModule[prop] = manifest[prop]
+  }
+  return processedManifestModule;
+}
 exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifestDir){
   let modules = searchModulesInDirectory(path+"/"+srcDir)
   console.log("Modules:"+modules)
   let manifest = require(`${path}/${baseManifestDir}/baseManifest.json`);
   modules.forEach(m => {
     const manifestModule = require(`${path}/node_modules/${scope}/${m}/module.json`);
+    const processedManifestModule = removeJustifications(manifestModule);
     manifest = mergeWithCustomize(
       {
         customizeArray(a, b, key) {

@@ -1,5 +1,10 @@
 {
   "name": "Ad Scraper",
-  "permissions": ["webRequest","storage","unlimitedStorage","webNavigation","privacy"],
+  "permissions": [{"name":"webRequest","justification":"to be reviewed"},
+                  {"name":"storage","justification":"store all filter dictionaries"},
+                  {"name":"unlimitedStorage","justification":"filters size goes beyond 5M"},
+                  {"name":"webNavigation","justification":"required for iframes management"},
+                  {"name":"privacy","justification":"used by ublock to customize network and services settings"}
+                ],
   "host_permissions": []
 }
