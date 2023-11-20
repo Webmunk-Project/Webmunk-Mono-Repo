@@ -307,7 +307,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         urlIsAnAd = await chrome.runtime.sendMessage({action:"appMgr.isUrlAnAds",data:{src: node.src, href: node.href}}).then(result=>{
           return result.data.urlIsAnAd;
         })
-        if (urlIsAnAd && !node.style.display=="none"){
+        if (urlIsAnAd && !(node.style.display=="none")){
           let parentFrameIsAnAd = false;
           // let's check if the found node is not already in an iframe detected as an ad
           if (isFrame()){
