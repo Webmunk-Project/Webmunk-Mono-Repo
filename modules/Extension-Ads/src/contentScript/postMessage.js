@@ -95,7 +95,7 @@ export default class PostMessageMgr {
           if (eventData.action == "registerFrame"){
             if (event.source){
               try {
-                event.source.document.body.style.background = "red";
+                //event.source.document.body.style.background = "red";
               }
               catch(e){
                 /*let timerId = setInterval(()=> {
