@@ -6,5 +6,8 @@
                   {"name":"webNavigation","justification":"required for iframes management"},
                   {"name":"privacy","justification":"used by ublock to customize network and services settings"}
                 ],
-  "host_permissions": []
+  "host_permissions": [],
+  "options_ui": {
+    "page": "wm/options/options.html"
+  }
 }

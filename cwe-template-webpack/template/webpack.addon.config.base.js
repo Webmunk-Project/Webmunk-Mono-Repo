@@ -12,7 +12,8 @@ module.exports = function config(browser){
       'content': [
         './src/content/content.js'
       ],
-      background: ['./src/background/worker.js']
+      'options': ['/src/options/options.js'],
+      'background': ['./src/background/worker.js']
     },
     output: {
       path: path.join(__dirname, 'dist/'),

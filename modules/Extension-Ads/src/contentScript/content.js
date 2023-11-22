@@ -1,6 +1,7 @@
 import PostMessageMgr from './postMessage' 
 import _ from 'lodash'
 
+var options=null;
 
 
 if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
@@ -268,17 +269,23 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
       return false;
     },
-    highlightNodeAsAds(node, indent, selector, color){
+    highlightNodeAsAds:async function(node, indent, selector, color){
       console.log(`Node matched: ${selector} ${document.URL} ${indent}`,node);
-      node.style.border=`dashed 2px ${color}`
-      if (node.style.display != "none") node.style.display="inline-block"
-      node.style.margin="2px"
+      if (!options){
+        options = await chrome.storage.sync.get(['highlightAds'])
+        console.log("Options=",options)
+      }
+      if (options.highlightAds){
+        node.style.border=`dashed 2px ${color}`
+        if (node.style.display != "none") node.style.display="inline-block"
+        node.style.margin="2px"
+        console.log("Highlighting ",node)
+      }
       node.ads = true;
       node.setAttribute("data-isad",true)
       if (isFrame()){
         this.setIsad(true,"highlightNodeAsAds");
       }
-      console.log("Highlighting ",node)
     },
     traverseDOM:async function(node, indent = 0) {    
       let urlIsAnAd = false;
