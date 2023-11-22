@@ -13,3 +13,4 @@
 !-----------------------Specific advert blocking filters-----------------------!
 melty.fr##div[id^='internal_trc'] div[observeid]
 lemonde.fr##.OUTBRAIN .ob-dynamic-rec-link 
+developer.mozilla.org##.toc-container > .side.place > .pong-box
