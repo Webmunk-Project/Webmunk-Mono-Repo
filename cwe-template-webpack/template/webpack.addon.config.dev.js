@@ -7,7 +7,8 @@ const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils').mergeManifests
 const copyDir = require('@webmunk/utils/scripts/copyDir').copyDir
 
-let baseManifest = mergeManifests("@webmunk",__dirname,"src","src/chrome");
+let {manifest, processedManifestModule} = mergeManifests("@webmunk",__dirname,"src","src/chrome");
+const baseManifest = manifest;
 copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
 
 const package = require('./package.json')
