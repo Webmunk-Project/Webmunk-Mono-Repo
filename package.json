@@ -9,7 +9,9 @@
   "keywords": [],
   "license": "GPL-2.0-or-later",
   "main": "scripts/mergeManifests.js",
-  "scripts": {},
+  "scripts": {
+    "publish:all":"npm run publish -ws"
+  },
   "dependencies": {
     "@webmunk/manifest-merge": "^5.10.0",
     "child_process": "^1.0.2",

@@ -1,12 +1,14 @@
 {
   "name": "@webmunk/utils",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "scripts for create-webmunk-ext",
   "main": "scripts/mergeManifests.js",
   "files": [
     "scripts/*"
   ],
-  "scripts": {},
+  "scripts": {
+    "publish": "npm publish"
+  },
   "keywords": [],
   "author": "JM Lambert",
   "license": "GPL V2",

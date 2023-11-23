@@ -1,6 +1,7 @@
 {
   "name": "@webmunk/extension-ads",
   "scripts": {
+    "publish": "npm publish",
     "dev": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js",
     "dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch"
   },

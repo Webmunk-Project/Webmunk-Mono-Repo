@@ -6,7 +6,7 @@
     "node": "v18.12.1"
   },
   "scripts": {
-    "publish_all": "npm publish"
+    "publish": "npm publish"
   },
   "files": [
     "template",

@@ -24,6 +24,7 @@
     "create-webmunk-ext": "./index.js"
   },
   "scripts": {
+    "publish": "npm publish",
     "test": "cross-env FORCE_COLOR=true jest"
   },
   "dependencies": {
