@@ -1,36 +1,14 @@
 {
-  "_args": [
-    [
-      "@webmunk/utils@1.0.8",
-      "/Users/jm/labhub/myext"
-    ]
+  "name": "@webmunk/utils",
+  "version": "1.0.8",
+  "description": "scripts for create-webmunk-ext",
+  "files": [
+    "scripts/*"
   ],
-  "_from": "@webmunk/utils@1.0.8",
-  "_id": "@webmunk/utils@1.0.8",
-  "_inBundle": false,
-  "_integrity": "sha512-7KsHZJRWX3sLgGU+r+dCbQesFazkszCiuFCrUhqLCb4xB+2NaMi/Pvcm8AS91WfHIJq8GXm7BOor+4CCxAbuoQ==",
-  "_location": "/@webmunk/utils",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "version",
-    "registry": true,
-    "raw": "@webmunk/utils@1.0.8",
-    "name": "@webmunk/utils",
-    "escapedName": "@webmunk%2futils",
-    "scope": "@webmunk",
-    "rawSpec": "1.0.8",
-    "saveSpec": null,
-    "fetchSpec": "1.0.8"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "https://registry.npmjs.org/@webmunk/utils/-/utils-1.0.8.tgz",
-  "_spec": "1.0.8",
-  "_where": "/Users/jm/labhub/myext",
-  "author": {
-    "name": "JM Lambert"
-  },
+  "keywords": [],
+  "license": "GPL-2.0-or-later",
+  "main": "scripts/mergeManifests.js",
+  "scripts": {},
   "dependencies": {
     "@webmunk/manifest-merge": "^5.10.0",
     "child_process": "^1.0.2",
@@ -40,15 +18,5 @@
     "path": "^0.12.7",
     "react-dev-utils": "^12.0.1",
     "util": "^0.12.5"
-  },
-  "description": "scripts for create-webmunk-ext",
-  "files": [
-    "scripts/*"
-  ],
-  "keywords": [],
-  "license": "GPL V2",
-  "main": "scripts/mergeManifests.js",
-  "name": "@webmunk/utils",
-  "scripts": {},
-  "version": "1.0.8"
+  }
 }
