@@ -67,8 +67,8 @@ module.exports = function config(browser){
               loader: 'babel-loader',
               options: {
                 plugins: [
-                  '@babel/plugin-proposal-class-properties',
-                  '@babel/plugin-proposal-optional-chaining'
+                  '@babel/plugin-transform-class-properties',
+                  '@babel/plugin-transform-optional-chaining'
                 ]
               }
             },

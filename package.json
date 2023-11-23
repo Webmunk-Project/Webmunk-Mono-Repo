@@ -1,9 +1,10 @@
 {
-  "name": "@webmunk/utils",
+  "name": "webmunk",
   "version": "1.0.8",
-  "description": "scripts for create-webmunk-ext",
-  "files": [
-    "scripts/*"
+  "description": "webmunk",
+  "workspaces": [
+    "packages/*",
+    "packages/modules/*"
   ],
   "keywords": [],
   "license": "GPL-2.0-or-later",
