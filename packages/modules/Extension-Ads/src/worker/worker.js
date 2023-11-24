@@ -3,10 +3,10 @@ import webRequest from './traffic.js';
 import messenger from "./messenger";
 import {wmSessionMgr} from '@webmunk/utils/sessionMgr';
 
-const appMgr = {
+const extensionAdsAppMgr = {
   throttler: new TimeThrottler(1,200),
   initialize: async function() {
-    messenger.addReceiver('appMgr', this);
+    messenger.addReceiver('extensionAdsAppMgr', this);
   },
   captureRegion(){
       return chrome.tabs.captureVisibleTab().then( (imageUri) => {
@@ -172,4 +172,5 @@ const appMgr = {
   }
 };
 
-appMgr.initialize();
+extensionAdsAppMgr.initialize();
+exports.extensionAdsAppMgr = extensionAdsAppMgr;

@@ -2,6 +2,9 @@ import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 
 var options=null;
+const debugLog = {
+  traverse: false
+}
 
 
 if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
@@ -136,12 +139,12 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           await this.wait(WAIT_BEFORE_EXTRACT)
           console.log(`extractContent: Iframe fully loaded+${WAIT_BEFORE_EXTRACT}ms... ${this.frameId} ${this.isAd}`, window.document);
           if (!this.isAd){
-            let response  = await chrome.runtime.sendMessage({action:"appMgr.parentFrameIsAnAd",data:{}});
+            let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
             this.isAd = response.data.isAd;
           } 
           if (this.isAd){
             let content = this.extractContent(this.frameId);
-            chrome.runtime.sendMessage({action:"appMgr.frameContent",data:{content}});
+            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.frameContent",data:{content}});
           }
         });
         this.postMessageMgr = new PostMessageMgr();
@@ -155,7 +158,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           adElements.forEach(elt => {
             if (elt.localName != "iframe"){
               let content =this.extractContent(0,elt)
-              chrome.runtime.sendMessage({action:"appMgr.frameContent",data:{content}});
+              chrome.runtime.sendMessage({action:"extensionAdsAppMgr.frameContent",data:{content}});
 
             }
           })
@@ -167,7 +170,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     
       //vAPI.domMutationTime = Date.now();
       vAPI.domWatcher = { start: ()=>this.start(), addListener: () => addListener(), removeListener: ()=>removeListener() };
-      /*chrome.runtime.sendMessage({action:'appMgr.retrieveContentScriptParameters',
+      /*chrome.runtime.sendMessage({action:'extensionAdsAppMgr.retrieveContentScriptParameters',
         data:{
           url: vAPI.effectiveSelf.location.href,
           needScriptlets: false,
@@ -255,7 +258,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     async captureToCanvas(regionElt) {
       let rect = regionElt.getBoundingClientRect()
       //await this.wait(4000)
-      return chrome.runtime.sendMessage({action:"appMgr.captureRegion", data:{region:rect}}).then( data => {
+      return chrome.runtime.sendMessage({action:"extensionAdsAppMgr.captureRegion", data:{region:rect}}).then( data => {
         console.log("captureToCanvas ",data)
       })
     },
@@ -299,7 +302,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           this.waitForFrameId(node).then( id => {
             console.log(`Setting Iframe[${node.getAttribute("frameid")}] to data-isad true `,node)
             node.setAttribute("data-isad", true)
-            chrome.runtime.sendMessage({action:"appMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
+            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
           }).catch(e => {
             console.log(`Setting Iframe[UNKNOWN] to data-isad true `,node)
             node.setAttribute("data-isad", true)
@@ -311,7 +314,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       if ((node.href && typeof node.href != "object") || (node.src)){ 
         //if (node.src) console.log(`${node.localName} Node has src `+node.src)
         //if (node.href) console.log(`${node.localName} Node has href `+node.href)
-        urlIsAnAd = await chrome.runtime.sendMessage({action:"appMgr.isUrlAnAds",data:{src: node.src, href: node.href}}).then(result=>{
+        urlIsAnAd = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isUrlAnAds",data:{src: node.src, href: node.href}}).then(result=>{
           return result.data.urlIsAnAd;
         })
         if (urlIsAnAd && !(node.style.display=="none")){
@@ -349,7 +352,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               node.setAttribute("data-isad",true)
               this.waitForFrameId(node).then((id) => {
                 console.log("Telling iframe it is an ad "+node.id, node)
-                chrome.runtime.sendMessage({action:"appMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
+                chrome.runtime.sendMessage({action:"extensionAdsAppMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
               });
             }
           }
@@ -396,7 +399,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           })
         }
       }
-      chrome.runtime.sendMessage({action:"appMgr.adDetected",data:{
+      chrome.runtime.sendMessage({action:"extensionAdsAppMgr.adDetected",data:{
         main:{
           tagName: node.localName,
           content: node.textContent,
@@ -462,14 +465,14 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       scopeArray.forEach(i => {
         let src = i.getAttribute("src");
         let href = i.getAttribute("href");
-        let o = {type:i.localName}
+        let o = {elt:i, type:i.localName}
         src && (o.src = src);
         href && (o.href = href);
         content.push(o)
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
-          content.push({type:i.localName,href: i.style.backgroundImage})
+          content.push({elt:i, type:i.localName,href: i.style.backgroundImage})
         }
       })
       content = _.uniqWith(content,(o1,o2) => {
@@ -504,7 +507,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               this.traverseDOM(node, 0);
             }
             else{
-              console.log("Launching traverseDOM from top "+node.id)
+              debugLog.traverse && console.log(`Launching traverseDOM from top [id=${node.id}]`)
               this.traverseDOM(node, 0);
             } 
             iNode++;

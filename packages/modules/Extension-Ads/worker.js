@@ -1,2 +1,2 @@
-require('./dist/worker.bundle');
-//import './dist/worker.bundle';
+const {extensionAdsAppMgr} = require('./dist/worker.bundle');
+exports.extensionAdsAppMgr = extensionAdsAppMgr;
