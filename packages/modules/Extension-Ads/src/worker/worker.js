@@ -1,6 +1,7 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
 import messenger from "./messenger";
+import {wmSessionMgr} from '@webmunk/utils/sessionMgr';
 
 const appMgr = {
   throttler: new TimeThrottler(1,200),
@@ -76,6 +77,7 @@ const appMgr = {
                   }
               }
           })
+          console.log(`Frame content for ${wmSessionMgr.getSessionId(from.tab.id)}`,data.content)
       })
   },
   _onMessage_captureRegion: function(request, _from) {

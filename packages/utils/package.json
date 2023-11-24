@@ -1,13 +1,15 @@
 {
   "name": "@webmunk/utils",
-  "version": "1.0.15",
+  "version": "1.0.18",
   "description": "scripts for create-webmunk-ext",
   "main": "scripts/mergeManifests.js",
   "files": [
-    "scripts/*"
+    "scripts/*",
+    "sessionMgr.js"
   ],
   "scripts": {
-    "publish": "npm publish"
+    "publish": "npm publish",
+    "build:dev": "BUILD_ENV=development webpack --config webpack.config.dev.js"
   },
   "keywords": [],
   "author": "JM Lambert",
