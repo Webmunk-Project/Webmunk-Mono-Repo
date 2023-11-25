@@ -2,14 +2,19 @@
 
 This template is the default template used by the create-webmunk-ext script to create an initial tree structure.
 As the name indicates, this template aims at engineers eager to use webpack for building their extension.
-The tree structure include the following set of directories:
-./  
-|
-+---src (where you include all your scripts ie worker, content, etc ...)
-|
-+---dist (where webpack generates the bundled scripts)
-|
-+---deliveries (where production builds end-up, ie zip files that can be uploaded in CWS) 
+The tree structure includes the following set of files/directories:
+```
+├───📁 assets/
+│   └───...
+├───📁 deliveries/ (where production builds end-up, ie zip files that can be uploaded in CWS) 
+│   └───...
+├───📁 dist/ (where webpack generates the bundled scripts)
+│   └───...
+├───📁 src/ (where you include all your scripts ie worker, content, etc ...)
+│   └───...
+├───📄 webpack.addon.config.base.js
+└───📄 webpack.addon.config.dev.js
+```
 
 Regarding the src folder, 4 sub-folders are included with the appropriate js files:
 - background/worker.js 
