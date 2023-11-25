@@ -48,18 +48,16 @@ Note: those scripts will also display a consolidated list of justifications for 
 Refer to the README.md file of the webmunk extension module.
 
 
-- __myext__
-   - __deliveries__
-   - __dist__
-   - __src__
-     - __background__
-       - [worker.js](src/background/worker.js)
-     - __chrome__
-       - [baseManifest.json](src/chrome/baseManifest.json)
-     - __content__
-       - [content.js](src/content/content.js)
-     - __options__
-       - [options.js](src/options/options.js)
-   - [webpack.addon.config.base.js](webpack.addon.config.base.js)
-   - [webpack.addon.config.dev.js](webpack.addon.config.dev.js)
-
+├───📁 background/
+│   ├───📄 README.md
+│   └───📄 worker.js
+├───📁 chrome/
+│   ├───📄 README.md
+│   └───📄 baseManifest.json
+├───📁 content/
+│   ├───📄 README.md
+│   └───📄 content.js
+├───📁 options/
+│   ├───📄 README.md
+│   └───📄 options.js
+└───📄 README.md
