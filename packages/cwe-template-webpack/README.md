@@ -17,9 +17,17 @@ The tree structure includes the following set of files/directories:
 ```
 
 Regarding the src folder, 4 sub-folders are included with the appropriate js files:
-- background/worker.js 
-- content/content.js 
-- options/options.js 
+```
+├───📁 background/
+│   └───📄 worker.js
+├───📁 chrome/
+│   └───📄 baseManifest.json
+├───📁 content/
+│   └───📄 content.js
+└───📁 options/
+    └───📄 options.js
+```
+
 Those are the files used by the webpack build process to generate the corresponding extension scripts. This is where the developer will import the webmunk extension modules files. 
 - chrome/baseManifest.json  is a manifest to be modified by the developer and includes new elements related to the final extension itself. The manifest.json "real" file will be built from this file and the manifest files of the webmunk extension modules. 
 
