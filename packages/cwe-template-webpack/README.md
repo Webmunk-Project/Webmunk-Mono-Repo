@@ -47,7 +47,7 @@ Note: those scripts will also display a consolidated list of justifications for 
 ## Importing a webmunk module
 Refer to the README.md file of the webmunk extension module.
 
-
+```
 ├───📁 background/
 │   ├───📄 README.md
 │   └───📄 worker.js
@@ -61,3 +61,4 @@ Refer to the README.md file of the webmunk extension module.
 │   ├───📄 README.md
 │   └───📄 options.js
 └───📄 README.md
+```
