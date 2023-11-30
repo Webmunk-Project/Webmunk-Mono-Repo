@@ -55,10 +55,10 @@ const extensionAdsAppMgr = {
       catch(e){}
       return url;
   },
-  _onMessage_frameContent(data, from){
+  _onMessage_adContent(data, from){
       let promises = [];
-      console.log(`Receiving content from ${from.frameId}`,data.content)
-      data.content.forEach((item) => {
+      console.log(`Receiving ad content from ${from.frameId} url:${from.frameId==0?from.tab.url:from.frameId}`)
+      data.content.elts.forEach((item) => {
           promises.push (new Promise(async resolve => {
               if (item.href && !item.href.startsWith("url(\"data")){
                   let result = await this.testRedirect(this.normalizeUrl(item.href,from.tab.url));
@@ -70,14 +70,14 @@ const extensionAdsAppMgr = {
       Promise.all(promises).then(results => {
           results.forEach((result, index) => {
               if (result){
-                  data.content[index].href = {
+                  data.content.elts[index].href = {
                       initialUrl: result.initialUrl,
                       redirected: result.redirected,
                       redirectedUrl: result.redirected ? result.url : undefined
                   }
               }
           })
-          console.log(`Frame content for ${wmSessionMgr.getSessionId(from.tab.id)}`,data.content)
+          console.log(`Ad content for ${wmSessionMgr.getSessionId(from.tab.id)}`,data.content)
       })
   },
   _onMessage_captureRegion: function(request, _from) {
@@ -93,32 +93,54 @@ const extensionAdsAppMgr = {
           return frames.filter(f => f.frameId!=0)
       });
   },
+  _onMessage_isDisplayNone(_request, from){
+    return chrome.webNavigation.getAllFrames({tabId:from.tab.id}).then(async frames => {
+      let result ={success: true, isAd: false};
+        let path = [from.frameId+"/false"];
+        let cont = true;
+        let myself = frames.find(f => f.frameId==from.frameId);
+        while (cont){
+          result = await messenger.sendToMainPage(from.tab.id, "content", "isDisplayNone", from.frameId, myself.parentFrameId)
+          path.unshift(myself.parentFrameId+"/"+result.isDisplayNone)
+          if (result.isDisplayNone){
+              result =  {success: true, isDisplayNone: true};
+              cont = false;
+          } 
+          else{
+              if (myself.parentFrameId == 0) cont = false;
+              myself = frames.find(f => f.frameId==myself.parentFrameId);
+          }
+        }
+        console.log(`_onMessage_isDisplayNone ${JSON.stringify(path)} => ${result.isDisplayNone}`)
+        return result;
+    });
+  },
   _onMessage_parentFrameIsAnAd(_request, from){
       return chrome.webNavigation.getAllFrames({tabId:from.tab.id}).then(async frames => {
-          let result ={success: true, isAd: false};
-          let path = [from.frameId+"/false"];
-          let cont = true;
-          let myself = frames.find(f => f.frameId==from.frameId);
-          while (cont){
-              if (myself.parentFrameId ==0){
-                  result = await messenger.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0) 
-                  path.unshift("0/"+(result.success ? result.isAd:"unknown"))
+        let result ={success: true, isAd: false};
+        let path = [from.frameId+"/false"];
+        let cont = true;
+        let myself = frames.find(f => f.frameId==from.frameId);
+        while (cont){
+          if (myself.parentFrameId ==0){
+              result = await messenger.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0) 
+              path.unshift("0/"+(result.success ? result.isAd:"unknown"))
+              cont = false;
+          }
+          else {
+              result = await messenger.sendToMainPage(from.tab.id, "content", "areYouAnAd", {}, myself.parentFrameId)
+              path.unshift(myself.parentFrameId+"/"+result.isAd)
+              if (result.isAd){
+                  result =  {success: true, isAd: true};
                   cont = false;
-              }
-              else {
-                  result = await messenger.sendToMainPage(from.tab.id, "content", "areYouAnAd", {}, myself.parentFrameId)
-                  path.unshift(myself.parentFrameId+"/"+result.isAd)
-                  if (result.isAd){
-                      result =  {success: true, isAd: true};
-                      cont = false;
-                  } 
-                  else{
-                      myself = frames.find(f => f.frameId==myself.parentFrameId);
-                  }
+              } 
+              else{
+                  myself = frames.find(f => f.frameId==myself.parentFrameId);
               }
           }
-          console.log(`_onMessage_parentFrameIsAnAd ${JSON.stringify(path)} => ${result.isAd}`)
-          return result;
+        }
+        console.log(`_onMessage_parentFrameIsAnAd ${JSON.stringify(path)} => ${result.isAd}`)
+        return result;
       })
   },
   _onMessage_retrieveContentScriptParameters: function(request, _from) {

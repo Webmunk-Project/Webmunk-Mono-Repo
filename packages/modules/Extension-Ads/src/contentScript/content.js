@@ -3,7 +3,12 @@ import _ from 'lodash'
 
 var options=null;
 const debugLog = {
-  traverse: false
+  traverse: false,
+  highlighting:false,
+  timeouts: false,
+  hidden: true,
+  noAd: true,
+  registration: false,
 }
 
 
@@ -125,8 +130,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     urlToIframeEltMap: new Map(),
     isAd: false,
     isVisible: true,
-    actionsMessageMain: ['isFrameAnAd'],
-    actionsMessageFrame: ['youAreAFrameAd','areYouAnAd'],
+    actionsMessageMain: ['isFrameAnAd','isDisplayNone'],
+    actionsMessageFrame: ['youAreAFrameAd','areYouAnAd','isDisplayNone'],
     frameId: null,
 
     initialize:async function(){
@@ -137,19 +142,26 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         document.addEventListener('DOMContentLoaded', async (event) => {
           this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
           await this.wait(WAIT_BEFORE_EXTRACT)
-          console.log(`extractContent: Iframe fully loaded+${WAIT_BEFORE_EXTRACT}ms... ${this.frameId} ${this.isAd}`, window.document);
+          //document.body?.scrollIntoView()
+          let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
+          if (response?.data?.isDisplayNone){
+            debugLog.hidden && console.log(`extractContent: Iframe  is hidden ${this.frameId} `, window.document);
+            return;
+          }
           if (!this.isAd){
             let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
             this.isAd = response.data.isAd;
           } 
+          !this.isAd && debugLog.noAd && console.log(`extractContent: Iframe  is not an ad ${this.frameId} `, window.document);
+
           if (this.isAd){
             let content = this.extractContent(this.frameId);
-            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.frameContent",data:{content}});
+            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.adContent",data:{content}});
           }
         });
         this.postMessageMgr = new PostMessageMgr();
         this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
-        console.log(`extractContent: inserting listener ${this.frameId}`, window.document.URL, window.document);
+        //console.log(`extractContent: inserting listener ${this.frameId}`, window.document.URL, window.document);
       } 
       else{ // main frame
         document.addEventListener('DOMContentLoaded', async (event) => {
@@ -158,8 +170,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           adElements.forEach(elt => {
             if (elt.localName != "iframe"){
               let content =this.extractContent(0,elt)
-              chrome.runtime.sendMessage({action:"extensionAdsAppMgr.frameContent",data:{content}});
-
+              chrome.runtime.sendMessage({action:"extensionAdsAppMgr.adContent",data:{content}});
             }
           })
         })
@@ -207,6 +218,22 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       this[`_onMessage_${message.action}`](message, sender, reply)
       return true //async reply
     },
+    _onMessage_isDisplayNone:function(msg,_from,reply){
+      let result  = {success:false, reason:"frameid not found", isDisplayNone: false};
+      try {
+        let iframes = Array.from(document.querySelectorAll("iframe"));
+        let iframe = iframes.find(f => f.getAttribute("frameid")== msg.data)
+        if (iframe){
+          if (iframe.style.display == "none"){
+            result = {success:true, isDisplayNone: true}
+          }
+        } 
+      }
+      catch(e){
+        result = e;
+      }
+      reply(result)
+    },
     _onMessage_areYouAnAd:function(_msg,_from,reply){
       reply({isAd: this.isAd})
     },
@@ -218,12 +245,21 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       let result  = {success:false, reason:"frameid not found", isAd: false};
       try {
         let iframes = Array.from(document.querySelectorAll("iframe"));
-        let iframe = iframes.find(f => f.getAttribute("frameid")== msg.frameId)
+        let iframe = iframes.find(f => f.getAttribute("frameid")== msg.data)
         if (iframe){
           if (iframe.style.display == "none"){
             result = {success:true, isAd: false, reason: "frame hidden"}
           }
-          else result = {success:true, isAd: iframe.getAttribute("data-isad")?true:false}
+          else {
+            let parent = iframe.parentElement, count = 0;
+            const MAX_PARENTS = 2;
+            result = {success:true, isAd: iframe.getAttribute("data-isad")?true:false}
+            while (!result.isAd && parent &&  count < MAX_PARENTS){
+              result = {success:true, isAd: parent.getAttribute("data-isad")?true:false}
+              parent = parent.parentElement;
+              count ++;
+            }
+          }
         } 
       }
       catch(e){
@@ -234,7 +270,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     mainReceivePostMessage:function(data){
       switch(data.action){
         case 'ready':
-          console.log(`[${window.name} iframe ready `+data.data)
+          debugLog.registration && console.log(`[${window.name} iframe ready `+data.data)
           break;
         case 'isIframeAnAd':
           let iframe = this.postMessageMgr.idToFrame(data.from)
@@ -273,16 +309,15 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return false;
     },
     highlightNodeAsAds:async function(node, indent, selector, color){
-      console.log(`Node matched: ${selector} ${document.URL} ${indent}`,node);
+      debugLog.highlighting && console.log(`Node matched: ${selector} ${document.URL} ${indent}`,node);
       if (!options){
         options = await chrome.storage.sync.get(['highlightAds'])
-        console.log("Options=",options)
       }
       if (options.highlightAds){
         node.style.border=`dashed 2px ${color}`
         if (node.style.display != "none") node.style.display="inline-block"
         node.style.margin="2px"
-        console.log("Highlighting ",node)
+        debugLog.highlighting && console.log("Highlighting ",node)
       }
       node.ads = true;
       node.setAttribute("data-isad",true)
@@ -465,10 +500,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       scopeArray.forEach(i => {
         let src = i.getAttribute("src");
         let href = i.getAttribute("href");
-        let o = {elt:i, type:i.localName}
-        src && (o.src = src);
-        href && (o.href = href);
-        content.push(o)
+        // let's avoid useless buttons
+        if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
+          let o = {elt:i, type:i.localName}
+          src && (o.src = src);
+          href && (o.href = href);
+          content.push(o)
+        }
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
@@ -481,8 +519,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
         return true;
       })
-      console.log(`extractContent: ${frameId}`,content)
-      return content;
+      console.log(`extractContent: ${frameId}`,content,document)
+      return {elts: content, documentUrl: document.URL};
     },
     safeObserverHandler:async function() {
         let i = 0;
