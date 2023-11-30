@@ -2,7 +2,7 @@
   "name": "@webmunk/utils",
   "version": "1.0.18",
   "description": "scripts for create-webmunk-ext",
-  "main": "scripts/mergeManifests.js",
+  "main": "index.js",
   "files": [
     "scripts/*",
     "sessionMgr.js"

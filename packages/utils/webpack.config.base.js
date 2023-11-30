@@ -7,7 +7,6 @@ const { parsed } = config({ path: `./.env.${process.env.BUILD_ENV}` })
 
 module.exports = function config(browser){
   return {
-    
     entry: {
       'sessionMgr': ['/src/sessionMgr.js'],
     },
