@@ -1,4 +1,9 @@
 const isFrame = () => window!==window.top
+const debugLog = {
+  timeouts: false,
+  registration:false,
+  messaging: false,
+}
 
 export default class PostMessageMgr {
   constructor() {
@@ -24,12 +29,12 @@ export default class PostMessageMgr {
         this.addmeta()
         chrome.runtime.sendMessage({action:"Messenger.getFrameId"}).then((frameId) => {
           window.frameId = frameId;
-          console.log(`Registering ${frameId} ${document.URL}`,document)
+          debugLog.registration && console.log(`Registering ${frameId} ${document.URL}`,document)
           let timerId = setTimeout(()=>{
-            console.log(`Exhausting time for ${frameId} response`,document)
+            debugLog.timeouts && console.log(`Exhausting time for ${frameId} response`,document)
           },4000)
           this.sendTo(window.parent,"registerFrame", {frameId}).then(reply => {
-            console.log(`Post-Registering ${frameId}  ${document.URL}`, document)
+            debugLog.registration && console.log(`Post-Registering ${frameId}  ${document.URL}`, document)
             clearTimeout(timerId)
           });
         });
@@ -73,7 +78,7 @@ export default class PostMessageMgr {
       /*setInterval(()=>{
         console.log("I'm alive "+name)
       },3000)*/
-      console.log(`[${name}] addMessageHdlr ready for `+document.URL,document)
+      debugLog.registration && console.log(`[${name}] addMessageHdlr ready for `+document.URL,document)
       this.sendTo(window.top,"ready",name)
     } 
     else{ 
@@ -144,7 +149,7 @@ export default class PostMessageMgr {
           var _p = this._promises.get(_promiseId)
           if (_p) {
             _p.resolve(event.data.data)
-            console.log(`[${window.name}-${eventData.requestId}]:  Receiving  ${JSON.stringify(event.data.data)}`)
+            debugLog.messaging && console.log(`[${window.name}-${eventData.requestId}]:  Receiving  ${JSON.stringify(event.data.data)}`)
 
             this._promises.delete(_promiseId)
           }
@@ -178,10 +183,10 @@ export default class PostMessageMgr {
         this._promises.set(_promiseId, { resolve, reject })
         this._promiseIdToContentWindow.set(_promiseId,w)
         try{
-          console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [${w.name}]` )
+          debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [${w.name}]` )
         }
         catch(e){
-          console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [UNKNOWN]` )
+          debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [UNKNOWN]` )
         }
         w.postMessage(
           {
