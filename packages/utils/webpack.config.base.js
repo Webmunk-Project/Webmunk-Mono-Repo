@@ -9,6 +9,7 @@ module.exports = function config(browser){
   return {
     entry: {
       'sessionMgr': ['/src/sessionMgr.js'],
+      'messenger': ['/src/messenger.js']
     },
     output: {
       path: __dirname,

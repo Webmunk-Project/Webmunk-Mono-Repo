@@ -4,8 +4,8 @@
   "description": "scripts for create-webmunk-ext",
   "main": "index.js",
   "files": [
-    "scripts/*",
-    "sessionMgr.js"
+    "sessionMgr.js",
+    "messenger.js"
   ],
   "scripts": {
     "publish": "npm publish",

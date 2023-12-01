@@ -1,12 +1,10 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
-import messenger from "./messenger";
-import {wmSessionMgr} from '@webmunk/utils/sessionMgr';
 
 const extensionAdsAppMgr = {
   throttler: new TimeThrottler(1,200),
   initialize: async function() {
-    messenger.addReceiver('extensionAdsAppMgr', this);
+    self.messenger?.addReceiver('extensionAdsAppMgr', this);
   },
   captureRegion(){
       return chrome.tabs.captureVisibleTab().then( (imageUri) => {
@@ -100,7 +98,7 @@ const extensionAdsAppMgr = {
         let cont = true;
         let myself = frames.find(f => f.frameId==from.frameId);
         while (cont){
-          result = await messenger.sendToMainPage(from.tab.id, "content", "isDisplayNone", from.frameId, myself.parentFrameId)
+          result = await self.messenger?.sendToMainPage(from.tab.id, "content", "isDisplayNone", from.frameId, myself.parentFrameId)
           path.unshift(myself.parentFrameId+"/"+result.isDisplayNone)
           if (result.isDisplayNone){
               result =  {success: true, isDisplayNone: true};
@@ -123,12 +121,12 @@ const extensionAdsAppMgr = {
         let myself = frames.find(f => f.frameId==from.frameId);
         while (cont){
           if (myself.parentFrameId ==0){
-              result = await messenger.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0) 
+              result = await self.messenger?.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0) 
               path.unshift("0/"+(result.success ? result.isAd:"unknown"))
               cont = false;
           }
           else {
-              result = await messenger.sendToMainPage(from.tab.id, "content", "areYouAnAd", {}, myself.parentFrameId)
+              result = await self.messenger?.sendToMainPage(from.tab.id, "content", "areYouAnAd", {}, myself.parentFrameId)
               path.unshift(myself.parentFrameId+"/"+result.isAd)
               if (result.isAd){
                   result =  {success: true, isAd: true};

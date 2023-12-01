@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 class Messenger {
   constructor(external=true) {
     this._methodPrefix = '_onMessage_'
@@ -202,4 +204,4 @@ class Messenger {
 let messenger = new Messenger()
 self.messenger = messenger;
 
-export default messenger
+exports.messenger = messenger;

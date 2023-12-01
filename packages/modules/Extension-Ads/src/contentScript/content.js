@@ -11,6 +11,7 @@ const debugLog = {
   registration: false,
 }
 
+let adsMgr;
 
 if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   vAPI.contentScript = true;
@@ -111,7 +112,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   const WAIT_BEFORE_EXTRACT = 2500;
 
   // vAPI.domWatcher
-  const adsMgr = {
+  adsMgr = {
     addedNodeLists: [],
     addedNodes: [],
     removedNodeLists: [],
@@ -133,7 +134,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     actionsMessageMain: ['isFrameAnAd','isDisplayNone'],
     actionsMessageFrame: ['youAreAFrameAd','areYouAnAd','isDisplayNone'],
     frameId: null,
-
+    appMgrName: "",
     initialize:async function(){
       chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))        
       if(isFrame()){
@@ -156,7 +157,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
           if (this.isAd){
             let content = this.extractContent(this.frameId);
-            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.adContent",data:{content}});
+            chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
           }
         });
         this.postMessageMgr = new PostMessageMgr();
@@ -170,7 +171,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           adElements.forEach(elt => {
             if (elt.localName != "iframe"){
               let content =this.extractContent(0,elt)
-              chrome.runtime.sendMessage({action:"extensionAdsAppMgr.adContent",data:{content}});
+              chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
             }
           })
         })
@@ -206,6 +207,12 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           
       });
     }, 
+    setMainAppMgrName: function(name){
+      this.appMgrName = name;
+    },
+    getMainAppMgrName: function(){
+      return this.appMgrName;
+    },
     setIsad:function(value, reason){
       this.isAd=value;
       console.log(`setIsad ${this.frameId} [${reason}]:`,value)
@@ -925,3 +932,4 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
   adsMgr.initialize()
 }
+exports.contentMgr = adsMgr;
