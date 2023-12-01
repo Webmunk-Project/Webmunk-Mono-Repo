@@ -5,7 +5,7 @@
     "build:dev": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js",
     "build:dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch"
   },
-  "version": "0.1.41",
+  "version": "0.1.42",
   "dependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.23.2",

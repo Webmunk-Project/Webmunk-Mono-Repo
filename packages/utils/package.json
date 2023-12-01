@@ -1,6 +1,6 @@
 {
   "name": "@webmunk/utils",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "scripts for create-webmunk-ext",
   "main": "index.js",
   "files": [

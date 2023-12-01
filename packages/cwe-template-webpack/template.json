@@ -29,7 +29,8 @@
       "core-js": "^3.33.2",
       "webpack": "^5.89.0",
       "webpack-cli": "^5.1.4",
-      "lodash": "^4.17.21"
+      "lodash": "^4.17.21",
+      "@webmunk/utils": "^1.0.19"
     },
     "scripts": {
       "addon:dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js --watch",
