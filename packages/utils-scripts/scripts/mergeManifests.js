@@ -4,7 +4,7 @@ const { merge } = require("@webmunk/manifest-merge")
 const chalk = require('chalk');
 const _ = require('lodash')
 const util = require('util');
-console.log("searchModulesInDirectory 1.0",searchModulesInDirectory);
+console.log("searchModulesInDirectory 2.0",searchModulesInDirectory);
 
 function log(o){
   console.log(util.inspect(o, { depth: null }));
@@ -43,7 +43,7 @@ exports.removeJustifications = function(manifest){
 exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifestDir){
   let modules = searchModulesInDirectory(path+"/"+srcDir)
   let permissionJustifications = {};
-  console.log("Modules1:"+modules)
+  console.log("Used modules:"+modules)
   let manifest = require(`${path}/${baseManifestDir}/baseManifest.json`);
   modules.forEach(m => {
     const manifestModule = require(`${path}/node_modules/${scope}/${m}/module.json`);
@@ -52,17 +52,19 @@ exports.mergeManifests = function mergeManifests(scope,path,srcDir, baseManifest
     permissionJustifications = merge(permissionJustifications, modulePermissionJustifications)
     manifest = mergeWithCustomize(
       {
-        customizeArray(a, b, key) {
-          return removeDuplicateObjects([...a, ...b]);
-        },
+        /*customizeArray(a, b, key) {
+          let c =  removeDuplicateObjects([...a, ...b]);
+          console.log("Merged array: ",c)
+          return c;
+        },*/
         customizeObject(a, b, key) {
-          if (key === 'module') {
-            // Custom merging
-            return _.merge({}, a, b);
-          }
-    
+
+          // Custom merging
+          let o=  _.merge({}, a, b);
+          console.log("Merged object: ",o)
+          return o;
           // Fall back to default merging
-          return undefined;
+          //return undefined;
         },
         customizePrimitive(a, b, key) {
           if (typeof a != "undefined" && typeof b!= "undefined" && a!=b){

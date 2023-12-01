@@ -1,4 +1,4 @@
-const searchModulesInDirectory = require("@webmunk/utils/scripts/depsFromModules").searchModulesInDirectory
+const searchModulesInDirectory = require("./depsFromModules").searchModulesInDirectory
 const chalk = require('chalk');
 const _ = require('lodash')
 const util = require('util');

@@ -6,6 +6,8 @@ const searchPattern = /@webmunk\/(\S+)\//g;
 const singleLineCommentPattern = /\/\/.*/g;
 const multiLineCommentPattern = /\/\*[\s\S]*?\*\//g;
 
+const excludedModules = ["utils"];
+
 function extractNamesFromFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     // Remove single-line comments
@@ -16,7 +18,9 @@ function extractNamesFromFile(filePath) {
     const matches = [];
     let match;
     while ((match = searchPattern.exec(content)) !== null) {
-        matches.push(match[1]);
+        if (excludedModules.indexOf(match[1]) == -1){
+            matches.push(match[1]);
+        }
     }
 
     return _.uniq(matches);
