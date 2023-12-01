@@ -114,7 +114,7 @@ function init() {
             'Firefox',
             'Safari',
           ],
-          npmPackages: ['webmunk@utils'],
+          npmPackages: ['webmunk@utils','webmunk@utils-scripts'],
           npmGlobalPackages: ['webmunk'],
         },
         {
