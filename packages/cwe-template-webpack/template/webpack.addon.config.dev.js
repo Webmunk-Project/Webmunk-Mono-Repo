@@ -5,7 +5,7 @@ const baseConfig = require('./webpack.addon.config.base')("chrome")
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils').mergeManifests
-const copyDir = require('@webmunk/utils/scripts/copyDir').copyDir
+const copyDir = require('@webmunk/utils-scripts').copyDir
 
 let {manifest, processedManifestModule} = mergeManifests("@webmunk",__dirname,"src","src/chrome");
 const baseManifest = manifest;
