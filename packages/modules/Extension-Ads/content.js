@@ -1,2 +1,1 @@
-require('./dist/content.bundle');
-//import './dist/content.bundle';
+exports.contentMgr  = require('./dist/content.bundle').contentMgr;
