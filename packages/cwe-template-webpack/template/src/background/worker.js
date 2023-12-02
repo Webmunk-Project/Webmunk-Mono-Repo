@@ -11,6 +11,39 @@ const appMgr =  {
   initialize:function(){
     messenger?.addReceiver('appMgr', this);
   },
+  normalizeUrl:function(url,originUrl){
+    try{
+        if (url.startsWith("//")){
+            let protocol = /((http|http)[s]?)/.exec(originUrl)[1];
+            return protocol+":"+url; 
+        }
+        let matches = /url\("(.*)"\)/.exec(url)
+        if (matches) return matches[1];
+    }
+    catch(e){}
+    return url;
+  },
+  testRedirect: async function(url){
+    //console.log(`testRedirect: url= ${url}`)
+    let result = await fetch(url)
+    .then(response => {
+        return {
+            success: true,
+            redirected: response.redirected,
+            url: response.url,
+            initialUrl: url
+        }
+    })
+    .catch(error => {
+        console.error(`Exception: fetching for redirects ${url}`, error)
+        return {
+            success: false,
+            url: url,
+            initialUrl: url
+        }
+    });
+    return result;
+  },
   _onMessage_adContent(data, from){
     let promises = [];
     console.log(`Receiving ad content from ${from.frameId} url:${from.frameId==0?from.tab.url:from.frameId}`)
