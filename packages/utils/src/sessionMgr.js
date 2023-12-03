@@ -10,6 +10,9 @@ const wmSessionMgr = {
       const storedSessions = JSON.parse(result.sessions);
       this.sessions = new Map(Object.entries(storedSessions));
     });
+    chrome.tabs.query({}, (tabs)=>{
+      tabs.forEach(tab => this.saveSession(tab))
+    })
     chrome.alarms.create("garbageCollector", { periodInMinutes: 1 });
     this.addEventListeners();
   },
