@@ -146,17 +146,18 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           //document.body?.scrollIntoView()
           let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
           if (response?.data?.isDisplayNone){
-            debugLog.hidden && console.log(`extractContent: Iframe  is hidden ${this.frameId} `, window.document);
+            debugLog.hidden && console.log(`DOMContentLoaded: Iframe  is hidden ${this.frameId} `, window.document);
             return;
           }
           if (!this.isAd){
             let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
             this.isAd = response.data.isAd;
           } 
-          !this.isAd && debugLog.noAd && console.log(`extractContent: Iframe  is not an ad ${this.frameId} `, window.document);
+          !this.isAd && debugLog.noAd && console.log(`DOMContentLoaded: Iframe  is not an ad ${this.frameId} `, window.document);
 
           if (this.isAd){
             let content = this.extractContent(this.frameId);
+            content.meta = this.extractMeta()
             chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
           }
         });
@@ -168,12 +169,18 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(2500)
           let adElements = document.querySelectorAll("[data-isad]")
+          let contentMain = {meta : this.extractMeta()}
+
           adElements.forEach(elt => {
             if (elt.localName != "iframe"){
               let content =this.extractContent(0,elt)
-              chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
+              contentMain.elts = contentMain.elts.concat(content.elts)
+              contentMain.documentUrl = content.documentUrl;
+              //chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
             }
           })
+          chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{contentMain}});
+
         })
         this.postMessageMgr = new PostMessageMgr();
         this.postMessageMgr.setReceiver((data)=>this.mainReceivePostMessage(data))
@@ -470,29 +477,15 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }, delay)
       }) 
     },
-    getFrameId(node){
-      if (node.contentWindow){
-        //node.setAttribute("frameCorrelationId",frameCorrelationId)
-        node.removeAttribute("sandbox");
-        node.setAttribute("frameId","empty")
-
-        try{
-          console.log("safeObserverHandler: Sending to "+node.id)
-        }
-        catch(e){
-          console.log("EXCEPTION ",e)
-        }
-        setTimeout(()=>{
-          if (!node.getAttribute("frameId")){
-            console.log("Failure getting frameId",node)
-          }
-        },1250)
-        this.postMessageMgr.sendTo(node.contentWindow,"getFrameId",{}).then(data => {
-          console.log("FrameId data:",node,data.frameId)
-          node.setAttribute("frameId",data.frameId)
-          node.frameId = data.frameId;
+    extractMeta(){
+      let content = [];
+      document.querySelectorAll("meta").forEach(m => {
+        content.push({
+          name:m.getAttribute("name"),
+          content:m.getAttribute("content"),
         })
-      }
+      })
+      return content;
     },
     extractContent(frameId, elt){
       let content = [];

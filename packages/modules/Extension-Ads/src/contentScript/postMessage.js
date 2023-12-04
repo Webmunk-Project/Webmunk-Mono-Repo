@@ -30,13 +30,13 @@ export default class PostMessageMgr {
         chrome.runtime.sendMessage({action:"Messenger.getFrameId"}).then((frameId) => {
           window.frameId = frameId;
           debugLog.registration && console.log(`Registering ${frameId} ${document.URL}`,document)
-          let timerId = setTimeout(()=>{
+          /*let timerId = setTimeout(()=>{
             debugLog.timeouts && console.log(`Exhausting time for ${frameId} response`,document)
-          },4000)
-          this.sendTo(window.parent,"registerFrame", {frameId}).then(reply => {
+          },4000)*/
+          this.sendTo(window.parent,"registerFrame", {frameId})/*.then(reply => {
             debugLog.registration && console.log(`Post-Registering ${frameId}  ${document.URL}`, document)
             clearTimeout(timerId)
-          });
+          });*/
         });
       //}
       //else console.log("Iframe is small",document)
@@ -52,8 +52,8 @@ export default class PostMessageMgr {
       var meta = document.createElement('meta');
   
       // Set attributes of the meta element
-      meta.setAttribute('name', 'jml-meta');
-      meta.setAttribute('content', 'youpi');
+      //meta.setAttribute('name', 'jml-meta');
+      //meta.setAttribute('content', 'youpi');
   
       // Access the head element
       var head = document.head;
@@ -93,9 +93,13 @@ export default class PostMessageMgr {
       switch(eventData.direction){
         case "FORWARD":
           if (eventData.action == "getFrameId"){
+            console.log("oops receiving getFrameId")
+            /*
             let frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
             console.log(`[${window.name}-${eventData.requestId}]:  replying ${frameId} `+event.data.action)
             return this.reply(eventData.action, event.source, {success:true,frameId}, eventData.promiseId, eventData.requestId)
+            */
+           return;
           }
           if (eventData.action == "registerFrame"){
             if (event.source){
@@ -134,14 +138,14 @@ export default class PostMessageMgr {
                 }
               };
               if (!registered) console.log(reason,eventSource)
-              return this.reply(eventData.action, eventSource, {success:registered, reason, frameId:eventData.data.frameId}, eventData.promiseId)
+              return // this.reply(eventData.action, eventSource, {success:registered, reason, frameId:eventData.data.frameId}, eventData.promiseId)
             }
             catch(e){
-              return this.reply(eventData.action, eventSource, {success:false, reason:e, frameId:eventData.data.frameId}, eventData.promiseId)
+              return //this.reply(eventData.action, eventSource, {success:false, reason:e, frameId:eventData.data.frameId}, eventData.promiseId)
             }
           }
           let result = await this._receiveHdlr(eventData);
-          this.reply(eventData.action, event.source, result, eventData.promiseId)
+          //this.reply(eventData.action, event.source, result, eventData.promiseId)
           break;
         case "BACK":
           //console.log('postMessageMgr.addMessageHdlr: Receiving msg from postmessage',eventData)
@@ -157,47 +161,27 @@ export default class PostMessageMgr {
       }
     }/*,{capture:true}*/)
   }
-  send(action, to, data) {
-    let w = isFrame() ? window.parent : this._promiseIdToContentWindow.get(to).contentWindow;
+  sendTo(w, action, data){
+    let requestId = Math.ceil(Math.random()*10000);
     var _p = new Promise((resolve, reject) => {
       var _promiseId = new Date().getTime()
       this._promises.set(_promiseId, { resolve, reject })
+      this._promiseIdToContentWindow.set(_promiseId,w)
+      try{
+        debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [${w.name}]` )
+      }
+      catch(e){
+        debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [UNKNOWN]` )
+      }
       w.postMessage(
         {
-          to,
-          from: this.from,
+          requestId,
           promiseId: _promiseId,
           direction: 'FORWARD',
           action,
           data
-        },
-        '*'
-        )
-      })
-      return _p
-    }
-    sendTo(w, action, data){
-      let requestId = Math.ceil(Math.random()*10000);
-      var _p = new Promise((resolve, reject) => {
-        var _promiseId = new Date().getTime()
-        this._promises.set(_promiseId, { resolve, reject })
-        this._promiseIdToContentWindow.set(_promiseId,w)
-        try{
-          debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [${w.name}]` )
-        }
-        catch(e){
-          debugLog.messaging && console.log(`[${window.name}]: Sending `+action+" "+requestId+` to [UNKNOWN]` )
-        }
-        w.postMessage(
-          {
-            requestId,
-            promiseId: _promiseId,
-            direction: 'FORWARD',
-            action,
-            data
-        },
-        '*'
-      )
+      },
+      '*')
     })
     return _p
   }
