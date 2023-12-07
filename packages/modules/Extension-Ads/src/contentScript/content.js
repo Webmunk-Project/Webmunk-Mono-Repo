@@ -1,5 +1,6 @@
 import PostMessageMgr from './postMessage' 
 import _ from 'lodash'
+import './contentscript-extra'
 
 var options=null;
 const debugLog = {
@@ -111,6 +112,211 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   const isFrame = () => window!==window.top
   const WAIT_BEFORE_EXTRACT = 2500;
 
+  /*******************************************************************************
+   
+  The DOM filterer is the heart of uBO's cosmetic filtering.
+  
+  DOMFilterer: adds procedural cosmetic filtering
+  
+  */
+ 
+  vAPI.hideStyle = 'display:none!important;';
+  
+  vAPI.DOMFilterer = class {
+    constructor() {
+      this.commitTimer = new vAPI.SafeAnimationFrame(
+        ( ) => { this.commitNow(); }
+        );
+        this.disabled = false;
+        this.listeners = [];
+        this.stylesheets = [];
+        this.exceptedCSSRules = [];
+        this.exceptions = [];
+        this.convertedProceduralFilters = [];
+        this.proceduralFilterer = null;
+    }
+    
+    explodeCSS(css) {
+      const out = [];
+      const cssHide = `{${vAPI.hideStyle}}`;
+      const blocks = css.trim().split(/\n\n+/);
+      for ( const block of blocks ) {
+        if ( block.endsWith(cssHide) === false ) { continue; }
+        out.push(block.slice(0, -cssHide.length).trim());
+      }
+      return out;
+    }
+    addCSS(css, details = {}) {
+      if ( typeof css !== 'string' || css.length === 0 ) { return; }
+      if ( this.stylesheets.includes(css) ) { return; }
+      this.stylesheets.push(css);
+      if ( details.mustInject && this.disabled === false ) {
+        vAPI.userStylesheet.add(css);
+      }
+      if ( this.hasListeners() === false ) { return; }
+      if ( details.silent ) { return; }
+      this.triggerListeners({ declarative: this.explodeCSS(css) });
+    }
+    exceptCSSRules(exceptions) {
+      if ( exceptions.length === 0 ) { return; }
+      this.exceptedCSSRules.push(...exceptions);
+      if ( this.hasListeners() ) {
+        this.triggerListeners({ exceptions });
+      }
+    }   
+    addListener(listener) {
+      if ( this.listeners.indexOf(listener) !== -1 ) { return; }
+      this.listeners.push(listener);
+    }   
+    removeListener(listener) {
+      const pos = this.listeners.indexOf(listener);
+      if ( pos === -1 ) { return; }
+      this.listeners.splice(pos, 1);
+    }
+    hasListeners() {
+      return this.listeners.length !== 0;
+    }
+    triggerListeners(changes) {
+      for ( const listener of this.listeners ) {
+        listener.onFiltersetChanged(changes);
+      }
+    }   
+    toggle(state, callback) {
+      if ( state === undefined ) { state = this.disabled; }
+      if ( state !== this.disabled ) { return; }
+      this.disabled = !state;
+      const uss = vAPI.userStylesheet;
+      for ( const css of this.stylesheets ) {
+        if ( this.disabled ) {
+          uss.remove(css);
+        } else {
+          uss.add(css);
+        }
+      }
+      uss.apply(callback);
+    }   
+    // Here we will deal with:
+    // - Injecting low priority user styles;
+    // - Notifying listeners about changed filterset.
+    // https://www.reddit.com/r/uBlockOrigin/comments/9jj0y1/no_longer_blocking_ads/
+    //   Ensure vAPI is still valid -- it can go away by the time we are
+    //   called, since the port could be force-disconnected from the main
+    //   process. Another approach would be to have vAPI.SafeAnimationFrame
+    //   register a shutdown job: to evaluate. For now I will keep the fix
+    //   trivial.
+    commitNow() {
+      this.commitTimer.clear();
+      if ( vAPI instanceof Object === false ) { return; }
+      vAPI.userStylesheet.apply();
+      if ( this.proceduralFilterer instanceof Object ) {
+        this.proceduralFilterer.commitNow();
+      }
+    }
+    commit(commitNow) {
+      if ( commitNow ) {
+        this.commitTimer.clear();
+        this.commitNow();
+      } else {
+        this.commitTimer.start();
+      }
+    }
+    proceduralFiltererInstance() {
+      if ( this.proceduralFilterer instanceof Object === false ) {
+        if ( vAPI.DOMProceduralFilterer instanceof Object === false ) {
+          return null;
+        }
+        this.proceduralFilterer = new vAPI.DOMProceduralFilterer(this);
+      }
+      return this.proceduralFilterer;
+    }   
+    addProceduralSelectors(selectors) {
+      const procedurals = [];
+      for ( const raw of selectors ) {
+        procedurals.push(JSON.parse(raw));
+      }
+      if ( procedurals.length === 0 ) { return; }
+      const pfilterer = this.proceduralFiltererInstance();
+      if ( pfilterer !== null ) {
+        pfilterer.addProceduralSelectors(procedurals);
+      }
+    }
+    createProceduralFilter(o) {
+      const pfilterer = this.proceduralFiltererInstance();
+      if ( pfilterer === null ) { return; }
+      return pfilterer.createProceduralFilter(o);
+    }  
+    getAllSelectors(bits = 0) {
+      const out = {
+        declarative: [],
+        exceptions: this.exceptedCSSRules,
+      };
+      const hasProcedural = this.proceduralFilterer instanceof Object;
+      const includePrivateSelectors = (bits & 0b01) !== 0;
+      const masterToken = hasProcedural
+      ? `[${this.proceduralFilterer.masterToken}]`
+      : undefined;
+      for ( const css of this.stylesheets ) {
+        for ( const block of this.explodeCSS(css) ) {
+          if (
+            includePrivateSelectors === false &&
+            masterToken !== undefined &&
+            block.startsWith(masterToken)
+            ) {
+              continue;
+            }
+            out.declarative.push(block);
+          }
+        }
+        const excludeProcedurals = (bits & 0b10) !== 0;
+        if ( excludeProcedurals === false ) {
+          out.procedural = [];
+          if ( hasProcedural ) {
+            out.procedural.push(
+              ...this.proceduralFilterer.selectors.values()
+              );
+            }
+            const proceduralFilterer = this.proceduralFiltererInstance();
+            if ( proceduralFilterer !== null ) {
+              for ( const json of this.convertedProceduralFilters ) {
+                const pfilter = proceduralFilterer.createProceduralFilter(json);
+                pfilter.converted = true;
+                out.procedural.push(pfilter);
+              }
+            }
+          }
+          return out;
+    }      
+    getAllExceptionSelectors() {
+      return this.exceptions.join(',\n');
+    }
+
+    processNodes(nodes, pselectorAction){
+      let content = {elts: []};
+      nodes.forEach(n => {
+        this.highlightNodeAsAds(n, 0, pselectorAction, "darkgreen");
+        if (!isFrame() && adsMgr.initialAdContentSent){
+          let nodeContent = adsMgr.extractContent(0,n);
+          content.elts.push(...nodeContent.elts)
+        }
+      })
+      if(content.elts.length) chrome.runtime.sendMessage({action:adsMgr.getMainAppMgrName()+".adContent",data:{content}});
+    }
+    highlightNodeAsAds(node1, indent, selector, color){
+      let node = node1;
+      console.log(`Node matched: ${selector} ${document.URL} ${indent}`,node);
+      if (node1.localName=="use") node = node1.parentElement;
+      node.style.border=`dashed 2px ${color}`
+      if (node.style.display != "none") node.style.display="inline-block"
+      node.style.margin="2px"
+      node.ads = true;
+      node.setAttribute("data-isad",true)
+      if (isFrame()){
+        adsMgr.setIsad(true,"highlightNodeAsAds");
+      }
+      console.log("Highlighting ",node)
+    }
+  }
+
   // vAPI.domWatcher
   adsMgr = {
     addedNodeLists: [],
@@ -134,6 +340,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     actionsMessageMain: ['isFrameAnAd','isDisplayNone'],
     actionsMessageFrame: ['youAreAFrameAd','areYouAnAd','isDisplayNone'],
     frameId: null,
+    initialAdContentSent: false,
     appMgrName: "",
     initialize:async function(){
       chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))        
@@ -169,18 +376,20 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(2500)
           let adElements = document.querySelectorAll("[data-isad]")
-          let contentMain = {meta : this.extractMeta()}
+          let contentMain = {meta : this.extractMeta(), elts:[]}
 
           adElements.forEach(elt => {
             if (elt.localName != "iframe"){
               let content =this.extractContent(0,elt)
-              contentMain.elts = contentMain.elts.concat(content.elts)
+              contentMain.elts.push(...content.elts)
               contentMain.documentUrl = content.documentUrl;
               //chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
             }
           })
           chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{contentMain}});
-
+          // this is to indicate that the newest element built dynamically past this point 
+          // will have to be sent individually
+          this.initialAdContentSent = true;
         })
         this.postMessageMgr = new PostMessageMgr();
         this.postMessageMgr.setReceiver((data)=>this.mainReceivePostMessage(data))
@@ -188,7 +397,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       this.iframeSourceObserver = new MutationObserver(this.iframeSourceModified);
     
       //vAPI.domMutationTime = Date.now();
-      vAPI.domWatcher = { start: ()=>this.start(), addListener: () => addListener(), removeListener: ()=>removeListener() };
+      vAPI.domWatcher = { start: ()=>this.start(), addListener: (filterer) => this.addListener(filterer), removeListener: (filterer)=>this.removeListener(filterer) };
       /*chrome.runtime.sendMessage({action:'extensionAdsAppMgr.retrieveContentScriptParameters',
         data:{
           url: vAPI.effectiveSelf.location.href,
@@ -322,22 +531,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
       return false;
     },
-    highlightNodeAsAds:async function(node, indent, selector, color){
-      debugLog.highlighting && console.log(`Node matched: ${selector} ${document.URL} ${indent}`,node);
-      if (!options){
-        options = await chrome.storage.sync.get(['highlightAds'])
-      }
-      if (options.highlightAds){
-        node.style.border=`dashed 2px ${color}`
-        if (node.style.display != "none") node.style.display="inline-block"
-        node.style.margin="2px"
-        debugLog.highlighting && console.log("Highlighting ",node)
-      }
-      node.ads = true;
-      node.setAttribute("data-isad",true)
-      if (isFrame()){
-        this.setIsad(true,"highlightNodeAsAds");
-      }
+    highlightNodeAsAds(node1, indent, selector, color){
+      vAPI.domFilterer.highlightNodeAsAds(node1, indent, selector, color);
     },
     traverseDOM:async function(node, indent = 0) {    
       let urlIsAnAd = false;
@@ -519,11 +714,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
         return true;
       })
-      console.log(`extractContent: ${frameId}`,content,document)
+      console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
       return {elts: content, documentUrl: document.URL};
     },
     safeObserverHandler:async function() {
         let i = 0;
+        let addedNodes = [].concat(this.addedNodeLists);
+
         while ( this.addedNodeLists.length ) {
           const nodeList = this.addedNodeLists.shift();
           let iNode = 0;
@@ -552,6 +749,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           }
           i++;
         }
+        // call domFilterer onChanged
+        vAPI.domFilterer && vAPI.domFilterer.proceduralFiltererInstance().onDOMChanged(addedNodes, []);
         this.addedNodeLists.length = 0;
         vAPI.domMutationTime = Date.now();
     },
@@ -640,17 +839,30 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
       // cosmetic filtering engine aka 'cfe'
       const cfeDetails = response && response.specificCosmeticFilters;
-      /*if ( !cfeDetails || !cfeDetails.ready ) {
-          vAPI.domWatcher = vAPI.domCollapser = vAPI.domFilterer =
-          vAPI.domSurveyor = vAPI.domIsLoaded = null;
-          return;
-      }*/
       vAPI.domWatcher.start(); // vAPI.domCollapser.start();
       const {
           noSpecificCosmeticFiltering,
           noGenericCosmeticFiltering,
           scriptletDetails,
       } = response;
+
+      vAPI.noSpecificCosmeticFiltering = noSpecificCosmeticFiltering;
+      vAPI.noGenericCosmeticFiltering = noGenericCosmeticFiltering;
+      if ( noSpecificCosmeticFiltering && noGenericCosmeticFiltering ) {
+        vAPI.domFilterer = null;
+        vAPI.domSurveyor = null;
+      } else {
+        const domFilterer = vAPI.domFilterer = new vAPI.DOMFilterer();
+        if ( noGenericCosmeticFiltering || cfeDetails.disableSurveyor ) {
+          vAPI.domSurveyor = null;
+        }
+        domFilterer.exceptions = cfeDetails.exceptionFilters;
+        domFilterer.addCSS(cfeDetails.injectedCSS);
+        domFilterer.addProceduralSelectors(cfeDetails.proceduralFilters);
+        domFilterer.exceptCSSRules(cfeDetails.exceptedFilters);
+        domFilterer.convertedProceduralFilters = cfeDetails.convertedProceduralFilters;
+        vAPI.userStylesheet.apply();
+      }
 
       // Library of resources is located at:
       // https://github.com/gorhill/uBlock/blob/master/assets/ublock/resources.txt
