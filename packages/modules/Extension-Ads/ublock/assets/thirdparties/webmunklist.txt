@@ -13,4 +13,9 @@
 !-----------------------Specific advert blocking filters-----------------------!
 melty.fr##div[id^='internal_trc'] div[observeid]
 lemonde.fr##.OUTBRAIN .ob-dynamic-rec-link 
+facebook.com##svg:style(height: 15px; overflow: visible; width: 67.6094px;)>use[*|href^="#Svg"]
+facebook.com##svg:matches-css(height: 15px):matches-css(overflow: visible):matches-css(width: 67.6094px)>use[*|href^="#Svg"]
+facebook.com##svg:matches-css(height: 15px):matches-css(overflow: visible):matches-css(width: 65.4609px)>use[*|href^="#Svg"]
+!facebook.com##span:has-text(/Sponsored|Sponsoris/)
+!facebook.com##div:has-text(/Sponsored|Sponsoris/)
 developer.mozilla.org##.toc-container > .side.place > .pong-box
