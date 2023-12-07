@@ -41,7 +41,6 @@ import {
 } from './uri-utils.js';
 
 
-console.log("You re mine")
 /******************************************************************************/
 
 // Not all platforms may have properly declared vAPI.webextFlavor.
