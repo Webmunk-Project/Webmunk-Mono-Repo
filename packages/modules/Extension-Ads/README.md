@@ -7,3 +7,6 @@ In your web extension content script:
 
 In your web extension worker script:
 `import "@worker/extension-ads/worker` 
+
+If you have included module option UI in your manifest, then import your options script also:
+`import "@worker/extension-ads/options` 
