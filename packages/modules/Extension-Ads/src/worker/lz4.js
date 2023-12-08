@@ -25,7 +25,6 @@
 
 /******************************************************************************/
 
-import µb from './background.js';
 
 /*******************************************************************************
 
@@ -44,10 +43,10 @@ let ttlCount = 0;
 let ttlDelay = 60000;
 
 const init = function() {
-    ttlDelay = µb.hiddenSettings.autoUpdateAssetFetchPeriod * 1000 + 15000;
+    ttlDelay = self.µBlock.hiddenSettings.autoUpdateAssetFetchPeriod * 1000 + 15000;
     if ( promisedInstance === undefined ) {
         let flavor;
-        if ( µb.hiddenSettings.disableWebAssembly === true ) {
+        if ( self.µBlock.hiddenSettings.disableWebAssembly === true ) {
             flavor = 'js';
         }
         promisedInstance = lz4BlockCodec.createInstance(flavor);

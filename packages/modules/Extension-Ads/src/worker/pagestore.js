@@ -26,7 +26,6 @@
 //import contextMenu from './contextmenu.js';
 import logger from './logger.js';
 import staticNetFilteringEngine from './static-net-filtering.js';
-import µb from './background.js';
 import webext from './webext.js';
 import { orphanizeString } from './text-utils.js';
 import { redirectEngine } from './redirect-engine.js';
@@ -230,7 +229,7 @@ const FrameStore = class {
                 this.rawURL
             );
             if ( result !== 0 && logger.enabled ) {
-                µb.filteringContext
+                self.µBlock.filteringContext
                     .duplicate()
                     .fromTabId(tabId)
                     .setURL(this.rawURL)
@@ -250,7 +249,7 @@ const FrameStore = class {
                 this.rawURL
             );
             if ( result !== 0 && logger.enabled ) {
-                µb.filteringContext
+                self.µBlock.filteringContext
                     .duplicate()
                     .fromTabId(tabId)
                     .setURL(this.rawURL)
@@ -374,7 +373,7 @@ const PageStore = class {
     //   to the logger.
 
     init(tabId, details) {
-        const tabContext = µb.tabContextManager.mustLookup(tabId);
+        const tabContext = self.µBlock.tabContextManager.mustLookup(tabId);
         this.tabId = tabId;
 
         // If we are navigating from-to same site, remember whether large
@@ -420,7 +419,7 @@ const PageStore = class {
         // When force refreshing a page, the page store data needs to be reset.
 
         // If the hostname changes, we can't merely just update the context.
-        const tabContext = µb.tabContextManager.mustLookup(this.tabId);
+        const tabContext = self.µBlock.tabContextManager.mustLookup(this.tabId);
         if ( tabContext.rootHostname !== this.tabHostname ) {
             context = '';
         }
@@ -559,13 +558,13 @@ const PageStore = class {
     }
 
     getNetFilteringSwitch() {
-        return µb.tabContextManager
+        return self.µBlock.tabContextManager
                  .mustLookup(this.tabId)
                  .getNetFilteringSwitch();
     }
 
     toggleNetFilteringSwitch(url, scope, state) {
-        µb.toggleNetFilteringSwitch(url, scope, state);
+        self.µBlock.toggleNetFilteringSwitch(url, scope, state);
         this.netFilteringCache.empty();
     }
 
@@ -578,7 +577,7 @@ const PageStore = class {
                     this.tabHostname
                 ) === true;
                 if ( this._noCosmeticFiltering && logger.enabled ) {
-                    µb.filteringContext
+                    self.µBlock.filteringContext
                         .duplicate()
                         .fromTabId(this.tabId)
                         .setURL(this.rawURL)
@@ -659,7 +658,7 @@ const PageStore = class {
         const hostname = fctxt.getHostname();
         if ( hostname === '' ) { return; }
         this.journal.push(hostname, result, fctxt.itype);
-        this.journalTimer.on(µb.hiddenSettings.requestJournalProcessPeriod);
+        this.journalTimer.on(self.µBlock.hiddenSettings.requestJournalProcessPeriod);
     }
 
     journalAddRootFrame(type, url) {
@@ -682,7 +681,7 @@ const PageStore = class {
                 this.journalLastUncommittedOrigin = newOrigin;
             }
         }
-        this.journalTimer.offon(µb.hiddenSettings.requestJournalProcessPeriod);
+        this.journalTimer.offon(self.µBlock.hiddenSettings.requestJournalProcessPeriod);
     }
 
     journalProcess() {
@@ -691,7 +690,7 @@ const PageStore = class {
         const journal = this.journal;
         const pivot = Math.max(0, this.journalLastCommitted);
         const now = Date.now();
-        const { SCRIPT, SUB_FRAME, OBJECT } = µb.FilteringContext;
+        const { SCRIPT, SUB_FRAME, OBJECT } = self.µBlock.FilteringContext;
         let aggregateAllowed = 0;
         let aggregateBlocked = 0;
 
@@ -726,8 +725,8 @@ const PageStore = class {
 
         // https://github.com/chrisaljoudi/uBlock/issues/905#issuecomment-76543649
         //   No point updating the badge if it's not being displayed.
-        if ( aggregateBlocked !== 0 && µb.userSettings.showIconBadge ) {
-            µb.updateToolbarIcon(this.tabId, 0x02);
+        if ( aggregateBlocked !== 0 && self.µBlock.userSettings.showIconBadge ) {
+            self.µBlock.updateToolbarIcon(this.tabId, 0x02);
         }
 
         // Everything before pivot does not originate from current page -- we
@@ -740,9 +739,9 @@ const PageStore = class {
             }
         }
         if ( aggregateAllowed !== 0 || aggregateBlocked !== 0 ) {
-            µb.localSettings.blockedRequestCount += aggregateBlocked;
-            µb.localSettings.allowedRequestCount += aggregateAllowed;
-            µb.localSettingsLastModified = now;
+            self.µBlock.localSettings.blockedRequestCount += aggregateBlocked;
+            self.µBlock.localSettings.allowedRequestCount += aggregateAllowed;
+            self.µBlock.localSettingsLastModified = now;
         }
         journal.length = 0;
     }
@@ -803,7 +802,7 @@ const PageStore = class {
         }
 
         // Dynamic hostname/type filtering.
-        if ( result === 0 && µb.userSettings.advancedUserEnabled ) {
+        if ( result === 0 && self.µBlock.userSettings.advancedUserEnabled ) {
             result = sessionFirewall.evaluateCellZY(
                 fctxt.getTabHostname(),
                 fctxt.getHostname(),
@@ -905,7 +904,7 @@ const PageStore = class {
         // Hostname filtering
         if (
             result === 1 &&
-            µb.userSettings.advancedUserEnabled &&
+            self.µBlock.userSettings.advancedUserEnabled &&
             sessionFirewall.evaluateCellZY(
                 fctxt.getTabHostname(),
                 fctxt.getHostname(),
@@ -1020,7 +1019,7 @@ const PageStore = class {
             const sources = this.allowLargeMediaElementsRegex instanceof RegExp
                 ? [ this.allowLargeMediaElementsRegex.source ]
                 : [];
-            sources.push('^' + µb.escapeRegex(fctxt.url));
+            sources.push('^' + self.µBlock.escapeRegex(fctxt.url));
             this.allowLargeMediaElementsRegex = new RegExp(sources.join('|'));
             return 0;
         }
@@ -1033,7 +1032,7 @@ const PageStore = class {
             this.allowLargeMediaElementsUntil = 0;
             return 0;
         }
-        if ( (size >>> 10) < µb.userSettings.largeMediaSize ) {
+        if ( (size >>> 10) < self.µBlock.userSettings.largeMediaSize ) {
             return 0;
         }
 
@@ -1091,9 +1090,9 @@ const PageStore = class {
     }
 
     getBlockedResources(request, response) {
-        const normalURL = µb.normalizeTabURL(this.tabId, request.frameURL);
+        const normalURL = self.µBlock.normalizeTabURL(this.tabId, request.frameURL);
         const resources = request.resources;
-        const fctxt = µb.filteringContext;
+        const fctxt = self.µBlock.filteringContext;
         fctxt.fromTabId(this.tabId)
              .setDocOriginFromURL(normalURL);
         // Force some resources to go through the filtering engine in order to
@@ -1115,14 +1114,14 @@ const PageStore = class {
 };
 
 PageStore.prototype.cacheableResults = new Set([
-    µb.FilteringContext.SUB_FRAME,
+    self.µBlock.FilteringContext.SUB_FRAME,
 ]);
 
 PageStore.prototype.collapsibleResources = new Set([
-    µb.FilteringContext.IMAGE,
-    µb.FilteringContext.MEDIA,
-    µb.FilteringContext.OBJECT,
-    µb.FilteringContext.SUB_FRAME,
+    self.µBlock.FilteringContext.IMAGE,
+    self.µBlock.FilteringContext.MEDIA,
+    self.µBlock.FilteringContext.OBJECT,
+    self.µBlock.FilteringContext.SUB_FRAME,
 ]);
 
 // To mitigate memory churning

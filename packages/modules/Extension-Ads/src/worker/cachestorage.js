@@ -26,7 +26,6 @@
 /******************************************************************************/
 
 import lz4Codec from './lz4.js';
-import µb from './background.js';
 import webext from './webext.js';
 
 /******************************************************************************/
@@ -140,7 +139,7 @@ const selectIDB = async function() {
 
     const keepAlive = function() {
         dbTimer.offon(Math.max(
-            µb.hiddenSettings.autoUpdateAssetFetchPeriod * 2 * 1000,
+            self.µBlock.hiddenSettings.autoUpdateAssetFetchPeriod * 2 * 1000,
             180000
         ));
     };
@@ -345,7 +344,7 @@ const selectIDB = async function() {
         const promises = [ getDb() ];
         const entries = [];
         const dontCompress =
-            µb.hiddenSettings.cacheStorageCompression !== true;
+            self.µBlock.hiddenSettings.cacheStorageCompression !== true;
         for ( const key of keys ) {
             const value = keyvalStore[key];
             const isString = typeof value === 'string';

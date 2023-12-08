@@ -24,7 +24,6 @@
 /******************************************************************************/
 
 import staticNetFilteringEngine from './static-net-filtering.js';
-import µb from './background.js';
 import { CompiledListWriter } from './static-filtering-io.js';
 import { i18n$ } from './i18n.js';
 import * as sfp from './static-filtering-parser.js';
@@ -97,14 +96,14 @@ const initWorker = function() {
         });
     };
 
-    for ( const listKey in µb.availableFilterLists ) {
-        if ( µb.availableFilterLists.hasOwnProperty(listKey) === false ) {
+    for ( const listKey in self.µBlock.availableFilterLists ) {
+        if ( self.µBlock.availableFilterLists.hasOwnProperty(listKey) === false ) {
             continue;
         }
-        const entry = µb.availableFilterLists[listKey];
+        const entry = self.µBlock.availableFilterLists[listKey];
         if ( entry.off === true ) { continue; }
         entries.set(listKey, {
-            title: listKey !== µb.userFiltersPath ?
+            title: listKey !== self.µBlock.userFiltersPath ?
                 entry.title :
                 i18n$('1pPageName'),
             supportURL: entry.supportURL || ''
@@ -117,7 +116,7 @@ const initWorker = function() {
     const promises = [];
     for ( const listKey of entries.keys() ) {
         promises.push(
-            µb.getCompiledFilterList(listKey).then(details => {
+            self.µBlock.getCompiledFilterList(listKey).then(details => {
                 onListLoaded(details);
             })
         );

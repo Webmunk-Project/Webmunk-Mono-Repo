@@ -24,7 +24,6 @@
 /******************************************************************************/
 
 import logger from './logger.js';
-import µb from './background.js';
 import { entityFromDomain } from './uri-utils.js';
 import { sessionFirewall } from './filtering-engines.js';
 import { StaticExtFilteringHostnameDB } from './static-ext-filtering-db.js';
@@ -164,7 +163,7 @@ httpheaderFilteringEngine.apply = function(fctxt, headers) {
     // https://github.com/gorhill/uBlock/issues/2835
     //   Do not filter response headers if the site is under an `allow` rule.
     if (
-        µb.userSettings.advancedUserEnabled &&
+        self.µBlock.userSettings.advancedUserEnabled &&
         sessionFirewall.evaluateCellZY(hostname, hostname, '*') === 2
     ) {
         return;

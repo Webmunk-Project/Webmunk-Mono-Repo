@@ -23,7 +23,6 @@
 
 /******************************************************************************/
 
-import µb from './background.js';
 import { redirectEngine as reng } from './redirect-engine.js';
 import { sessionFirewall } from './filtering-engines.js';
 import { StaticExtFilteringHostnameDB } from './static-ext-filtering-db.js';
@@ -40,7 +39,7 @@ import {
 const VERSION = 1;
 
 const duplicates = new Set();
-const scriptletCache = new µb.MRUCache(32);
+const scriptletCache = new self.µBlock.MRUCache(32);
 
 const scriptletDB = new StaticExtFilteringHostnameDB(1, VERSION);
 
@@ -232,7 +231,7 @@ const decompile = function(json) {
 
 scriptletFilteringEngine.logFilters = function(tabId, url, filters) {
     if ( typeof filters !== 'string' ) { return; }
-    const fctxt = µb.filteringContext
+    const fctxt = self.µBlock.filteringContext
             .duplicate()
             .fromTabId(tabId)
             .setRealm('extended')
@@ -325,7 +324,7 @@ scriptletFilteringEngine.retrieve = function(request) {
     // https://github.com/gorhill/uBlock/issues/2835
     //   Do not inject scriptlets if the site is under an `allow` rule.
     if (
-        µb.userSettings.advancedUserEnabled &&
+        self.µBlock.userSettings.advancedUserEnabled &&
         sessionFirewall.evaluateCellZY(hostname, hostname, '*') === 2
     ) {
         return;
@@ -399,7 +398,7 @@ scriptletFilteringEngine.retrieve = function(request) {
     if ( isDevBuild === undefined ) {
         isDevBuild = vAPI.webextFlavor.soup.has('devbuild');
     }
-    if ( isDevBuild || µb.hiddenSettings.filterAuthorMode ) {
+    if ( isDevBuild || self.µBlock.hiddenSettings.filterAuthorMode ) {
         scriptletGlobals.push([ 'canDebug', true ]);
     }
 
@@ -408,7 +407,7 @@ scriptletFilteringEngine.retrieve = function(request) {
             '(function() {',
             '// >>>> start of private namespace',
             '',
-            µb.hiddenSettings.debugScriptlets ? 'debugger;' : ';',
+            self.µBlock.hiddenSettings.debugScriptlets ? 'debugger;' : ';',
             '',
             // For use by scriptlets to share local data among themselves
             `const scriptletGlobals = new Map(${JSON.stringify(scriptletGlobals, null, 2)});`,
@@ -422,7 +421,7 @@ scriptletFilteringEngine.retrieve = function(request) {
             'function() {',
             '// >>>> start of private namespace',
             '',
-            µb.hiddenSettings.debugScriptlets ? 'debugger;' : ';',
+            self.µBlock.hiddenSettings.debugScriptlets ? 'debugger;' : ';',
             '',
             // For use by scriptlets to share local data among themselves
             `const scriptletGlobals = new Map(${JSON.stringify(scriptletGlobals, null, 2)});`,
@@ -453,7 +452,7 @@ scriptletFilteringEngine.injectNow = function(details) {
     const { mainWorld = '', isolatedWorld = '', filters } = scriptletDetails;
     if ( mainWorld !== '' ) {
         let code = mainWorldInjector.assemble(request.hostname, mainWorld, filters);
-        if ( µb.hiddenSettings.debugScriptletInjector ) {
+        if ( self.µBlock.hiddenSettings.debugScriptletInjector ) {
             code = 'debugger;\n' + code;
         }
         vAPI.tabs.executeScript(details.tabId, {
@@ -465,7 +464,7 @@ scriptletFilteringEngine.injectNow = function(details) {
     }
     if ( isolatedWorld !== '' ) {
         let code = isolatedWorldInjector.assemble(request.hostname, isolatedWorld);
-        if ( µb.hiddenSettings.debugScriptletInjector ) {
+        if ( self.µBlock.hiddenSettings.debugScriptletInjector ) {
             code = 'debugger;\n' + code;
         }
         vAPI.tabs.executeScript(details.tabId, {

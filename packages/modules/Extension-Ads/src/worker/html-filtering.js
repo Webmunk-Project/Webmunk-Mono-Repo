@@ -24,7 +24,6 @@
 /******************************************************************************/
 
 import logger from './logger.js';
-import µb from './background.js';
 import { sessionFirewall } from './filtering-engines.js';
 import { StaticExtFilteringHostnameDB } from './static-ext-filtering-db.js';
 
@@ -254,7 +253,7 @@ PSelector.prototype.operatorToTaskMap = new Map([
 ]);
 
 function logOne(details, exception, selector) {
-    µb.filteringContext
+    self.µBlock.filteringContext
         .duplicate()
         .fromTabId(details.tabId)
         .setRealm('extended')
@@ -363,7 +362,7 @@ htmlFilteringEngine.compile = function(parser, writer) {
 
 htmlFilteringEngine.fromCompiledContent = function(reader) {
     // Don't bother loading filters if stream filtering is not supported.
-    if ( µb.canFilterResponseData === false ) { return; }
+    if ( self.µBlock.canFilterResponseData === false ) { return; }
 
     reader.select('HTML_FILTERS');
 
@@ -399,7 +398,7 @@ htmlFilteringEngine.retrieve = function(details) {
     // https://github.com/gorhill/uBlock/issues/2835
     //   Do not filter if the site is under an `allow` rule.
     if (
-        µb.userSettings.advancedUserEnabled &&
+        self.µBlock.userSettings.advancedUserEnabled &&
         sessionFirewall.evaluateCellZY(hostname, hostname, '*') === 2
     ) {
         return;

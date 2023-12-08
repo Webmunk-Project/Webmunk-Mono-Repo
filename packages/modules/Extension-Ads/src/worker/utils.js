@@ -23,11 +23,10 @@
 
 /******************************************************************************/
 
-import µb from './background.js';
 
 /******************************************************************************/
 
-µb.formatCount = function(count) {
+self.µBlock.formatCount = function(count) {
     if ( typeof count !== 'number' ) { return ''; }
     const s = `${count}`;
     if ( count < 1000 ) { return s; }
@@ -45,7 +44,7 @@ import µb from './background.js';
 
 /******************************************************************************/
 
-µb.dateNowToSensibleString = function() {
+self.µBlock.dateNowToSensibleString = function() {
     const now = new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000);
     return now.toISOString().replace(/\.\d+Z$/, '')
                             .replace(/:/g, '.')
@@ -54,7 +53,7 @@ import µb from './background.js';
 
 /******************************************************************************/
 
-µb.openNewTab = function(details) {
+self.µBlock.openNewTab = function(details) {
     if ( details.url.startsWith('logger-ui.html') ) {
         if ( details.shiftKey ) {
             this.changeUserSettings(
@@ -84,7 +83,7 @@ import µb from './background.js';
 
 /******************************************************************************/
 
-µb.MRUCache = class {
+self.µBlock.MRUCache = class {
     constructor(size) {
         this.size = size;
         this.array = [];
@@ -128,13 +127,13 @@ import µb from './background.js';
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
 
-µb.escapeRegex = function(s) {
+self.µBlock.escapeRegex = function(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
 /******************************************************************************/
 
-µb.fireDOMEvent = function(name) {
+self.µBlock.fireDOMEvent = function(name) {
     if (
         window instanceof Object &&
         window.dispatchEvent instanceof Function &&
@@ -148,7 +147,7 @@ import µb from './background.js';
 
 // TODO: properly compare arrays
 
-µb.getModifiedSettings = function(edit, orig = {}) {
+self.µBlock.getModifiedSettings = function(edit, orig = {}) {
     const out = {};
     for ( const prop in edit ) {
         if ( orig.hasOwnProperty(prop) && edit[prop] !== orig[prop] ) {
@@ -158,7 +157,7 @@ import µb from './background.js';
     return out;
 };
 
-µb.settingValueFromString = function(orig, name, s) {
+self.µBlock.settingValueFromString = function(orig, name, s) {
     if ( typeof name !== 'string' || typeof s !== 'string' ) { return; }
     if ( orig.hasOwnProperty(name) === false ) { return; }
     let r;

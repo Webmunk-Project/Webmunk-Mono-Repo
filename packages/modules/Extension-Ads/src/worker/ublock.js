@@ -26,7 +26,6 @@
 //import contextMenu from './contextmenu.js';
 import cosmeticFilteringEngine from './cosmetic-filtering.js';
 import io from './assets.js';
-import µb from './background.js';
 import { hostnameFromURI } from './uri-utils.js';
 import { redirectEngine } from './redirect-engine.js';
 
@@ -103,7 +102,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.getNetFilteringSwitch = function(url) {
+self.µBlock.getNetFilteringSwitch = function(url) {
     const hostname = hostnameFromURI(url);
     let key = hostname;
     for (;;) {
@@ -122,7 +121,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.toggleNetFilteringSwitch = function(url, scope, newState) {
+self.µBlock.toggleNetFilteringSwitch = function(url, scope, newState) {
     const currentState = this.getNetFilteringSwitch(url);
     if ( newState === undefined ) {
         newState = !currentState;
@@ -196,7 +195,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.arrayFromWhitelist = function(whitelist) {
+self.µBlock.arrayFromWhitelist = function(whitelist) {
     const out = new Set();
     for ( const bucket of whitelist.values() ) {
         for ( const directive of bucket ) {
@@ -206,13 +205,13 @@ const matchBucket = function(url, hostname, bucket, start) {
     return Array.from(out).sort((a, b) => a.localeCompare(b));
 };
 
-µb.stringFromWhitelist = function(whitelist) {
+self.µBlock.stringFromWhitelist = function(whitelist) {
     return this.arrayFromWhitelist(whitelist).join('\n');
 };
 
 /******************************************************************************/
 
-µb.whitelistFromArray = function(lines) {
+self.µBlock.whitelistFromArray = function(lines) {
     const whitelist = new Map();
 
     // Comment bucket must always be ready to be used.
@@ -290,17 +289,17 @@ const matchBucket = function(url, hostname, bucket, start) {
     return whitelist;
 };
 
-µb.whitelistFromString = function(s) {
+self.µBlock.whitelistFromString = function(s) {
     return this.whitelistFromArray(s.split('\n'));
 };
 
 // https://github.com/gorhill/uBlock/issues/3717
-µb.reWhitelistBadHostname = /[^a-z0-9.\-_\[\]:]/;
-µb.reWhitelistHostnameExtractor = /([a-z0-9.\-_\[\]]+)(?::[\d*]+)?\/(?:[^\x00-\x20\/]|$)[^\x00-\x20]*$/;
+self.µBlock.reWhitelistBadHostname = /[^a-z0-9.\-_\[\]:]/;
+self.µBlock.reWhitelistHostnameExtractor = /([a-z0-9.\-_\[\]]+)(?::[\d*]+)?\/(?:[^\x00-\x20\/]|$)[^\x00-\x20]*$/;
 
 /******************************************************************************/
 
-µb.changeUserSettings = function(name, value) {
+self.µBlock.changeUserSettings = function(name, value) {
     let us = this.userSettings;
 
     // Return all settings if none specified.
@@ -416,7 +415,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 // https://www.reddit.com/r/uBlockOrigin/comments/8524cf/my_custom_scriptlets_doesnt_work_what_am_i_doing/
 
-µb.changeHiddenSettings = function(hs) {
+self.µBlock.changeHiddenSettings = function(hs) {
     const mustReloadResources =
         hs.userResourcesLocation !== this.hiddenSettings.userResourcesLocation;
     this.hiddenSettings = hs;
@@ -430,7 +429,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.elementPickerExec = async function(
+self.µBlock.elementPickerExec = async function(
     tabId,
     frameId,
     targetElement,
@@ -468,7 +467,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 // Always set own rules, trying to be fancy to avoid setting seemingly
 // (but not really) redundant rules led to this issue.
 
-µb.toggleFirewallRule = function(details) {
+self.µBlock.toggleFirewallRule = function(details) {
     let { srcHostname, desHostname, requestType, action } = details;
 
     if ( action !== 0 ) {
@@ -547,7 +546,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.toggleURLFilteringRule = function(details) {
+self.µBlock.toggleURLFilteringRule = function(details) {
     let changed = sessionURLFiltering.setRule(
         details.context,
         details.url,
@@ -574,7 +573,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.toggleHostnameSwitch = function(details) {
+self.µBlock.toggleHostnameSwitch = function(details) {
     const newState = typeof details.state === 'boolean'
         ? details.state
         : sessionSwitches.evaluateZ(details.name, details.hostname) === false;
@@ -636,7 +635,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.blockingModeFromHostname = function(hn) {
+self.µBlock.blockingModeFromHostname = function(hn) {
     let bits = 0;
     if ( sessionSwitches.evaluateZ('no-scripting', hn) ) {
         bits |= 0b00000010;
@@ -657,7 +656,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 {
     const parse = function() {
-        const s = µb.hiddenSettings.blockingProfiles;
+        const s = self.µBlock.hiddenSettings.blockingProfiles;
         const profiles = [];
         s.split(/\s+/).forEach(s => {
             let pos = s.indexOf('/');
@@ -669,8 +668,8 @@ const matchBucket = function(url, hostname, bucket, start) {
             const color = s.slice(pos + 1);
             profiles.push({ bits, color: color !== '' ? color : '#666' });
         });
-        µb.liveBlockingProfiles = profiles;
-        µb.blockingProfileColorCache.clear();
+        self.µBlock.liveBlockingProfiles = profiles;
+        self.µBlock.blockingProfileColorCache.clear();
     };
 
     parse();
@@ -680,7 +679,7 @@ const matchBucket = function(url, hostname, bucket, start) {
 
 /******************************************************************************/
 
-µb.pageURLFromMaybeDocumentBlockedURL = function(pageURL) {
+self.µBlock.pageURLFromMaybeDocumentBlockedURL = function(pageURL) {
     try{
         if ( pageURL.startsWith(vAPI.getURL('/document-blocked.html?')) ) {
             try {

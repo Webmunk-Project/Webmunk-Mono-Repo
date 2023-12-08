@@ -27,7 +27,6 @@ import cosmeticFilteringEngine from './cosmetic-filtering.js';
 import io from './assets.js';
 import scriptletFilteringEngine from './scriptlet-filtering.js';
 import staticNetFilteringEngine from './static-net-filtering.js';
-import µb from './background.js';
 import webRequest from './traffic.js';
 import { FilteringContext } from './filtering-context.js';
 import { LineIterator } from './text-utils.js';
@@ -81,7 +80,7 @@ const loadBenchmarkDataset = (( ) => {
             return datasetPromise;
         }
 
-        const datasetURL = µb.hiddenSettings.benchmarkDatasetURL;
+        const datasetURL = self.µBlock.hiddenSettings.benchmarkDatasetURL;
         if ( datasetURL === 'unset' ) {
             console.info(`No benchmark dataset available.`);
             return Promise.resolve();
@@ -136,7 +135,7 @@ const loadBenchmarkDataset = (( ) => {
 
 // action: 1=test
 
-µb.benchmarkStaticNetFiltering = async function(options = {}) {
+self.µBlock.benchmarkStaticNetFiltering = async function(options = {}) {
     const { target, redirectEngine } = options;
 
     const requests = await loadBenchmarkDataset();
@@ -211,7 +210,7 @@ const loadBenchmarkDataset = (( ) => {
 
 /******************************************************************************/
 
-µb.tokenHistograms = async function() {
+self.µBlock.tokenHistograms = async function() {
     const requests = await loadBenchmarkDataset();
     if ( Array.isArray(requests) === false || requests.length === 0 ) {
         console.info('No requests found to benchmark');
@@ -252,7 +251,7 @@ const loadBenchmarkDataset = (( ) => {
 
 /******************************************************************************/
 
-µb.benchmarkDynamicNetFiltering = async function() {
+self.µBlock.benchmarkDynamicNetFiltering = async function() {
     const requests = await loadBenchmarkDataset();
     if ( Array.isArray(requests) === false || requests.length === 0 ) {
         console.info('No requests found to benchmark');
@@ -279,7 +278,7 @@ const loadBenchmarkDataset = (( ) => {
 
 /******************************************************************************/
 
-µb.benchmarkCosmeticFiltering = async function() {
+self.µBlock.benchmarkCosmeticFiltering = async function() {
     const requests = await loadBenchmarkDataset();
     if ( Array.isArray(requests) === false || requests.length === 0 ) {
         console.info('No requests found to benchmark');
@@ -316,7 +315,7 @@ const loadBenchmarkDataset = (( ) => {
 
 /******************************************************************************/
 
-µb.benchmarkScriptletFiltering = async function() {
+self.µBlock.benchmarkScriptletFiltering = async function() {
     const requests = await loadBenchmarkDataset();
     if ( Array.isArray(requests) === false || requests.length === 0 ) {
         console.info('No requests found to benchmark');
@@ -350,7 +349,7 @@ const loadBenchmarkDataset = (( ) => {
 
 /******************************************************************************/
 
-µb.benchmarkOnBeforeRequest = async function() {
+self.µBlock.benchmarkOnBeforeRequest = async function() {
     const requests = await loadBenchmarkDataset();
     if ( Array.isArray(requests) === false || requests.length === 0 ) {
         console.info('No requests found to benchmark');

@@ -25,7 +25,6 @@
 
 import './utils.js';
 //import logger from './logger.js';
-import µb from './background.js';
 
 import { StaticExtFilteringHostnameDB } from './static-ext-filtering-db.js';
 
@@ -251,13 +250,13 @@ const FilterContainer = function() {
         canonical: 'highGenericHideSimple',
         dict: new Set(),
         str: '',
-        mru: new µb.MRUCache(16)
+        mru: new self.µBlock.MRUCache(16)
     };
     this.highlyGeneric.complex = {
         canonical: 'highGenericHideComplex',
         dict: new Set(),
         str: '',
-        mru: new µb.MRUCache(16)
+        mru: new self.µBlock.MRUCache(16)
     };
 
     // Short-lived: content is valid only during one function call. These
@@ -374,7 +373,7 @@ FilterContainer.prototype.compileGenericHideSelector = function(
     // https://github.com/uBlockOrigin/uBlock-issues/issues/131
     //   Support generic procedural filters as per advanced settings.
     if ( compiled.charCodeAt(0) === 0x7B /* '{' */ ) {
-        if ( µb.hiddenSettings.allowGenericProceduralFilters === true ) {
+        if ( self.µBlock.hiddenSettings.allowGenericProceduralFilters === true ) {
             return this.compileSpecificSelector(parser, '', false, writer);
         }
         const who = writer.properties.get('name') || '?';
