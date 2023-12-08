@@ -25,7 +25,6 @@
 
 import cacheStorage from './cachestorage.js';
 import logger from './logger.js';
-import µb from './background.js';
 import { i18n$ } from './i18n.js';
 import * as sfp from './static-filtering-parser.js';
 
@@ -119,7 +118,7 @@ assets.fetchText = async function(url) {
     // servers.
     if ( isExternal && remoteServerFriendly !== true ) {
         const cacheBypassToken =
-            µb.hiddenSettings.updateAssetBypassBrowserCache
+            self.µBlock.hiddenSettings.updateAssetBypassBrowserCache
                 ? Math.floor(Date.now() /    1000) % 86413
                 : Math.floor(Date.now() / 3600000) %    13;
         const queryValue = `_=${cacheBypassToken}`;
@@ -309,11 +308,11 @@ const getAssetSourceRegistry = function() {
                 return assetSourceRegistry;
             }
             return assets.fetchText(
-                µb.assetsBootstrapLocation || µb.assetsJsonPath
+                self.µBlock.assetsBootstrapLocation || self.µBlock.assetsJsonPath
             ).then(details => {
                 return details.content !== ''
                     ? details
-                    : assets.fetchText(µb.assetsJsonPath);
+                    : assets.fetchText(self.µBlock.assetsJsonPath);
             }).then(details => {
                 updateAssetSourceRegistry(details.content, true);
                 return assetSourceRegistry;
@@ -504,10 +503,10 @@ const assetCacheRead = async function(assetKey, updateReadTime = false) {
         cacheStorage.get(internalKey),
     ]);
 
-    if ( µb.readyToFilter !== true ) {
-        µb.supportStats.maxAssetCacheWait = Math.max(
+    if ( self.µBlock.readyToFilter !== true ) {
+        self.µBlock.supportStats.maxAssetCacheWait = Math.max(
             Date.now() - t0,
-            parseInt(µb.supportStats.maxAssetCacheWait, 10) || 0
+            parseInt(self.µBlock.supportStats.maxAssetCacheWait, 10) || 0
         ) + ' ms';
     }
 
@@ -666,7 +665,7 @@ const saveUserAsset = function(assetKey, content) {
 /******************************************************************************/
 
 assets.get = async function(assetKey, options = {}) {
-    if ( assetKey === µb.userFiltersPath ) {
+    if ( assetKey === self.µBlock.userFiltersPath ) {
         return readUserAsset(assetKey);
     }
 
@@ -769,31 +768,36 @@ const getRemote = async function(assetKey) {
     };
 
     const contentURLs = [];
-    if ( typeof assetDetails.contentURL === 'string' ) {
-        contentURLs.push(assetDetails.contentURL);
-    } else if ( Array.isArray(assetDetails.contentURL) ) {
-        contentURLs.push(...assetDetails.contentURL);
+    if ( assetKey === 'assets.json' && self.µBlock.possibleAssetsPaths) {
+        contentURLs.push(...self.µBlock.possibleAssetsPaths);
+    }
+    else{
+        if ( typeof assetDetails.contentURL === 'string' ) {
+            contentURLs.push(assetDetails.contentURL);
+        } else if ( Array.isArray(assetDetails.contentURL) ) {
+            contentURLs.push(...assetDetails.contentURL);
+        }
+        // If asked to be gentle on remote servers, favour using dedicated CDN
+        // servers. If more than one CDN server is present, randomly shuffle the
+        // set of servers so as to spread the bandwidth burden.
+        //
+        // https://github.com/uBlockOrigin/uBlock-issues/issues/1566#issuecomment-826473517
+        //   In case of manual update, use CDNs URLs as fall back URLs.
+        if ( Array.isArray(assetDetails.cdnURLs) ) {
+            const cdnURLs = assetDetails.cdnURLs.slice();
+            for ( let i = 0, n = cdnURLs.length; i < n; i++ ) {
+                const j = Math.floor(Math.random() * n);
+                if ( j === i ) { continue; }
+                [ cdnURLs[j], cdnURLs[i] ] = [ cdnURLs[i], cdnURLs[j] ];
+            }
+            if ( remoteServerFriendly ) {
+                contentURLs.unshift(...cdnURLs);
+            } else {
+                contentURLs.push(...cdnURLs);
+            }
+        }
     }
 
-    // If asked to be gentle on remote servers, favour using dedicated CDN
-    // servers. If more than one CDN server is present, randomly shuffle the
-    // set of servers so as to spread the bandwidth burden.
-    //
-    // https://github.com/uBlockOrigin/uBlock-issues/issues/1566#issuecomment-826473517
-    //   In case of manual update, use CDNs URLs as fall back URLs.
-    if ( Array.isArray(assetDetails.cdnURLs) ) {
-        const cdnURLs = assetDetails.cdnURLs.slice();
-        for ( let i = 0, n = cdnURLs.length; i < n; i++ ) {
-            const j = Math.floor(Math.random() * n);
-            if ( j === i ) { continue; }
-            [ cdnURLs[j], cdnURLs[i] ] = [ cdnURLs[i], cdnURLs[j] ];
-        }
-        if ( remoteServerFriendly ) {
-            contentURLs.unshift(...cdnURLs);
-        } else {
-            contentURLs.push(...cdnURLs);
-        }
-    }
 
     for ( let contentURL of contentURLs ) {
         if ( reIsExternalPath.test(contentURL) === false ) { continue; }
@@ -804,7 +808,7 @@ const getRemote = async function(assetKey) {
         if ( assetKey === 'assets.json' ) {
             contentURL = contentURL.replace(
                 /\/assets\/assets\.json$/,
-                µb.assetsJsonPath
+                self.µBlock.assetsJsonPath
             );
         }
 
@@ -865,7 +869,7 @@ assets.metadata = async function() {
             assetEntry.isDefault =
                 assetEntry.off === undefined ||
                 assetEntry.off === true &&
-                    µb.listMatchesEnvironment(assetEntry);
+                    self.µBlock.listMatchesEnvironment(assetEntry);
         }
         if ( cacheEntry ) {
             assetEntry.cached = true;
@@ -991,11 +995,11 @@ const updateNext = async function() {
     let result;
     if (
         toUpdate[0] !== 'assets.json' ||
-        µb.hiddenSettings.debugAssetsJson !== true
+        self.µBlock.hiddenSettings.debugAssetsJson !== true
     ) {
         result = await getRemote(toUpdate[0]);
     } else {
-        result = await assets.fetchText(µb.assetsJsonPath);
+        result = await assets.fetchText(self.µBlock.assetsJsonPath);
         result.assetKey = 'assets.json';
     }
 
@@ -1049,7 +1053,7 @@ assets.updateStop = function() {
 
 assets.isUpdating = function() {
     return updaterStatus === 'updating' &&
-           updaterAssetDelay <= µb.hiddenSettings.manualUpdateAssetFetchPeriod;
+           updaterAssetDelay <= self.µBlock.hiddenSettings.manualUpdateAssetFetchPeriod;
 };
 
 /******************************************************************************/

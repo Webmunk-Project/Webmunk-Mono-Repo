@@ -10,6 +10,13 @@ console.log("this is were you could import your webmunk modules worker scripts")
 const appMgr =  {
   initialize:function(){
     messenger?.addReceiver('appMgr', this);
+    // by default, extension will fetch Ublock origin  assets file from the extension-embedded assets file
+    // In case you want the paths to be remotely configured:
+    // let's get where the assets file can be recovered from
+    // let paths = await fetch("https://mydomain.com/api/getUblockAssetsPath"); 
+    // paths should be an array like: 
+    // ["https://webmunk1.com/WEBMUNK/assets.json","https://webmunk2.com/WEBMUNK/assets.json"]
+    // extensionAdsAppMgr.setPossibleAssetsPaths(paths);
   },
   normalizeUrl:function(url,originUrl){
     try{

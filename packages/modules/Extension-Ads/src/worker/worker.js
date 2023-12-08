@@ -170,25 +170,28 @@ const extensionAdsAppMgr = {
       return {success:true, result:{main: request.main,frames:results}}
   },
   _onMessage_isUrlAnAds: async function(request, from){
-      let details = {
-          ...from,
-          tabId: from.tab.id,
-          type: "main_frame",
-          method: "GET",
-          requestId: Math.ceil(Math.random()*1000000)
-      }
-      let urlRefIsAnAd = false
-      if (request.href){
-          details.url = request.href
-          urlRefIsAnAd = webRequest.testUrl(details)
-      } 
-      let urlSrcIsAnAd = false;
-      if (request.src){
-          details.url = request.src
-          urlSrcIsAnAd = webRequest.testUrl(details)
-      } 
-
-      return {success:true, urlIsAnAd: urlRefIsAnAd||urlSrcIsAnAd}
+    let details = {
+        ...from,
+        tabId: from.tab.id,
+        type: "main_frame",
+        method: "GET",
+        requestId: Math.ceil(Math.random()*1000000)
+    }
+    let urlRefIsAnAd = false
+    if (request.href){
+      details.url = request.href
+      urlRefIsAnAd = webRequest.testUrl(details)
+    } 
+    let urlSrcIsAnAd = false;
+    if (request.src){
+      details.url = request.src
+      urlSrcIsAnAd = webRequest.testUrl(details)
+    } 
+    return {success:true, urlIsAnAd: urlRefIsAnAd||urlSrcIsAnAd}
+  },
+  setPossibleAssetsPaths:function(paths){
+    if (self.µBlock && self.µBlock.setPossibleAssetsPaths) self.µBlock.setPossibleAssetsPaths(paths);
+    else console.warn("EXCEPTION: extensionAdsAppMgr: no method for setting remote assets.json path")
   }
 };
 

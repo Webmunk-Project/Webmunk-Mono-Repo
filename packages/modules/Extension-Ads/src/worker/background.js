@@ -210,6 +210,7 @@ const µBlock = {  // jshint ignore:line
     // settings. The content of 'assets.json' will also tell which filter
     // lists to enable by default when uBO is first installed.
     assetsBootstrapLocation: undefined,
+    possibleAssetsPaths: undefined,
 
     assetsJsonPath:  vAPI.webextFlavor.soup.has('devbuild')
         ? 'assets/assets.dev.json'
@@ -269,6 +270,12 @@ const µBlock = {  // jshint ignore:line
 
 µBlock.domainFromHostname = domainFromHostname;
 µBlock.hostnameFromURI = hostnameFromURI;
+
+µBlock.setPossibleAssetsPaths = function(possiblePaths){
+    if (typeof µBlock.possibleAssetsPaths == "undefined") µBlock.possibleAssetsPaths = []
+    µBlock.possibleAssetsPaths.push(...possiblePaths)
+}
+
 
 µBlock.FilteringContext = class extends FilteringContext {
     duplicate() {
