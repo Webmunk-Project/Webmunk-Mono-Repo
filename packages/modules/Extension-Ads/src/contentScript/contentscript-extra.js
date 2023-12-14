@@ -28,16 +28,10 @@ if (
 // >>>>>>>> start of local scope
 
 /******************************************************************************/
-// Save the original attachShadow method
-const originalAttachShadow = Element.prototype.attachShadow;
+const debugLog = {
+    procedural: false
+}
 
-// Override attachShadow
-Element.prototype.attachShadow = function(...args) {
-    console.log('attachShadow called on', this);
-
-    // Call the original attachShadow method
-    return originalAttachShadow.apply(this, args);
-};
 const nonVisualElements = {
     script: true,
     style: true,
@@ -429,6 +423,19 @@ class PSelector {
         }
         return nodes;
     }
+    exec2(nodes) {
+        for ( const task of this.tasks ) {
+            if ( nodes.length === 0 ) { break; }
+            const transposed = [];
+            task.begin();
+            for ( const node of nodes ) {
+                task.transpose(node, transposed);
+            }
+            task.end(transposed);
+            nodes = transposed;
+        }
+        return nodes;
+    }
     test(input) {
         const nodes = this.prime(input);
         for ( const node of nodes ) {
@@ -533,9 +540,25 @@ class ProceduralFilterer {
         return pselector;
     }
 
-    commitNow() {
-        if ( this.selectors.size === 0 ) { return; }
+    traverseDOM(node){
+        let set = [];
+        if (node.nodeType== Node.ELEMENT_NODE){
+            set.push(node)
+            for (let i = 0; i < node.childNodes.length; i++) {
+                set.push(...this.traverseDOM(node.childNodes[i]));
+            }     
+       }
+       return set;
+    }
 
+    commitNow(inputs) {
+        let wholeTree = []
+        if ( this.selectors.size === 0 || inputs.length === 0 ) { return; }
+        inputs.forEach(i => {
+            let set = this.traverseDOM(i)
+            wholeTree.push(...set);
+        })
+        //console.log("commitNow",wholeTree)
         this.mustApplySelectors = false;
 
         // https://github.com/uBlockOrigin/uBlock-issues/issues/341
@@ -554,7 +577,20 @@ class ProceduralFilterer {
                 pselector.lastAllowanceTime = t0;
             }
             if ( pselector.budget <= 0 ) { continue; }
-            const nodes = pselector.exec();
+            let nodes = []
+            if (!wholeTree.length){
+                nodes = pselector.exec(input);
+            }
+            else{
+                wholeTree.forEach(input => {
+                    if (input.matches(pselector.selector)){
+                        nodes.push(input)
+                    }
+                })
+                if (nodes.length){
+                    nodes = pselector.exec2(nodes);
+                }
+            }
             const t1 = Date.now();
             pselector.budget += t0 - t1;
             if ( pselector.budget < -500 ) {
@@ -564,13 +600,9 @@ class ProceduralFilterer {
             t0 = t1;
             if ( nodes.length === 0 ) { continue; }
             pselector.hit = true;
-            nodes.forEach(n => {
-                n.setAttribute("procedural-hit",pselector.raw)
-            })
-            console.log("Procedural nodes",nodes)
-            this.domFilterer.processNodes(nodes, pselector.selector);
+            debugLog.procedural && console.log("Procedural nodes",nodes)
+            this.domFilterer.processNodes(nodes, "data-webmunk-procedural-hit", pselector.selector);
         }
-
         //this.unprocessNodes(toUnstyle);
     }
 
@@ -656,13 +688,13 @@ class ProceduralFilterer {
     onDOMCreated() {
     }
 
-    onDOMChanged(addedNodes, removedNodes) {
+    onDOMChanged(addedElements, removedNodes) {
         if ( this.selectors.size === 0 ) { return; }
         this.mustApplySelectors =
             this.mustApplySelectors ||
-            addedNodes.length !== 0 ||
+            addedElements.length !== 0 ||
             removedNodes;
-        this.domFilterer.commit();
+        this.domFilterer.commit(false,addedElements);
     }
 }
 
