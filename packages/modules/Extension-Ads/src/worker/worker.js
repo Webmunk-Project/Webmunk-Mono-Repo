@@ -3,8 +3,20 @@ import webRequest from './traffic.js';
 
 const extensionAdsAppMgr = {
   throttler: new TimeThrottler(1,200),
+  tabData: {},
+
   initialize: async function() {
     self.messenger?.addReceiver('extensionAdsAppMgr', this);
+
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+        if (changeInfo.status === 'complete') {
+            this.tabData[tabId] = {ads: []};
+        }
+    });
+
+    chrome.tabs.onRemoved.addListener((tabId) => {
+        delete this.tabData[tabId];
+    });
   },
   captureRegion(){
       return chrome.tabs.captureVisibleTab().then( (imageUri) => {
@@ -45,7 +57,7 @@ const extensionAdsAppMgr = {
       try{
           if (url.startsWith("//")){
               let protocol = /((http|http)[s]?)/.exec(originUrl)[1];
-              return protocol+":"+url; 
+              return protocol+":"+url;
           }
           let matches = /url\("(.*)"\)/.exec(url)
           if (matches) return matches[1];
@@ -53,31 +65,51 @@ const extensionAdsAppMgr = {
       catch(e){}
       return url;
   },
-  _onMessage_adContent(data, from){
-      let promises = [];
-      console.log(`Receiving ad content from ${from.frameId} url:${from.frameId==0?from.tab.url:from.frameId}`)
-      data.content.elts.forEach((item) => {
-          promises.push (new Promise(async resolve => {
-              if (item.href && !item.href.startsWith("url(\"data")){
-                  let result = await this.testRedirect(this.normalizeUrl(item.href,from.tab.url));
-                  resolve(result)
-              }
-              else resolve(null)
-          }))
-      })
-      Promise.all(promises).then(results => {
-          results.forEach((result, index) => {
-              if (result){
-                  data.content.elts[index].href = {
-                      initialUrl: result.initialUrl,
-                      redirected: result.redirected,
-                      redirectedUrl: result.redirected ? result.url : undefined
-                  }
-              }
-          })
-          console.log(`Ad content for ${wmSessionMgr.getSessionId(from.tab.id)}`,data.content)
-      })
-  },
+  _onMessage_adContent(data, from) {
+    let promises = [];
+    let tabId = from.tab.id;
+    let origin = from.tab.url;
+
+    if (!this.tabData[tabId]) {
+        this.tabData[tabId] = {ads: []};
+    }
+
+    data.content.elts.forEach((item) => {
+        if (item.href && !item.href.startsWith("url(\"data")) {
+            promises.push(new Promise(async resolve => {
+                let result = await this.testRedirect(this.normalizeUrl(item.href, origin));
+                resolve(result);
+            }));
+        }
+    });
+
+    Promise.all(promises).then((results) => {
+        results.forEach((result, index) => {
+            if (result) {
+                const adExists = this.tabData[tabId].ads.some((ad) => ad.initialUrl === result.initialUrl);
+
+                if (!adExists) {
+                    this.tabData[tabId].ads.push({
+                        initialUrl: result.initialUrl,
+                        redirected: result.redirected,
+                        redirectedUrl: result.redirected ? result.url : undefined,
+                        content: {
+                            type: data.content.elts[index].type,
+                            src: data.content.elts[index].src,
+                            title: data.content.elts[index].title,
+                            text: data.content.elts[index].text,
+                        }
+                    });
+                } else {
+                    this.tabData[tabId].ads = this.tabData[tabId].ads.filter((ad) => ad.initialUrl !== result.initialUrl);
+                }
+            }
+        });
+
+        console.log(`Detected ads:`, this.tabData[tabId].ads);
+        console.log(`%cReceiving ad from tab ${tabId} - ${origin}, ads detected: ${this.tabData[tabId].ads.length}`, 'color: green; font-weight: bold');
+    });
+},
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
           return this.captureRegion();
@@ -103,13 +135,13 @@ const extensionAdsAppMgr = {
           if (result.isDisplayNone){
               result =  {success: true, isDisplayNone: true};
               cont = false;
-          } 
+          }
           else{
               if (myself.parentFrameId == 0) cont = false;
               myself = frames.find(f => f.frameId==myself.parentFrameId);
           }
         }
-        console.log(`_onMessage_isDisplayNone ${JSON.stringify(path)} => ${result.isDisplayNone}`)
+        // console.log(`_onMessage_isDisplayNone ${JSON.stringify(path)} => ${result.isDisplayNone}`)
         return result;
     });
   },
@@ -121,7 +153,7 @@ const extensionAdsAppMgr = {
         let myself = frames.find(f => f.frameId==from.frameId);
         while (cont){
           if (myself.parentFrameId ==0){
-              result = await self.messenger?.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0) 
+              result = await self.messenger?.sendToMainPage(from.tab.id, "content", "isFrameAnAd", from.frameId, 0)
               path.unshift("0/"+(result.success ? result.isAd:"unknown"))
               cont = false;
           }
@@ -131,13 +163,13 @@ const extensionAdsAppMgr = {
               if (result.isAd){
                   result =  {success: true, isAd: true};
                   cont = false;
-              } 
+              }
               else{
                   myself = frames.find(f => f.frameId==myself.parentFrameId);
               }
           }
         }
-        console.log(`_onMessage_parentFrameIsAnAd ${JSON.stringify(path)} => ${result.isAd}`)
+        // console.log(`_onMessage_parentFrameIsAnAd ${JSON.stringify(path)} => ${result.isAd}`)
         return result;
       })
   },
@@ -148,13 +180,13 @@ const extensionAdsAppMgr = {
           noGenericCosmeticFiltering: false,
           noSpecificCosmeticFiltering: false,
       };
-  
+
       request.tabId = tabId;
       request.frameId = frameId;
       request.hostname = hostnameFromURI(request.url);
       request.domain = domainFromHostname(request.hostname);
       request.entity = entityFromDomain(request.domain);
-  
+
       const scf = response.specificCosmeticFilters =
           cosmeticFilteringEngine.retrieveSpecificSelectors(request, response);
   },
@@ -181,12 +213,12 @@ const extensionAdsAppMgr = {
     if (request.href){
       details.url = request.href
       urlRefIsAnAd = webRequest.testUrl(details)
-    } 
+    }
     let urlSrcIsAnAd = false;
     if (request.src){
       details.url = request.src
       urlSrcIsAnAd = webRequest.testUrl(details)
-    } 
+    }
     return {success:true, urlIsAnAd: urlRefIsAnAd||urlSrcIsAnAd}
   },
   setPossibleAssetsPaths:function(paths){
