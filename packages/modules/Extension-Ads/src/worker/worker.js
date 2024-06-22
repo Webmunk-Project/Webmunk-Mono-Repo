@@ -4,18 +4,20 @@ import webRequest from './traffic.js';
 const extensionAdsAppMgr = {
   throttler: new TimeThrottler(1,200),
   tabData: {},
-
   initialize: async function() {
     self.messenger?.addReceiver('extensionAdsAppMgr', this);
 
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-        if (changeInfo.status === 'complete') {
-            this.tabData[tabId] = {ads: []};
-        }
-    });
+    chrome.tabs.onRemoved.addListener((tabId) => delete this.tabData[tabId]);
 
-    chrome.tabs.onRemoved.addListener((tabId) => {
-        delete this.tabData[tabId];
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, { title, url, status }) => {
+      console.log(changeInfo);
+
+      // create or update tabData
+      if (!this.tabData[tabId]) {
+        this.tabData[tabId] = { ads: new Map(), title, url, status };
+      } else {
+        this.tabData[tabId] = { ...this.tabData[tabId], title, url, status };
+      }
     });
   },
   captureRegion(){
@@ -65,50 +67,45 @@ const extensionAdsAppMgr = {
       catch(e){}
       return url;
   },
-  _onMessage_adContent(data, from) {
-    let promises = [];
-    let tabId = from.tab.id;
-    let origin = from.tab.url;
+  _onMessage_adContent: async function (data, from) {
+    const { id: tabId, url: tabUrl } = from.tab;
+    const content = data?.content || data?.contentMain;
+    const promises = [];
 
-    if (!this.tabData[tabId]) {
-        this.tabData[tabId] = {ads: []};
-    }
+    if (!content) return;
 
-    data.content.elts.forEach((item) => {
+    content.elts.forEach((item) => {
         if (item.href && !item.href.startsWith("url(\"data")) {
             promises.push(new Promise(async resolve => {
-                let result = await this.testRedirect(this.normalizeUrl(item.href, origin));
+                let result = await this.testRedirect(this.normalizeUrl(item.href, tabUrl));
                 resolve(result);
             }));
         }
     });
 
-    Promise.all(promises).then((results) => {
-        results.forEach((result, index) => {
-            if (result) {
-                const adExists = this.tabData[tabId].ads.some((ad) => ad.initialUrl === result.initialUrl);
+    const results = await Promise.all(promises);
 
-                if (!adExists) {
-                    this.tabData[tabId].ads.push({
-                        initialUrl: result.initialUrl,
-                        redirected: result.redirected,
-                        redirectedUrl: result.redirected ? result.url : undefined,
-                        content: {
-                            type: data.content.elts[index].type,
-                            src: data.content.elts[index].src,
-                            title: data.content.elts[index].title,
-                            text: data.content.elts[index].text,
-                        }
-                    });
-                } else {
-                    this.tabData[tabId].ads = this.tabData[tabId].ads.filter((ad) => ad.initialUrl !== result.initialUrl);
-                }
-            }
-        });
+    results.forEach((result, index) => {
+      if (!result) return;
 
-        console.log(`Detected ads:`, this.tabData[tabId].ads);
-        console.log(`%cReceiving ad from tab ${tabId} - ${origin}, ads detected: ${this.tabData[tabId].ads.length}`, 'color: green; font-weight: bold');
+      // add new ad if not collected or update prev collected ad data
+      this.tabData[tabId].ads.set(result.initialUrl, {
+        initialUrl: result.initialUrl,
+        redirected: result.redirected,
+        redirectedUrl: result.redirected ? result.url : undefined,
+        content: {
+          type: content.elts[index].type,
+          src: content.elts[index].src,
+          title: content.elts[index].title,
+          text: content.elts[index].text,
+        }
+      });
     });
+
+    if (from.frameId === 0 && this.tabData[tabId].status === 'complete') {
+      console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
+      console.log('Tab data:', this.tabData[tabId]);
+    }
 },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
