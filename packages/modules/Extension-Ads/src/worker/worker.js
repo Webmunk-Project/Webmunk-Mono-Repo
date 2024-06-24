@@ -78,16 +78,18 @@ const extensionAdsAppMgr = {
     if (!content) return;
 
     content.elts.forEach((item) => {
-        if (item.href && !item.href.startsWith("url(\"data")) {
-          const normalizedUrl = this.normalizeUrl(item.href, tabUrl);
+      if (item.href && !item.href.startsWith("url(\"data")) {
+        const normalizedUrl = this.normalizeUrl(item.href, tabUrl);
 
-          if (!uniqueHrefs.has(normalizedUrl)) {
-            uniqueHrefs.add(normalizedUrl);
-            promises.push(new Promise(async resolve => {
-                let result = await this.testRedirect(normalizedUrl);
-                resolve(result);
-            }));
-        }}
+        if (!uniqueHrefs.has(normalizedUrl)) {
+          uniqueHrefs.add(normalizedUrl);
+
+          promises.push(new Promise(async resolve => {
+            let result = await this.testRedirect(normalizedUrl);
+            resolve(result);
+          }));
+        }
+      }
     });
 
     const results = await Promise.all(promises);
