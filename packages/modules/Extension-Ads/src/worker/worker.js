@@ -15,6 +15,8 @@ const extensionAdsAppMgr = {
       // create or update tabData
       if (!this.tabData[tabId]) {
         this.tabData[tabId] = { ads: new Map(), title, url, status };
+      } else if (status === 'loading') {
+        this.tabData[tabId].ads.clear();
       } else {
         this.tabData[tabId] = { ...this.tabData[tabId], title, url, status };
       }
@@ -71,16 +73,23 @@ const extensionAdsAppMgr = {
     const { id: tabId, url: tabUrl } = from.tab;
     const content = data?.content || data?.contentMain;
     const promises = [];
+    const uniqueHrefs = new Set();
 
     if (!content) return;
 
     content.elts.forEach((item) => {
-        if (item.href && !item.href.startsWith("url(\"data")) {
-            promises.push(new Promise(async resolve => {
-                let result = await this.testRedirect(this.normalizeUrl(item.href, tabUrl));
-                resolve(result);
-            }));
+      if (item.href && !item.href.startsWith("url(\"data")) {
+        const normalizedUrl = this.normalizeUrl(item.href, tabUrl);
+
+        if (!uniqueHrefs.has(normalizedUrl)) {
+          uniqueHrefs.add(normalizedUrl);
+
+          promises.push(new Promise(async resolve => {
+            let result = await this.testRedirect(normalizedUrl);
+            resolve(result);
+          }));
         }
+      }
     });
 
     const results = await Promise.all(promises);
@@ -102,7 +111,7 @@ const extensionAdsAppMgr = {
       });
     });
 
-    if (from.frameId === 0 && this.tabData[tabId].status === 'complete') {
+    if (this.tabData[tabId].status === 'complete') {
       console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
       console.log('Tab data:', this.tabData[tabId]);
     }
