@@ -6,7 +6,7 @@ export class RudderStack {
   });
 
   constructor() {
-      this._client = new Analytics('2hv3OHj4joAaarruwt337mRuFhx','https://unibrixdmyrfcl.dataplane.rudderstack.com');               // Number of requests allowed in the interval
+      this._client = new Analytics('2hv3OHj4joAaarruwt337mRuFhx','https://unibrixdmyrfcl.dataplane.rudderstack.com');
   }
 
   track(event, properties) {
