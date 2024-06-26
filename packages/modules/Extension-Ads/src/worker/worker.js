@@ -1,9 +1,11 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
+import { RudderStack } from './rudderstack';
 
 const extensionAdsAppMgr = {
-  throttler: new TimeThrottler(1,200),
   tabData: {},
+  rudderStack: new RudderStack(),
+  throttler: new TimeThrottler(1,200),
   initialize: async function() {
     self.messenger?.addReceiver('extensionAdsAppMgr', this);
 
@@ -114,8 +116,17 @@ const extensionAdsAppMgr = {
     if (this.tabData[tabId].status === 'complete') {
       console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
       console.log('Tab data:', this.tabData[tabId]);
+
+      if (!this.tabData[tabId].ads.size) return;
+
+      const eventData = {
+        ...this.tabData[tabId],
+        ads: [...this.tabData[tabId].ads.values()]
+      };
+
+      this.rudderStack.track(RudderStack.events.ADS_DETECTED, eventData);
     }
-},
+  },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
           return this.captureRegion();
