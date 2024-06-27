@@ -582,8 +582,8 @@ class ProceduralFilterer {
                 nodes = pselector.exec(input);
             }
             else{
-                wholeTree.forEach(input => {
-                    if (pselector.selector && input.matches(pselector.selector)){
+                wholeTree.forEach((input) => {
+                    if (pselector.selector && input.matches(pselector.selector)) {
                         nodes.push(input);
                     }
                 });
