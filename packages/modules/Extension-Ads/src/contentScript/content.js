@@ -367,35 +367,42 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     initialAdContentSent: false,
     appMgrName: "",
     initialize:async function(){
-      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))
-      if(isFrame()){
+      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this));
+
+      if(isFrame()) {
         this.isAd = false;
+
         document.addEventListener('DOMContentLoaded', async (event) => {
           this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
-          await this.wait(WAIT_BEFORE_EXTRACT)
-          let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
-          if (response && response.data && response.data.isDisplayNone){
+          await this.wait(WAIT_BEFORE_EXTRACT);
+          const response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
+
+          if (response?.data?.isDisplayNone) {
             debugLog.hidden && console.log(`DOMContentLoaded: Iframe  is hidden ${this.frameId} `, window.document);
+
             return;
           }
-          if (!this.isAd){
-            let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
-            if (response && response.data) {
-              this.isAd = response.data.isAd;
+
+          if (!this.isAd) {
+            const response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
+
+            this.isAd = response?.data?.isAd;
           }
-          }
+
           !this.isAd && debugLog.noAd && console.log(`DOMContentLoaded: Iframe  is not an ad ${this.frameId} `, window.document);
 
-          if (this.isAd){
-            let content = this.extractContent(this.frameId);
+          if (this.isAd) {
+            const content = this.extractContent(this.frameId);
             content.meta = this.extractMeta()
+
             chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
           }
         });
+
         this.postMessageMgr = new PostMessageMgr();
         this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
       }
-      else{ // main frame
+      else { // main frame
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(2500)
           let adElements = document.querySelectorAll("[data-webmunk-isad]")
