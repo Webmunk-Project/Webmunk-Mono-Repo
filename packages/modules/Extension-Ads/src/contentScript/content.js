@@ -1,4 +1,4 @@
-import PostMessageMgr from './postMessage' 
+import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 import './contentscript-extra'
 
@@ -114,19 +114,19 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   const WAIT_BEFORE_EXTRACT = 2500;
 
   /*******************************************************************************
-   
+
   The DOM filterer is the heart of uBO's cosmetic filtering.
-  
+
   DOMFilterer: adds procedural cosmetic filtering
-  
+
   */
- 
+
   vAPI.hideStyle = 'display:none!important;';
-  
+
   vAPI.DOMFilterer = class {
     constructor() {
       this.commitTimer = new vAPI.SafeAnimationFrame(
-        ( ) => { 
+        ( ) => {
           this.commitNow(this.addedElements);
           this.addedElements= [];
         });
@@ -139,7 +139,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         this.proceduralFilterer = null;
         this.addedElements= [];
     }
-    
+
     explodeCSS(css) {
       const out = [];
       const cssHide = `{${vAPI.hideStyle}}`;
@@ -167,11 +167,11 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       if ( this.hasListeners() ) {
         this.triggerListeners({ exceptions });
       }
-    }   
+    }
     addListener(listener) {
       if ( this.listeners.indexOf(listener) !== -1 ) { return; }
       this.listeners.push(listener);
-    }   
+    }
     removeListener(listener) {
       const pos = this.listeners.indexOf(listener);
       if ( pos === -1 ) { return; }
@@ -184,7 +184,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       for ( const listener of this.listeners ) {
         listener.onFiltersetChanged(changes);
       }
-    }   
+    }
     toggle(state, callback) {
       if ( state === undefined ) { state = this.disabled; }
       if ( state !== this.disabled ) { return; }
@@ -198,7 +198,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
       }
       uss.apply(callback);
-    }   
+    }
     // Here we will deal with:
     // - Injecting low priority user styles;
     // - Notifying listeners about changed filterset.
@@ -220,7 +220,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     commit(commitNow, elts) {
       if (elts){
         this.addedElements.push(...elts)
-      } 
+      }
       if ( commitNow ) {
         this.commitTimer.clear();
         this.commitNow();
@@ -236,7 +236,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         this.proceduralFilterer = new vAPI.DOMProceduralFilterer(this);
       }
       return this.proceduralFilterer;
-    }   
+    }
     addProceduralSelectors(selectors) {
       const procedurals = [];
       for ( const raw of selectors ) {
@@ -252,7 +252,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       const pfilterer = this.proceduralFiltererInstance();
       if ( pfilterer === null ) { return; }
       return pfilterer.createProceduralFilter(o);
-    }  
+    }
     getAllSelectors(bits = 0) {
       const out = {
         declarative: [],
@@ -293,7 +293,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             }
           }
           return out;
-    }      
+    }
     getAllExceptionSelectors() {
       return this.exceptions.join(',\n');
     }
@@ -325,12 +325,12 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         color="orange"
         node.setAttribute("data-webmunk-br",rect.width+"/"+rect.height)
         return;
-      } 
+      }
       //console.log(`Node matched: ${selectorRaw} ${document.URL} ${_indent}`,node);
-      // specific pattern for facebook (finally useless) 
+      // specific pattern for facebook (finally useless)
       if (node1.localName=="use") node = node1.parentElement;
       node.style.border=`dashed 2px ${color}`
-      if (node.style.display != "none") node.style.display="inline-block"
+      if (node.style.display != "none") node.style.display="block"
       node.style.margin="2px"
       node.ads = true;
       node.setAttribute("data-webmunk-isad",true)
@@ -367,21 +367,23 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     initialAdContentSent: false,
     appMgrName: "",
     initialize:async function(){
-      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))        
+      chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this))
       if(isFrame()){
         this.isAd = false;
         document.addEventListener('DOMContentLoaded', async (event) => {
           this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
           await this.wait(WAIT_BEFORE_EXTRACT)
           let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
-          if (response?.data?.isDisplayNone){
+          if (response && response.data && response.data.isDisplayNone){
             debugLog.hidden && console.log(`DOMContentLoaded: Iframe  is hidden ${this.frameId} `, window.document);
             return;
           }
           if (!this.isAd){
             let response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
-            this.isAd = response.data.isAd;
-          } 
+            if (response && response.data) {
+              this.isAd = response.data.isAd;
+          }
+          }
           !this.isAd && debugLog.noAd && console.log(`DOMContentLoaded: Iframe  is not an ad ${this.frameId} `, window.document);
 
           if (this.isAd){
@@ -392,7 +394,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         });
         this.postMessageMgr = new PostMessageMgr();
         this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
-      } 
+      }
       else{ // main frame
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(2500)
@@ -408,7 +410,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             }
           })
           chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{contentMain}});
-          // this is to indicate that the newest element built dynamically past this point 
+          // this is to indicate that the newest element built dynamically past this point
           // will have to be sent individually
           this.initialAdContentSent = true;
         })
@@ -416,7 +418,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         this.postMessageMgr.setReceiver((data)=>this.mainReceivePostMessage(data))
       }
       this.iframeSourceObserver = new MutationObserver(this.iframeSourceModified);
-    
+
       //vAPI.domMutationTime = Date.now();
       vAPI.domWatcher = { start: ()=>this.start(), addListener: (filterer) => this.addListener(filterer), removeListener: (filterer)=>this.removeListener(filterer) };
       /*chrome.runtime.sendMessage({action:'extensionAdsAppMgr.retrieveContentScriptParameters',
@@ -440,9 +442,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             this.cssSelectors = []
           }
           this.onResponseReady(response);
-          
+
       });
-    }, 
+    },
     setMainAppMgrName: function(name){
       this.appMgrName = name;
     },
@@ -470,7 +472,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           if (iframe.style.display == "none"){
             result = {success:true, isDisplayNone: true}
           }
-        } 
+        }
       }
       catch(e){
         result = e;
@@ -503,7 +505,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               count ++;
             }
           }
-        } 
+        }
       }
       catch(e){
         result = e;
@@ -552,74 +554,84 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     highlightNodeAsAds(node, _indent, color, detectionType, selectorRaw){
       vAPI.domFilterer.highlightNodeAsAds(node, _indent, color, detectionType, selectorRaw);
     },
-    traverseDOM:async function(node, _indent = 0) {    
+    traverseDOM: async function(node, _indent = 0) {
       let urlIsAnAd = false;
-      if ( node.nodeType !== 1 ) return
-      if ( this.ignoreTags.has(node.localName) ) return
+      if (node.nodeType !== 1) return;
+      if (this.ignoreTags.has(node.localName)) return;
       if (isFrame() && this.isAd) return;
-      if (node.localName=="iframe" && this.hasAnAdsParent(node,1)){
-        setTimeout(()=>{
-          this.waitForFrameId(node).then( id => {
-            //console.log(`Setting Iframe[${node.getAttribute("frameid")}] to data-webmunk-isad true `,node)
-            node.setAttribute("data-webmunk-isad", true)
-            chrome.runtime.sendMessage({action:"extensionAdsAppMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
-          }).catch(e => {
-            console.log(`EXCEPTIOn: Setting Iframe[UNKNOWN] to data-webmunk-isad true `,node)
-            node.setAttribute("data-webmunk-isad", true)
-          })
-        },300)
-      }
-
-      if ((node.href && typeof node.href != "object") || (node.src)){ 
-        urlIsAnAd = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isUrlAnAds",data:{src: node.src, href: node.href}}).then(result=>{
-          return result.data.urlIsAnAd;
-        })
-        if (urlIsAnAd && !(node.style.display=="none")){
-          let parentFrameIsAnAd = false;
-          // let's check if the found node is not already in an iframe detected as an ad
-          if (isFrame()){
-            console.log("Checking node for ad ascendance",node)
-          }
-          if (!parentFrameIsAnAd){
-            this.highlightNodeAsAds(node, _indent,"red", "urlIsAnAd-hit", node.src);
-            //this.notifyForAd(node);
-          }
-        }
-      }
-      //if (!urlIsAnAd && node.nodeType === Node.ELEMENT_NODE) {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        
-        this.cssSelectors.forEach(async (selector) => {
-          if (node.localName=="iframe") {
-
-            this.iframeSourceObserver.observe(node, this.iframeSourceObserverOptions);}
-          if (node.matches(selector) && !this.hasAnAdsParent(node)) {
-            let parentFrameIsAnAd = false;
-            if (isFrame()){
-              console.log("Checking node for ad ascendance",node)
-            }
-            if (!parentFrameIsAnAd){
-              this.highlightNodeAsAds(node, _indent, "blue","data-webmunk-cosmetic-hit",selector);
-              //this.captureToCanvas(node.parentElement)
-              //this.notifyForAd(node);
-            }
-            
-          }
-          else {
-            if (this.isAd && node.localName=="iframe"){
-              node.setAttribute("data-webmunk-isad",true)
-              this.waitForFrameId(node).then((id) => {
-                //console.log("Telling iframe it is an ad "+node.id, node)
-                chrome.runtime.sendMessage({action:"extensionAdsAppMgr.youAreAFrameAd",data:{frameId:parseInt(id, 10)}})
+      if (node.localName === "iframe" && this.hasAnAdsParent(node,1)) {
+          setTimeout(()=>{
+              this.waitForFrameId(node).then(id => {
+                 //console.log(`Setting Iframe[${node.getAttribute("frameid")}] to data-webmunk-isad true `,node)
+                  node.setAttribute("data-webmunk-isad", true);
+                  chrome.runtime.sendMessage({
+                      action: "extensionAdsAppMgr.youAreAFrameAd",
+                      data: {
+                          frameId: parseInt(id, 10)
+                      }
+                  });
+              }).catch(e => {
+                  console.log(`EXCEPTION: Setting Iframe[UNKNOWN] to data-webmunk-isad true`, node);
+                  node.setAttribute("data-webmunk-isad", true);
               });
-            }
-          }
-        });
-        for (let i = 0; i < node.childNodes.length; i++) {
-          this.traverseDOM(node.childNodes[i], _indent + 2);
-        }
+          }, 300);
       }
-    },
+      if (node.href && typeof node.href != "object" || node.src){
+          urlIsAnAd = await chrome.runtime.sendMessage({
+              action: "extensionAdsAppMgr.isUrlAnAds",
+              data: {
+                  src: node.src,
+                  href: node.href
+              }
+          }).then(result => {
+              return result.data.urlIsAnAd;
+          });
+          if (urlIsAnAd && !(node.style.display === "none")) {
+              let parentFrameIsAnAd = false;
+              if (isFrame()) {
+                  console.log("Checking node for ad ascendance", node);
+              }
+              if (!parentFrameIsAnAd) {
+                  this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
+              }
+          }
+      }
+      if (node.nodeType === Node.ELEMENT_NODE) {
+          this.cssSelectors.forEach(async selector => {
+              if (node.localName === "iframe") {
+                  this.iframeSourceObserver.observe(node, this.iframeSourceObserverOptions);
+              }
+              try {
+                  if (node.matches(selector) && !this.hasAnAdsParent(node)) {
+                      let parentFrameIsAnAd = false;
+                      if (isFrame()) {
+                          console.log("Checking node for ad ascendance", node);
+                      }
+                      if (!parentFrameIsAnAd) {
+                          this.highlightNodeAsAds(node, _indent, "blue", "data-webmunk-cosmetic-hit", selector);
+                      }
+                  } else {
+                      if (this.isAd && node.localName === "iframe") {
+                          node.setAttribute("data-webmunk-isad", true);
+                          this.waitForFrameId(node).then(id => {
+                              chrome.runtime.sendMessage({
+                                  action: "extensionAdsAppMgr.youAreAFrameAd",
+                                  data: {
+                                      frameId: parseInt(id, 10)
+                                  }
+                              });
+                          });
+                      }
+                  }
+              } catch (e) {
+                  console.log(`Error processing selector: ${selector}`, e);
+              }
+          });
+          for (let i = 0; i < node.childNodes.length; i++) {
+              this.traverseDOM(node.childNodes[i], _indent + 2);
+          }
+      }
+  },
     waitForFrameId:function(node, count = 50){
       return new Promise((resolve,reject) => {
         let frameId = node.getAttribute("frameid")
@@ -630,7 +642,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             if (frameId){
               clearInterval(intervalId)
               resolve(frameId);
-            } 
+            }
             if (count<0){
               clearInterval(intervalId);
               reject()
@@ -638,21 +650,21 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             }
             count --;
           }, 10)
-        } 
+        }
       })
     },
     notifyForAd:function(node){
       let frameIds = [];
       if (node.localName=="iframe") {
         let frameId = node.getAttribute("frameid")
-        if (frameId) frameIds.push(frameId)           
+        if (frameId) frameIds.push(frameId)
       }
       else{
         let iframes = node.querySelectorAll("iframe");
         if (iframes.length){
           Array.from(iframes).forEach(f => {
             let frameId = f.getAttribute("frameid");
-            if (frameId) frameIds.push(frameId)           
+            if (frameId) frameIds.push(frameId)
           })
         }
       }
@@ -679,11 +691,11 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             else console.log("waitForContentWindow ready",node)
             clearInterval(timerId);
             resolve()
-          } 
+          }
           count --;
-          delay = 10;   
+          delay = 10;
         }, delay)
-      }) 
+      })
     },
     extractMeta(){
       let content = [];
@@ -742,9 +754,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             if (node.localName=="iframe" /*&& node.id.startsWith("google_ads_iframe_/22152718")*/){
               node.onload = () => {
                 try{
-                  /*setTimeout(async () => {                    
+                  /*setTimeout(async () => {
                     console.log("iframe onload",node, node.getAttribute("frameid"))
-                    
+
                   }, (1000));*/
                 }
                 catch(e){}
@@ -756,7 +768,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             else{
               debugLog.traverse && console.log(`Launching traverseDOM from top [id=${node.id}]`)
               this.traverseDOM(node, 0);
-            } 
+            }
             iNode++;
           }
           i++;

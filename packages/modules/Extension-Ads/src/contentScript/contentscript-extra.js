@@ -546,7 +546,7 @@ class ProceduralFilterer {
             set.push(node)
             for (let i = 0; i < node.childNodes.length; i++) {
                 set.push(...this.traverseDOM(node.childNodes[i]));
-            }     
+            }
        }
        return set;
     }
@@ -583,10 +583,10 @@ class ProceduralFilterer {
             }
             else{
                 wholeTree.forEach(input => {
-                    if (input.matches(pselector.selector)){
-                        nodes.push(input)
+                    if (pselector.selector && input.matches(pselector.selector)){
+                        nodes.push(input);
                     }
-                })
+                });
                 if (nodes.length){
                     nodes = pselector.exec2(nodes);
                 }
