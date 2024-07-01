@@ -12,8 +12,6 @@ const extensionAdsAppMgr = {
     chrome.tabs.onRemoved.addListener((tabId) => delete this.tabData[tabId]);
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, { title, url, status }) => {
-      console.log(changeInfo);
-
       // create or update tabData
       if (!this.tabData[tabId]) {
         this.tabData[tabId] = { ads: new Map(), title, url, status };
