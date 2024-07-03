@@ -10,7 +10,7 @@ getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
 
 continueButton.addEventListener('click', () => {
-    const email = emailInput.value.trim().toLowerCase()
+    const email = emailInput.value.trim().toLowerCase();
 
     if (!email) {
         alert('E-Mail Required\nPlease enter an e-mail address to continue.');
@@ -24,11 +24,12 @@ continueButton.addEventListener('click', () => {
 
     if (payload) {
         const identifier = getRandomIdentifier();
-        localStorage.setItem('identifier', identifier)
+        chrome.storage.local.set({ identifier: identifier }, function () {
 
-        getStartedContainer.style.display = 'none';
-        studyExtensionContainer.style.display = 'block'
-        randomIdentifier.innerHTML = identifier;
+            getStartedContainer.style.display = 'none';
+            studyExtensionContainer.style.display = 'block';
+            randomIdentifier.innerHTML = identifier;
+        });
     }
 
     // fetch(enrollUrl, {
@@ -52,11 +53,12 @@ continueButton.addEventListener('click', () => {
     //         if (data.rules && data.rules['uninstall-url'] !== undefined) {
     //             chrome.runtime.setUninstallURL(data.rules['uninstall-url'].replace('<IDENTIFIER>', data.identifier));
     //
-    //         localStorage.setItem('enrollmentData', JSON.stringify(data))
-    //         const message = data.rules && data.rules['enrollment-confirmation']
-    //             ? data.rules['enrollment-confirmation'].join('<br /><br />')
-    //             : 'Thank you for providing your e-mail address.'
-    //         document.querySelector('.main-container').innerHTML = `<p>${message}</p>`;
+    //         chrome.storage.local.set({ enrollmentData: JSON.stringify(data) }, function () {
+    //             const message = data.rules && data.rules['enrollment-confirmation']
+    //                 ? data.rules['enrollment-confirmation'].join('<br /><br />')
+    //                 : 'Thank you for providing your e-mail address.';
+    //             document.querySelector('.main-container').innerHTML = `<p>${message}</p>`;
+    //         });
     //     } else {
     //         alert('Enrollment failed\nUnable to complete enrollment. Please verify that you have a working Internet connection and your e-mail address was entered correctly.');
     //     }
@@ -81,13 +83,15 @@ function getRandomIdentifier() {
 }
 
 function displayIdentifier() {
-    const identifier = localStorage.getItem('identifier');
+    chrome.storage.local.get('identifier', function (result) {
+        const identifier = result.identifier;
 
-    if (identifier) {
-        getStartedContainer.style.display = 'none';
-        studyExtensionContainer.style.display = 'block';
-        randomIdentifier.innerHTML = identifier;
-    }
+        if (identifier) {
+            getStartedContainer.style.display = 'none';
+            studyExtensionContainer.style.display = 'block';
+            randomIdentifier.innerHTML = identifier;
+        }
+    });
 }
 
 displayIdentifier();
