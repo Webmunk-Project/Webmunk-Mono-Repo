@@ -24,7 +24,7 @@ module.exports = function config(browser){
       extensions: ['.tsx','.ts', '.js']
     },
     module: {
-      rules: [ 
+      rules: [
         {
           test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
           use: [
@@ -120,7 +120,7 @@ module.exports = function config(browser){
             }
           ]
         },
-       
+
       ]
     },
     plugins: [
@@ -130,7 +130,9 @@ module.exports = function config(browser){
       new CopyPlugin({
         patterns: [
           { from: './assets/icons', to: './icons' },
-          { from: './assets/web_accessible_resources', to: './web_accessible_resources' }
+          { from: './assets/web_accessible_resources', to: './web_accessible_resources' },
+          { from: './src/popup', to: './popup' },
+          { from: './images', to: './images' }
         ]
       }),
       new webpack.EnvironmentPlugin({
