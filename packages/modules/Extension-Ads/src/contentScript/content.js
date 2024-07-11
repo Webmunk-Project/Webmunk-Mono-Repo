@@ -297,25 +297,44 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     getAllExceptionSelectors() {
       return this.exceptions.join(',\n');
     }
+    processNodes(nodes, pselectorAction, pselectorRaw) {
+      const content = { elts: [] };
 
-    processNodes(nodes, pselectorAction, pselectorRaw){
-      let content = {elts: []};
-      nodes.forEach(n => {
-        debugLog.procedural && n.setAttribute("data-webmunk-considered-processNodes","true")
-        if (!adsMgr.hasAnAdsParent(n,1000000)){
-          this.highlightNodeAsAds(n, 0, "darkgreen", pselectorAction,pselectorRaw);
+      nodes.forEach(node => {
+        debugLog.procedural && node.setAttribute("data-webmunk-considered-processNodes", "true");
+
+        if (!adsMgr.hasAnAdsParent(node, 1000000)) {
+          this.highlightNodeAsAds(node, 0, "darkgreen", pselectorAction, pselectorRaw);
         }
-        if (!isFrame() && adsMgr.initialAdContentSent){
-          let nodeContent = adsMgr.extractContent(0,n);
-          /*if (n.getAttribute("data-webmunk-isad")=="true"){
+
+        if (!isFrame() && adsMgr.initialAdContentSent) {
+          let nodeContent = adsMgr.extractContent(0, node);
+          /*if (n.getAttribute("data-webmunk-isad") == "true") {
             console.log("Deja vu")
           }*/
-          content.elts.push(...nodeContent.elts)
+          content.elts.push(...nodeContent.elts);
         }
-        //else n.setAttribute("considered-processNodes","false")
-      })
 
-      if(content.elts.length) chrome.runtime.sendMessage({action:adsMgr.getMainAppMgrName()+".adContent",data:{content}});
+        if (!node.hasAttribute('data-click-handler-added')) {
+          node.setAttribute('data-click-handler-added', 'true');
+
+          node.addEventListener('click', (event) => {
+            let clickedUrl = null;
+
+            clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
+
+            if (clickedUrl) {
+              const content = { ...adsMgr.extractContent(0, node), clickedUrl };
+
+              chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + ".adClicked", data: { content } });
+            }
+          });
+        }
+      });
+
+      if (content.elts.length) {
+        chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + ".adContent", data: { content } });
+      }
     }
     highlightNodeAsAds(node1, _indent, color, detectionType, selectorRaw){
       let node = node1;
@@ -393,9 +412,20 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
           if (this.isAd) {
             const content = this.extractContent(this.frameId);
-            content.meta = this.extractMeta()
+            content.meta = this.extractMeta();
+            chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adContent", data: { content } });
 
-            chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
+            document.addEventListener('click', (event) => {
+              let clickedUrl = null;
+
+              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
+
+              if (clickedUrl) {
+                content.clickedUrl = clickedUrl;
+
+                chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adClicked", data: { content }});
+              }
+            });
           }
         });
 
@@ -404,25 +434,49 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
       else { // main frame
         document.addEventListener('DOMContentLoaded', async (event) => {
-          await this.wait(2500)
-          let adElements = document.querySelectorAll("[data-webmunk-isad]")
-          let contentMain = {meta : this.extractMeta(), elts:[]}
+          await this.wait(WAIT_BEFORE_EXTRACT);
 
-          adElements.forEach(elt => {
-            if (elt.localName != "iframe"){
-              let content =this.extractContent(0,elt)
-              contentMain.elts.push(...content.elts)
+          let adElements = [];
+
+          const getAdElements = () => {
+            adElements = Array.from(document.querySelectorAll("[data-webmunk-isad]"));
+          };
+
+          getAdElements();
+
+          const contentMain = { meta: this.extractMeta(), elts: [] };
+
+          adElements.forEach((elt) => {
+            if (elt.localName !== "iframe") {
+              const content = this.extractContent(0, elt);
+              contentMain.elts.push(...content.elts);
               contentMain.documentUrl = content.documentUrl;
-              //chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{content}});
             }
-          })
-          chrome.runtime.sendMessage({action:this.getMainAppMgrName()+".adContent",data:{contentMain}});
-          // this is to indicate that the newest element built dynamically past this point
-          // will have to be sent individually
+          });
+
+          chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adContent", data: { contentMain } });
           this.initialAdContentSent = true;
-        })
+
+          document.addEventListener('click', (event) => {
+            const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
+
+            if (adElement) {
+              const content = this.extractContent(0, adElement);
+              let clickedUrl = null;
+
+              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
+
+              if (clickedUrl) {
+                content.clickedUrl = clickedUrl;
+              }
+
+              chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adClicked", data: { content }});
+            }
+          });
+        });
+
         this.postMessageMgr = new PostMessageMgr();
-        this.postMessageMgr.setReceiver((data)=>this.mainReceivePostMessage(data))
+        this.postMessageMgr.setReceiver((data) => this.mainReceivePostMessage(data))
       }
       this.iframeSourceObserver = new MutationObserver(this.iframeSourceModified);
 
