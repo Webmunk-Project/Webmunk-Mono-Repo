@@ -80,7 +80,7 @@ const extensionAdsAppMgr = {
         if (matches) return matches[1];
       }
     } catch (e) {
-      console.error("Exception occurred while normalizing URL:", e);
+      console.log("Exception occurred while normalizing URL:", e);
     }
     return url;
   },

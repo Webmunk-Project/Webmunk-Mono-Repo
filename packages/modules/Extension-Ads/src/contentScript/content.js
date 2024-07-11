@@ -298,7 +298,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return this.exceptions.join(',\n');
     }
     processNodes(nodes, pselectorAction, pselectorRaw) {
-      let content = { elts: [] };
+      const content = { elts: [] };
 
       nodes.forEach(node => {
         debugLog.procedural && node.setAttribute("data-webmunk-considered-processNodes", "true");
@@ -321,19 +321,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           node.addEventListener('click', (event) => {
             let clickedUrl = null;
 
-            if (event.target.tagName === 'A') {
-              clickedUrl = event.target.href;
-            } else {
-              const link = event.target.closest('a');
-
-              if (link) {
-                clickedUrl = link.href;
-              }
-            }
+            clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
 
             if (clickedUrl) {
-              let content = adsMgr.extractContent(0, node);
-              content.clickedUrl = clickedUrl;
+              const content = { ...adsMgr.extractContent(0, node), clickedUrl };
 
               chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + ".adClicked", data: { content } });
             }
@@ -427,15 +418,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             document.addEventListener('click', (event) => {
               let clickedUrl = null;
 
-              if (event.target.tagName === 'A') {
-                clickedUrl = event.target.href;
-              } else {
-                const link = event.target.closest('a');
-
-                if (link) {
-                  clickedUrl = link.href;
-                }
-              }
+              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
 
               if (clickedUrl) {
                 content.clickedUrl = clickedUrl;
@@ -455,17 +438,17 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
           let adElements = [];
 
-          const getAdElements = async () => {
+          const getAdElements = () => {
             adElements = Array.from(document.querySelectorAll("[data-webmunk-isad]"));
           };
 
-          await getAdElements();
+          getAdElements();
 
-          let contentMain = { meta: this.extractMeta(), elts: [] };
+          const contentMain = { meta: this.extractMeta(), elts: [] };
 
           adElements.forEach((elt) => {
             if (elt.localName !== "iframe") {
-              let content = this.extractContent(0, elt);
+              const content = this.extractContent(0, elt);
               contentMain.elts.push(...content.elts);
               contentMain.documentUrl = content.documentUrl;
             }
@@ -475,21 +458,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           this.initialAdContentSent = true;
 
           document.addEventListener('click', (event) => {
-            const adElement = adElements.find((elt) => elt.contains(event.target) || elt === event.target);
+            const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
 
             if (adElement) {
-              let content = this.extractContent(0, adElement);
+              const content = this.extractContent(0, adElement);
               let clickedUrl = null;
 
-              if (event.target.tagName === 'A') {
-                clickedUrl = event.target.href;
-              } else {
-                const link = event.target.closest('a');
-
-                if (link) {
-                  clickedUrl = link.href;
-                }
-              }
+              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
 
               if (clickedUrl) {
                 content.clickedUrl = clickedUrl;
