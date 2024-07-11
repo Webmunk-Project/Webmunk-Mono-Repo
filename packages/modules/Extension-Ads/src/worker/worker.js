@@ -51,23 +51,38 @@ const extensionAdsAppMgr = {
       });
       return result;
   },
+  _onMessage_adClicked: function(request) {
+    if (request.content.clickedUrl) {
+      console.log(`%cUser clicked on an ad: ${request.content.clickedUrl}`, 'color: orange');
+    } else {
+      console.log("Clicked URL not found.");
+    }
+  },
   _onMessage_youAreAFrameAd(data, from){
       chrome.tabs.sendMessage(from.tab.id,
           {action:"youAreAFrameAd"},
           {frameId: data.frameId}
       )
   },
-  normalizeUrl:function(url,originUrl){
-      try{
-          if (url.startsWith("//")){
-              let protocol = /((http|http)[s]?)/.exec(originUrl)[1];
-              return protocol+":"+url;
-          }
-          let matches = /url\("(.*)"\)/.exec(url)
-          if (matches) return matches[1];
+  normalizeUrl(url, originUrl) {
+    try {
+      if (url.startsWith("//")) {
+        let protocol = /^((http|https):)/.exec(originUrl)[1];
+
+        return protocol + url;
+      } else if (url.startsWith("/")) {
+        let origin = /^(.*?:\/\/[^\/]+)/.exec(originUrl)[1];
+
+        return origin + url;
+      } else if (url.startsWith("url(")) {
+        let matches = /url\("(.*)"\)/.exec(url);
+
+        if (matches) return matches[1];
       }
-      catch(e){}
-      return url;
+    } catch (e) {
+      console.error("Exception occurred while normalizing URL:", e);
+    }
+    return url;
   },
   _onMessage_adContent: async function (data, from) {
     const { id: tabId, url: tabUrl } = from.tab;
