@@ -436,13 +436,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(WAIT_BEFORE_EXTRACT);
 
-          let adElements = [];
+          const adElements = [];
 
-          const getAdElements = () => {
-            adElements = Array.from(document.querySelectorAll("[data-webmunk-isad]"));
-          };
-
-          getAdElements();
+          document.querySelectorAll("[data-webmunk-isad]")
+            .forEach(elem => adElements.push(elem));
 
           const contentMain = { meta: this.extractMeta(), elts: [] };
 
@@ -801,7 +798,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         return true;
       })
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
-      return {elts: content, documentUrl: document.URL};
+      return { elts: content, documentUrl: document.URL };
     },
     safeObserverHandler:async function() {
         let i = 0;
