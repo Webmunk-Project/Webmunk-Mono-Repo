@@ -78,6 +78,8 @@ const extensionAdsAppMgr = {
         let matches = /url\("(.*)"\)/.exec(url);
 
         if (matches) return matches[1];
+      } else if (url.startsWith("blob:")) {
+        url = url.slice(5);
       }
     } catch (e) {
       console.error("Exception occurred while normalizing URL:", e);
@@ -87,41 +89,42 @@ const extensionAdsAppMgr = {
   _onMessage_adContent: async function (data, from) {
     const { id: tabId, url: tabUrl } = from.tab;
     const content = data?.content || data?.contentMain;
-    const promises = [];
     const uniqueHrefs = new Set();
 
     if (!content) return;
 
-    content.elts.forEach((item) => {
-      if (item.href && !item.href.startsWith("url(\"data")) {
-        const normalizedUrl = this.normalizeUrl(item.href, tabUrl);
+    const promises = content.elts.map(async (item) => {
+      let itemUrl = item.src || item.href;
+
+      if (itemUrl && !itemUrl.startsWith("url(\"data")) {
+        const normalizedUrl = this.normalizeUrl(itemUrl, tabUrl);
 
         if (!uniqueHrefs.has(normalizedUrl)) {
           uniqueHrefs.add(normalizedUrl);
 
-          promises.push(new Promise(async resolve => {
-            let result = await this.testRedirect(normalizedUrl);
-            resolve(result);
-          }));
+          let result = await this.testRedirect(normalizedUrl);
+
+          return { result, item };
         }
       }
+
+      return null;
     });
 
-    const results = await Promise.all(promises);
+    const results = (await Promise.all(promises)).filter(res => res !== null);
 
-    results.forEach((result, index) => {
+    results.forEach(({ result, item }) => {
       if (!result) return;
 
-      // add new ad if not collected or update prev collected ad data
       this.tabData[tabId].ads.set(result.initialUrl, {
         initialUrl: result.initialUrl,
         redirected: result.redirected,
         redirectedUrl: result.redirected ? result.url : undefined,
         content: {
-          type: content.elts[index].type,
-          src: content.elts[index].src,
-          title: content.elts[index].title,
-          text: content.elts[index].text,
+          type: item.type,
+          src: item.src || item.href,
+          title: item.title,
+          text: item.text,
         }
       });
     });
