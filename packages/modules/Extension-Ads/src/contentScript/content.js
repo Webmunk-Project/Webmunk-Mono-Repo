@@ -772,15 +772,35 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       let content = [];
       let root = document;
       if (frameId == 0) root = elt;
-      let imgArray = Array.from(root.querySelectorAll("img"));
-      let aArray = Array.from(root.querySelectorAll("a"));
-      let divArray = Array.from(root.querySelectorAll("div"));
+      const imgArray = Array.from(root.querySelectorAll("img"));
+      const aArray = Array.from(root.querySelectorAll("a"));
+      const divArray = Array.from(root.querySelectorAll("div"));
+      const videoArray = Array.from(root.querySelectorAll("video"));
 
-      let scopeArray = [...imgArray, ...aArray];
+      const scopeArray = [...imgArray, ...aArray, ...videoArray];
       if (frameId == 0) scopeArray.push(root)
       scopeArray.forEach(i => {
         let src = i.getAttribute("src");
         let href = i.getAttribute("href");
+
+        if (src && (src.startsWith('https://static.xx.fbcdn.net/images/') || src.startsWith('data:image/svg+xml'))) {
+          return;
+        }
+
+        if (href && href.startsWith('#')) return;
+
+        if (i.localName === "video" || i.getAttribute("role") === "presentation") {
+          const videoSrc = Array.from(i.querySelectorAll("source")).map(source => source.getAttribute("src")).filter(src => src);
+
+          if (videoSrc.length) {
+            content.push({ elt: i, type: i.localName, src: videoSrc });
+          } else if (src) {
+            content.push({ elt: i, type: i.localName, src: src });
+          }
+
+          return;
+        }
+
         // let's avoid useless buttons
         if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
           let o = {elt:i, type:i.localName}
