@@ -155,12 +155,6 @@ const extensionAdsAppMgr = {
     }
   },
   async _onMessage_adClicked(data, from) {
-    if (data.content.clickedUrl) {
-      console.log(`%cUser clicked on an ad: ${data.content.clickedUrl}`, 'color: orange');
-    } else {
-      console.log("Clicked URL not found.");
-    }
-
     if (!data.content.clickedUrl) {
       console.log("Clicked URL not found.");
       return;
