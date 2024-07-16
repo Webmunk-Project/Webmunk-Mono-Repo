@@ -301,36 +301,42 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       const adsData = [];
 
       nodes.forEach(node => {
-        debugLog.procedural && node.setAttribute('data-webmunk-considered-processNodes', 'true');
+          debugLog.procedural && node.setAttribute('data-webmunk-considered-processNodes', 'true');
 
-        if (!adsMgr.hasAnAdsParent(node, 1000000)) {
-          this.highlightNodeAsAds(node, 0, 'darkgreen', pselectorAction, pselectorRaw);
-        }
+          if (!adsMgr.hasAnAdsParent(node, 1000000)) {
+              this.highlightNodeAsAds(node, 0, 'darkgreen', pselectorAction, pselectorRaw);
+          }
 
-        if (!isFrame() && adsMgr.initialAdContentSent) {
-          const adData = adsMgr.extractAdData(0, node);
-          adsData.push(adData)
-        }
+          if (!isFrame() && adsMgr.initialAdContentSent) {
+              const adData = adsMgr.extractAdData(0, node);
+              adsData.push(adData)
+          }
 
-        if (!isFrame() && !node.hasAttribute('data-click-handler-added')) {
-          node.setAttribute('data-click-handler-added', 'true');
+          if (!isFrame() && !node.hasAttribute('data-click-handler-added')) {
+              node.setAttribute('data-click-handler-added', 'true');
+              node.setAttribute('data-click-processed', 'false');
 
-          node.addEventListener('click', (event) => {
-            const clickedUrl = event.target.tagName === 'A'
-              ? event.target.href
-              : event.target.closest('a')?.href;
+              node.addEventListener('click', async (event) => {
+                  if (node.getAttribute('data-click-processed') === 'true') return;
 
-            const meta = adsMgr.extractMeta();
-            const adData = adsMgr.extractAdData(0, node);
+                  await node.setAttribute('data-click-processed', 'true');
 
-            chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
-          });
-        }
+                  const clickedUrl = event.target.tagName === 'A'
+                      ? event.target.href
+                      : event.target.closest('a')?.href;
+
+                  const meta = adsMgr.extractMeta();
+                  const adData = adsMgr.extractAdData(0, node);
+
+                  await chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
+                  await node.setAttribute('data-click-processed', 'false');
+              });
+          }
       });
 
       if (adsData.length) {
-        const meta = adsMgr.extractMeta();
-        chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adContent', data: { meta, adsData } });
+          const meta = adsMgr.extractMeta();
+          chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adContent', data: { meta, adsData } });
       }
     }
     highlightNodeAsAds(node1, _indent, color, detectionType, selectorRaw){
@@ -416,16 +422,21 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
           chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adContent', data: { meta, adsData: [frameData] } });
 
-          document.addEventListener('click', (event) => {
+          document.addEventListener('click', async (event) => {
+            if (document.body.getAttribute('data-click-processed') === 'true') return;
+
+            await document.body.setAttribute('data-click-processed', 'true');
+
             const clickedUrl = event.target.tagName === 'A'
-              ? event.target.href
-              : event.target.closest('a')?.href;
+                ? event.target.href
+                : event.target.closest('a')?.href;
 
             const meta = this.extractMeta();
             const adData = this.extractAdData(this.frameId);
 
-            chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
-          });
+            await chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
+            await document.body.setAttribute('data-click-processed', 'false');
+        });
         });
 
         this.postMessageMgr = new PostMessageMgr();
@@ -789,9 +800,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           const videoSrc = Array.from(i.querySelectorAll("source")).map(source => source.getAttribute("src")).filter(src => src);
 
           if (videoSrc.length) {
-            content.push({ elt: i, type: i.localName, src: videoSrc });
+            content.push({ type: i.localName, src: videoSrc });
           } else if (src) {
-            content.push({ elt: i, type: i.localName, src: src });
+            content.push({ type: i.localName, src: src });
           }
 
           return;
@@ -799,7 +810,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
         // let's avoid useless buttons
         if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
-          let o = {elt:i, type:i.localName}
+          let o = {type:i.localName}
           src && (o.src = src);
           href && (o.href = href);
           content.push(o)
@@ -807,7 +818,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
-          content.push({elt:i, type:i.localName,href: i.style.backgroundImage})
+          content.push({type:i.localName,href: i.style.backgroundImage})
         }
       })
       content = _.uniqWith(content,(o1,o2) => {
