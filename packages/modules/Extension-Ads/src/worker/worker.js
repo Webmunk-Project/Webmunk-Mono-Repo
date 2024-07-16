@@ -211,12 +211,12 @@ const extensionAdsAppMgr = {
 
       console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
       console.log('Event data:', eventData);
+
+      await this.rudderStack.track(RudderStack.events.AD_CLICKED, eventData);
+      await this.rudderStack.flush();
     } else {
       console.log("Clicked URL not found.");
     }
-
-    await this.rudderStack.track(RudderStack.events.AD_CLICKED, eventData);
-    await this.rudderStack.flush();
   },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
