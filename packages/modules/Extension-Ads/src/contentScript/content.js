@@ -436,7 +436,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
             await chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
             await document.body.setAttribute('data-click-processed', 'false');
-        });
+          });
         });
 
         this.postMessageMgr = new PostMessageMgr();
@@ -689,8 +689,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         for (let i = 0; i < node.childNodes.length; i++) {
             await this.traverseDOM(node.childNodes[i], _indent + 2);
         }
-    }
-  },
+      }
+    },
     waitForFrameId:function(node, count = 50){
       return new Promise((resolve,reject) => {
         let frameId = node.getAttribute("frameid")
