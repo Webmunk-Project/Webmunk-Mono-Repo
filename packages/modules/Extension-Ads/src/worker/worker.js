@@ -30,26 +30,34 @@ const extensionAdsAppMgr = {
   _onMessage_isFrameAnAd(_request, from){
       return chrome.tabs.sendMessage(from.tab.id,{action:"isFrameAnAd", frameId:from.frameId})
   },
-  testRedirect: async function(url){
-      //console.log(`testRedirect: url= ${url}`)
-      let result = await fetch(url)
-      .then(response => {
-          return {
-              success: true,
-              redirected: response.redirected,
-              url: response.url,
-              initialUrl: url
-          }
-      })
-      .catch(error => {
-          console.error(`Exception: fetching for redirects ${url}`, error)
-          return {
-              success: false,
-              url: url,
-              initialUrl: url
-          }
-      });
-      return result;
+  async testRedirect(url) {
+    const result = {
+      redirected: false,
+      redirectedUrl: null,
+    };
+
+    try {
+      const res = await fetch(url);
+
+      if (res.redirected) {
+        result.redirected = true;
+        result.redirectedUrl = res.url;
+      } else {
+        const text = await res.text();
+        const match = text.match(/document\.location\.replace\("(.*)"\)/);
+
+        if (match && match[1]) {
+          result.redirected = true;
+          result.redirectedUrl = match[1];
+        } else {
+          result.redirectedUrl = null;
+        }
+      }
+    } catch (error) {
+      console.log(`Exception fetching for redirects ${url}`, error);
+    }
+
+    return result;
   },
   _onMessage_youAreAFrameAd(data, from){
       chrome.tabs.sendMessage(from.tab.id,
@@ -59,17 +67,16 @@ const extensionAdsAppMgr = {
   },
   normalizeUrl(url, originUrl) {
     try {
+      url = url.trim().replace(/(\s\d+x,?)/g, '');
+
       if (url.startsWith("//")) {
         let protocol = /^((http|https):)/.exec(originUrl)[1];
-
         return protocol + url;
       } else if (url.startsWith("/")) {
         let origin = /^(.*?:\/\/[^\/]+)/.exec(originUrl)[1];
-
         return origin + url;
       } else if (url.startsWith("url(")) {
         let matches = /url\("(.*)"\)/.exec(url);
-
         if (matches) return matches[1];
       } else if (url.startsWith("blob:")) {
         url = url.slice(5);
@@ -78,6 +85,64 @@ const extensionAdsAppMgr = {
       console.log("Exception occurred while normalizing URL:", e);
     }
     return url;
+  },
+  contentFilterPredicate(item) {
+    // TODO: move all content filters to this ONE place
+    const url = item.src || item.href;
+    return url && !url.startsWith("url(\"data");
+  },
+  async processAdData({ title, company, text, content }, tabUrl, clickedUrl) {
+    const uniqueUrls = new Set();
+    const allowedRedirectTypes = ['a', 'div'];
+    const filteredContent = content.filter(this.contentFilterPredicate);
+
+    const processedContent = await Promise.all(
+      filteredContent.map(async (item) => {
+        const itemUrl = item.src || item.href;
+        const normalizedUrl = this.normalizeUrl(itemUrl, tabUrl);
+
+        if (uniqueUrls.has(normalizedUrl)) return;
+
+        uniqueUrls.add(normalizedUrl);
+
+        try {
+          let redirectResult = {};
+
+          if (allowedRedirectTypes.includes(item.type)) {
+            redirectResult = await this.testRedirect(normalizedUrl);
+          }
+
+          return { ...item, ...redirectResult, initialUrl: normalizedUrl };
+        } catch (error) {
+          console.error(`Error processing URL ${normalizedUrl}:`, error);
+          return null; // Return null or handle error as needed
+        }
+      })
+    );
+
+    // Filter out any null values due to errors
+    const filteredProcessedContent = processedContent.filter(result => !!result);
+
+    // processedContent should already be properly sorted on the content script side, but we might need to add sorting here as well
+    const successRedirectItem = filteredProcessedContent.find((item) => item.redirected);
+    const clickedItem = clickedUrl
+      && filteredProcessedContent.find((item) => item.initialUrl === clickedUrl);
+
+    if (clickedUrl && !clickedItem) {
+      console.warn('Clicked content is not found!');
+    }
+
+    const mainContentItem = clickedItem || successRedirectItem || filteredProcessedContent[0];
+
+    return {
+      title,
+      company,
+      text,
+      initialUrl: mainContentItem.initialUrl,
+      redirected: mainContentItem.redirected,
+      redirectedUrl: mainContentItem.redirectedUrl,
+      content: filteredProcessedContent
+    };
   },
   prepareEventData(adData, pageUrl) {
     return {
@@ -107,45 +172,27 @@ const extensionAdsAppMgr = {
   },
   async _onMessage_adContent(data, from) {
     const { id: tabId, url: tabUrl } = from.tab;
-    const content = data?.content || data?.contentMain;
-    const uniqueHrefs = new Set();
+    const { meta, adsData } = data;
 
-    if (!content) return;
+    if (!adsData.length) return;
 
-    const promises = content.elts.map(async (item) => {
-      let itemUrl = item.src || item.href;
+    const results = await Promise.all(
+      adsData.map(async (data) => {
+        try {
+          const result = await this.processAdData(data, tabUrl, null);
 
-      if (itemUrl && !itemUrl.startsWith("url(\"data")) {
-        const normalizedUrl = this.normalizeUrl(itemUrl, tabUrl);
+          return result;
+        } catch (error) {
 
-        if (!uniqueHrefs.has(normalizedUrl)) {
-          uniqueHrefs.add(normalizedUrl);
-
-          let result = await this.testRedirect(normalizedUrl);
-
-          return { result, item };
+          return null;
         }
+      })
+    );
+
+    results.forEach((result) => {
+      if (result) {
+        this.tabData[tabId].ads.set(result.initialUrl, result);
       }
-
-      return null;
-    });
-
-    const results = (await Promise.all(promises)).filter(res => res !== null);
-
-    results.forEach(({ result, item }) => {
-      if (!result) return;
-
-      this.tabData[tabId].ads.set(result.initialUrl, {
-        initialUrl: result.initialUrl,
-        redirected: result.redirected,
-        redirectedUrl: result.redirected ? result.url : undefined,
-        content: {
-          type: item.type,
-          src: item.src || item.href,
-          title: item.title,
-          text: item.text,
-        }
-      });
     });
 
     if (this.tabData[tabId].status === 'complete') {
@@ -155,31 +202,21 @@ const extensionAdsAppMgr = {
     }
   },
   async _onMessage_adClicked(data, from) {
-    if (!data.content.clickedUrl) {
-      console.log("Clicked URL not found.");
-      return;
-    }
-
     const { id: tabId, url: tabUrl } = from.tab;
-    const normalizedUrl = this.normalizeUrl(data.content.clickedUrl, tabUrl);
-    const result = await this.testRedirect(normalizedUrl);
+    const { meta, adData, clickedUrl } = data;
 
-    if (!result) return;
+    if (clickedUrl) {
+      const result = await this.processAdData(adData, tabUrl, clickedUrl);
+      const eventData = this.prepareEventData(result, tabUrl);
 
-    const ad = {
-      initialUrl: result.initialUrl,
-      redirected: result.redirected,
-      redirectedUrl: result.redirected ? result.url : undefined,
-      content: data.content.elts,
-    };
+      console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
+      console.log('Event data:', eventData);
 
-    const eventData = this.prepareEventData(ad, this.tabData[tabId].url);
-
-    console.log(`%cUser clicked on an ad: ${data.content.clickedUrl}`, 'color: orange');
-    console.log('Event data:', eventData);
-
-    await this.rudderStack.track(RudderStack.events.AD_CLICKED, eventData);
-    await this.rudderStack.flush();
+      await this.rudderStack.track(RudderStack.events.AD_CLICKED, eventData);
+      await this.rudderStack.flush();
+    } else {
+      console.log("Clicked URL not found.");
+    }
   },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {

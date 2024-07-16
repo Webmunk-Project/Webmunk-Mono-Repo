@@ -298,42 +298,45 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return this.exceptions.join(',\n');
     }
     processNodes(nodes, pselectorAction, pselectorRaw) {
-      const content = { elts: [] };
+      const adsData = [];
 
       nodes.forEach(node => {
-        debugLog.procedural && node.setAttribute("data-webmunk-considered-processNodes", "true");
+        debugLog.procedural && node.setAttribute('data-webmunk-considered-processNodes', 'true');
 
         if (!adsMgr.hasAnAdsParent(node, 1000000)) {
-          this.highlightNodeAsAds(node, 0, "darkgreen", pselectorAction, pselectorRaw);
+          this.highlightNodeAsAds(node, 0, 'darkgreen', pselectorAction, pselectorRaw);
         }
 
         if (!isFrame() && adsMgr.initialAdContentSent) {
-          let nodeContent = adsMgr.extractContent(0, node);
-          /*if (n.getAttribute("data-webmunk-isad") == "true") {
-            console.log("Deja vu")
-          }*/
-          content.elts.push(...nodeContent.elts);
+          const adData = adsMgr.extractAdData(0, node);
+          adsData.push(adData)
         }
 
-        if (!node.hasAttribute('data-click-handler-added')) {
+        if (!isFrame() && !node.hasAttribute('data-click-handler-added')) {
           node.setAttribute('data-click-handler-added', 'true');
+          node.setAttribute('data-click-processed', 'false');
 
-          node.addEventListener('click', (event) => {
-            let clickedUrl = null;
+          node.addEventListener('click', async (event) => {
+            if (node.getAttribute('data-click-processed') === 'true') return;
 
-            clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
+            await node.setAttribute('data-click-processed', 'true');
 
-            if (clickedUrl) {
-              const content = { ...adsMgr.extractContent(0, node), clickedUrl };
+            const clickedUrl = event.target.tagName === 'A'
+              ? event.target.href
+              : event.target.closest('a')?.href;
 
-              chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + ".adClicked", data: { content } });
-            }
+            const meta = adsMgr.extractMeta();
+            const adData = adsMgr.extractAdData(0, node);
+
+            await chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
+            await node.setAttribute('data-click-processed', 'false');
           });
         }
       });
 
-      if (content.elts.length) {
-        chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + ".adContent", data: { content } });
+      if (adsData.length) {
+        const meta = adsMgr.extractMeta();
+        chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adContent', data: { meta, adsData } });
       }
     }
     highlightNodeAsAds(node1, _indent, color, detectionType, selectorRaw){
@@ -385,91 +388,88 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     frameId: null,
     initialAdContentSent: false,
     appMgrName: "",
-    initialize:async function(){
+    async initialize(){
       chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this));
 
-      if(isFrame()) {
+      if (isFrame()) {
         this.isAd = false;
 
         document.addEventListener('DOMContentLoaded', async (event) => {
-          this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
+          this.frameId = await chrome.runtime.sendMessage({ action: 'Messenger.getFrameId' });
           await this.wait(WAIT_BEFORE_EXTRACT);
-          const response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.isDisplayNone",data:{}});
+          const response = await chrome.runtime.sendMessage({ action: 'extensionAdsAppMgr.isDisplayNone', data: {} });
 
           if (response?.data?.isDisplayNone) {
-            debugLog.hidden && console.log(`DOMContentLoaded: Iframe  is hidden ${this.frameId} `, window.document);
+            debugLog.hidden && console.log(`DOMContentLoaded: Iframe is hidden ${this.frameId} `, window.document);
 
             return;
           }
 
           if (!this.isAd) {
-            const response  = await chrome.runtime.sendMessage({action:"extensionAdsAppMgr.parentFrameIsAnAd",data:{}});
+            const response  = await chrome.runtime.sendMessage({ action: 'extensionAdsAppMgr.parentFrameIsAnAd', data: {} });
 
             this.isAd = response?.data?.isAd;
           }
 
-          !this.isAd && debugLog.noAd && console.log(`DOMContentLoaded: Iframe  is not an ad ${this.frameId} `, window.document);
+          if (!this.isAd) {
+            debugLog.noAd && console.log(`DOMContentLoaded: Iframe is not an ad ${this.frameId} `, window.document);
 
-          if (this.isAd) {
-            const content = this.extractContent(this.frameId);
-            content.meta = this.extractMeta();
-            chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adContent", data: { content } });
-
-            document.addEventListener('click', (event) => {
-              let clickedUrl = null;
-
-              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
-
-              if (clickedUrl) {
-                content.clickedUrl = clickedUrl;
-
-                chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adClicked", data: { content }});
-              }
-            });
+            return;
           }
+
+          const meta = this.extractMeta();
+          const frameData = this.extractAdData(this.frameId);
+
+          chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adContent', data: { meta, adsData: [frameData] } });
+
+          document.addEventListener('click', async (event) => {
+            if (document.body.getAttribute('data-click-processed') === 'true') return;
+
+            await document.body.setAttribute('data-click-processed', 'true');
+
+            const clickedUrl = event.target.tagName === 'A'
+              ? event.target.href
+              : event.target.closest('a')?.href;
+
+            const meta = this.extractMeta();
+            const adData = this.extractAdData(this.frameId);
+
+            await chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
+            await document.body.setAttribute('data-click-processed', 'false');
+        });
         });
 
         this.postMessageMgr = new PostMessageMgr();
-        this.frameId = await chrome.runtime.sendMessage({action:"Messenger.getFrameId"});
-      }
-      else { // main frame
+        this.frameId = await chrome.runtime.sendMessage({ action: 'Messenger.getFrameId' });
+      } else { // main frame
+        const adElements = [];
+
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(WAIT_BEFORE_EXTRACT);
 
-          const adElements = [];
+          document.querySelectorAll('[data-webmunk-isad]')
+            .forEach(elem => elem.localName !== 'iframe' && adElements.push(elem));
 
-          document.querySelectorAll("[data-webmunk-isad]")
-            .forEach(elem => adElements.push(elem));
+          const meta = this.extractMeta();
+          const adsData = adElements.map((elem) => this.extractAdData(0, elem));
 
-          const contentMain = { meta: this.extractMeta(), elts: [] };
+          chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adContent', data: { meta, adsData } });
 
-          adElements.forEach((elt) => {
-            if (elt.localName !== "iframe") {
-              const content = this.extractContent(0, elt);
-              contentMain.elts.push(...content.elts);
-              contentMain.documentUrl = content.documentUrl;
-            }
-          });
-
-          chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adContent", data: { contentMain } });
           this.initialAdContentSent = true;
+        });
 
-          document.addEventListener('click', (event) => {
-            const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
+        document.addEventListener('click', (event) => {
+          const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
 
-            if (adElement) {
-              const content = this.extractContent(0, adElement);
-              let clickedUrl = null;
+          if (!adElement) return;
 
-              clickedUrl = (event.target.tagName === 'A') ? event.target.href : event.target.closest('a')?.href || '';
+          const clickedUrl = event.target.tagName === 'A'
+            ? event.target.href
+            : event.target.closest('a')?.href;
+          const meta = this.extractMeta();
+          const adData = this.extractAdData(0, adElement);
 
-              if (clickedUrl) {
-                content.clickedUrl = clickedUrl;
-              }
-
-              chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + ".adClicked", data: { content }});
-            }
-          });
+          chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
         });
 
         this.postMessageMgr = new PostMessageMgr();
@@ -655,40 +655,41 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           }
       }
       if (node.nodeType === Node.ELEMENT_NODE) {
-          this.cssSelectors.forEach(async selector => {
-              if (node.localName === "iframe") {
-                  this.iframeSourceObserver.observe(node, this.iframeSourceObserverOptions);
-              }
-              try {
-                  if (node.matches(selector) && !this.hasAnAdsParent(node)) {
-                      let parentFrameIsAnAd = false;
-                      if (isFrame()) {
-                          console.log("Checking node for ad ascendance", node);
-                      }
-                      if (!parentFrameIsAnAd) {
-                          this.highlightNodeAsAds(node, _indent, "blue", "data-webmunk-cosmetic-hit", selector);
-                      }
-                  } else {
-                      if (this.isAd && node.localName === "iframe") {
-                          node.setAttribute("data-webmunk-isad", true);
-                          this.waitForFrameId(node).then(id => {
-                              chrome.runtime.sendMessage({
-                                  action: "extensionAdsAppMgr.youAreAFrameAd",
-                                  data: {
-                                      frameId: parseInt(id, 10)
-                                  }
-                              });
-                          });
-                      }
-                  }
-              } catch (e) {
-                  console.log(`Error processing selector: ${selector}`, e);
-              }
-          });
-          for (let i = 0; i < node.childNodes.length; i++) {
-              this.traverseDOM(node.childNodes[i], _indent + 2);
-          }
-      }
+        for (const selector of this.cssSelectors) {
+            if (node.localName === "iframe") {
+                this.iframeSourceObserver.observe(node, this.iframeSourceObserverOptions);
+            }
+
+            try {
+                if (node.matches(selector) && !this.hasAnAdsParent(node)) {
+                    let parentFrameIsAnAd = false;
+                    if (isFrame()) {
+                        console.log("Checking node for ad ascendance", node);
+                    }
+                    if (!parentFrameIsAnAd) {
+                        this.highlightNodeAsAds(node, _indent, "blue", "data-webmunk-cosmetic-hit", selector);
+                    }
+                } else {
+                    if (this.isAd && node.localName === "iframe") {
+                        node.setAttribute("data-webmunk-isad", true);
+                        const id = await this.waitForFrameId(node);
+                        chrome.runtime.sendMessage({
+                            action: "extensionAdsAppMgr.youAreAFrameAd",
+                            data: {
+                                frameId: parseInt(id, 10)
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log(`Error processing selector: ${selector}`, e);
+            }
+        }
+
+        for (let i = 0; i < node.childNodes.length; i++) {
+            await this.traverseDOM(node.childNodes[i], _indent + 2);
+        }
+    }
   },
     waitForFrameId:function(node, count = 50){
       return new Promise((resolve,reject) => {
@@ -765,20 +766,30 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       return content;
     },
-    extractContent(frameId, elt){
+    extractAdData(frameId, elem = null) {
+      const { title, company, text } = this.extractTexts(frameId, elem);
+      const content = this.extractContent(frameId, elem);
+
+      return { title, company, text, content };
+    },
+    extractTexts(frameId, element) {
+      // TODO: implement texts extractor
+      return { title: null, company: null, text: null };
+    },
+    extractContent(frameId, elt) {
       let content = [];
       let root = document;
-      if (frameId == 0) root = elt;
-      const imgArray = Array.from(root.querySelectorAll("img"));
+      if (frameId === 0) root = elt;
       const aArray = Array.from(root.querySelectorAll("a"));
+      const imgArray = Array.from(root.querySelectorAll("img"));
       const divArray = Array.from(root.querySelectorAll("div"));
       const videoArray = Array.from(root.querySelectorAll("video"));
 
-      const scopeArray = [...imgArray, ...aArray, ...videoArray];
-      if (frameId == 0) scopeArray.push(root)
+      const scopeArray = [...aArray, ...imgArray, ...videoArray];
+      if (frameId === 0) scopeArray.push(root)
       scopeArray.forEach(i => {
-        let src = i.getAttribute("src");
         let href = i.getAttribute("href");
+        let src = i.getAttribute("src");
 
         if (src && (src.startsWith('https://static.xx.fbcdn.net/images/') || src.startsWith('data:image/svg+xml'))) {
           return;
@@ -790,9 +801,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           const videoSrc = Array.from(i.querySelectorAll("source")).map(source => source.getAttribute("src")).filter(src => src);
 
           if (videoSrc.length) {
-            content.push({ elt: i, type: i.localName, src: videoSrc });
+            content.push({ type: i.localName, src: videoSrc });
           } else if (src) {
-            content.push({ elt: i, type: i.localName, src: src });
+            content.push({ type: i.localName, src: src });
           }
 
           return;
@@ -800,7 +811,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
 
         // let's avoid useless buttons
         if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
-          let o = {elt:i, type:i.localName}
+          let o = {type:i.localName}
           src && (o.src = src);
           href && (o.href = href);
           content.push(o)
@@ -808,7 +819,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
-          content.push({elt:i, type:i.localName,href: i.style.backgroundImage})
+          content.push({type:i.localName,href: i.style.backgroundImage})
         }
       })
       content = _.uniqWith(content,(o1,o2) => {
@@ -818,7 +829,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         return true;
       })
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
-      return { elts: content, documentUrl: document.URL };
+      return content;
     },
     safeObserverHandler:async function() {
         let i = 0;
