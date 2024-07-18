@@ -773,8 +773,43 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return { title, company, text, content };
     },
     extractTexts(frameId, element) {
-      // TODO: implement texts extractor
-      return { title: null, company: null, text: null };
+      let title = null;
+      let longestText = '';
+      let company = null;
+
+      if (!element) {
+        return { title: null, company: null, text: null };
+      }
+
+      const selectors = [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span',
+        'yt-formatted-string', 'body-text', 'title-text'
+      ];
+
+      const excludedWords = ['Right chevron', 'Like', 'Comment', 'Verified', 'Learn more', 'Sponsored', 'See Translation'];
+
+      const elements = Array.from(element.querySelectorAll(selectors)).filter((el) => {
+        const textContent = el.textContent.trim();
+
+        return !el.classList.contains('visually-hidden') &&
+          !excludedWords.some((word) => textContent.includes(word));
+      });
+
+      elements.forEach((el) => {
+        const textContent = el.textContent.trim();
+
+        if (textContent !== '') {
+          if (!title) {
+            title = textContent;
+          }
+          if (textContent.length > longestText.length) {
+            longestText = textContent;
+          }
+        }
+      });
+
+
+      return { title, company, text: longestText };
     },
     extractContent(frameId, elt) {
       let content = [];

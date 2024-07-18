@@ -93,6 +93,7 @@ const extensionAdsAppMgr = {
   },
   async processAdData({ title, company, text, content }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
+    let companyName = company;
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
 
@@ -105,18 +106,13 @@ const extensionAdsAppMgr = {
 
         uniqueUrls.add(normalizedUrl);
 
-        try {
-          let redirectResult = {};
+        let redirectResult = {};
 
-          if (allowedRedirectTypes.includes(item.type)) {
-            redirectResult = await this.testRedirect(normalizedUrl);
-          }
-
-          return { ...item, ...redirectResult, initialUrl: normalizedUrl };
-        } catch (error) {
-          console.error(`Error processing URL ${normalizedUrl}:`, error);
-          return null; // Return null or handle error as needed
+        if (allowedRedirectTypes.includes(item.type)) {
+          redirectResult = await this.testRedirect(normalizedUrl);
         }
+
+        return { ...item, ...redirectResult, initialUrl: normalizedUrl };
       })
     );
 
@@ -125,6 +121,10 @@ const extensionAdsAppMgr = {
 
     // processedContent should already be properly sorted on the content script side, but we might need to add sorting here as well
     const successRedirectItem = filteredProcessedContent.find((item) => item.redirected);
+    if (successRedirectItem) {
+      companyName = this.getCompanyName(successRedirectItem.redirectedUrl);
+    }
+
     const clickedItem = clickedUrl
       && filteredProcessedContent.find((item) => item.initialUrl === clickedUrl);
 
@@ -136,13 +136,23 @@ const extensionAdsAppMgr = {
 
     return {
       title,
-      company,
+      company: companyName,
       text,
       initialUrl: mainContentItem.initialUrl,
       redirected: mainContentItem.redirected,
       redirectedUrl: mainContentItem.redirectedUrl,
       content: filteredProcessedContent
     };
+  },
+  getCompanyName(url) {
+    const { hostname } = new URL(url);
+    let name = hostname.replace('www.', '');
+    name = name.split('.')[0];
+
+    return name
+      .split(/[.-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   },
   prepareEventData(adData, pageUrl) {
     return {
