@@ -780,33 +780,38 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         return { title: null, text: null };
       }
 
+      // Selectors array to identify text elements
       const selectors = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span',
         'yt-formatted-string', 'body-text', 'title-text'
       ];
 
-      const excludedWords = ['Right chevron', 'Like', 'Comment', 'Verified', 'Learn more', 'Sponsored', 'See Translation'];
-
       const elements = Array.from(element.querySelectorAll(selectors)).filter((el) => {
-        const textContent = el.textContent.trim();
-
-        return !el.classList.contains('visually-hidden') &&
-          !excludedWords.some((word) => textContent.includes(word));
+        return !el.classList.contains('visually-hidden');
       });
 
-      elements.forEach((el) => {
+      // Extract title text from the first non-empty element
+      elements.some((el) => {
         const textContent = el.textContent.trim();
 
         if (textContent !== '') {
-          if (!title) {
-            title = textContent;
-          }
-          if (textContent.length > longestText.length) {
-            longestText = textContent;
-          }
+          title = textContent;
+
+          return true;
         }
+
+        return false;
       });
 
+      // Find the longest text element by sanitizing the content
+      elements.forEach((el) => {
+        const textContent = el.textContent.trim();
+        const sanitizedTextContent = textContent.replace(/[^\w\s]/gi, '');
+
+        if (sanitizedTextContent.length > longestText.length) {
+          longestText = textContent;
+        }
+      });
 
       return { title, text: longestText };
     },

@@ -93,7 +93,6 @@ const extensionAdsAppMgr = {
   },
   async processAdData({ title, text, content }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
-    let companyName = '';
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
 
@@ -121,9 +120,6 @@ const extensionAdsAppMgr = {
 
     // processedContent should already be properly sorted on the content script side, but we might need to add sorting here as well
     const successRedirectItem = filteredProcessedContent.find((item) => item.redirected);
-    if (successRedirectItem) {
-      companyName = this.getCompanyName(successRedirectItem.redirectedUrl);
-    }
 
     const clickedItem = clickedUrl
       && filteredProcessedContent.find((item) => item.initialUrl === clickedUrl);
@@ -133,10 +129,11 @@ const extensionAdsAppMgr = {
     }
 
     const mainContentItem = clickedItem || successRedirectItem || filteredProcessedContent[0];
+    const company = this.getCompanyName(mainContentItem.redirectedUrl || mainContentItem.initialUrl, title);
 
     return {
       title,
-      company: companyName,
+      company,
       text,
       initialUrl: mainContentItem.initialUrl,
       redirected: mainContentItem.redirected,
@@ -144,16 +141,24 @@ const extensionAdsAppMgr = {
       content: filteredProcessedContent
     };
   },
-  getCompanyName(url) {
-    const { hostname } = new URL(url);
-    let name = hostname.replace('www.', '');
-    name = name.split('.')[0];
+  getCompanyName(url, title) {
+    let domain = (new URL(url)).hostname?.replace('www.', '');
+    const mainDomain = domain.split('.')[0];
 
-    return name
-      .split(/[.-]/)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  },
+    if (mainDomain.length >= 1 && mainDomain.length <= 4) {
+      const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
+
+      return sanitizedTitle
+        .split(/[_.-]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    return mainDomain
+        .split(/[_.-]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+},
   prepareEventData(adData, pageUrl) {
     return {
       pageUrl: pageUrl,
