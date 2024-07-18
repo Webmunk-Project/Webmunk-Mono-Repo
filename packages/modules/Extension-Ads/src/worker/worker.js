@@ -91,9 +91,9 @@ const extensionAdsAppMgr = {
     const url = item.src || item.href;
     return url && !url.startsWith("url(\"data");
   },
-  async processAdData({ title, company, text, content }, tabUrl, clickedUrl) {
+  async processAdData({ title, text, content }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
-    let companyName = company;
+    let companyName = '';
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
 

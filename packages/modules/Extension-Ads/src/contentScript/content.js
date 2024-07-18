@@ -767,18 +767,17 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return content;
     },
     extractAdData(frameId, elem = null) {
-      const { title, company, text } = this.extractTexts(frameId, elem);
+      const { title, text } = this.extractTexts(frameId, elem);
       const content = this.extractContent(frameId, elem);
 
-      return { title, company, text, content };
+      return { title, text, content };
     },
     extractTexts(frameId, element) {
       let title = null;
       let longestText = '';
-      let company = null;
 
       if (!element) {
-        return { title: null, company: null, text: null };
+        return { title: null, text: null };
       }
 
       const selectors = [
@@ -809,7 +808,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       });
 
 
-      return { title, company, text: longestText };
+      return { title, text: longestText };
     },
     extractContent(frameId, elt) {
       let content = [];
