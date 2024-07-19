@@ -773,9 +773,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return { title, text, content };
     },
     extractTexts(frameId, element) {
-      let title = null;
-      let longestText = '';
-
       if (!element) {
         return { title: null, text: null };
       }
@@ -791,29 +788,24 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       });
 
       // Extract title text from the first non-empty element
-      elements.some((el) => {
+      const title = elements.find((el) => {
         const textContent = el.textContent.trim();
 
-        if (textContent !== '') {
-          title = textContent;
-
-          return true;
-        }
-
-        return false;
-      });
+        return textContent !== '';
+      })?.textContent.trim() || null;
 
       // Find the longest text element by sanitizing the content
-      elements.forEach((el) => {
-        const textContent = el.textContent.trim();
+      const longestValue = elements.reduce((accumulator, elem) => {
+        const textContent = elem.textContent.trim();
         const sanitizedTextContent = textContent.replace(/[^\w\s]/gi, '');
 
-        if (sanitizedTextContent.length > longestText.length) {
-          longestText = textContent;
-        }
+        return sanitizedTextContent.length > accumulator.sanitizedTextContent.length ? { textContent, sanitizedTextContent } : accumulator;
+      }, {
+        textContent: '',
+        sanitizedTextContent: ''
       });
 
-      return { title, text: longestText };
+      return { title, text: longestValue.textContent };
     },
     extractContent(frameId, elt) {
       let content = [];

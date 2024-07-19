@@ -142,23 +142,25 @@ const extensionAdsAppMgr = {
     };
   },
   getCompanyName(url, title) {
-    let domain = (new URL(url)).hostname?.replace('www.', '');
+    const domain = (new URL(url)).hostname?.replace('www.', '');
     const mainDomain = domain.split('.')[0];
 
+    // Based on research, domains with a length of 1 to 4 characters are typically not company names,
+    // but common domain extensions (e.g., com, net, org, ru, ua).
     if (mainDomain.length >= 1 && mainDomain.length <= 4) {
       const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
 
-      return sanitizedTitle
-        .split(/[_.-]/)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+      return this.getRecycledText(sanitizedTitle);
     }
 
-    return mainDomain
+    return this.getRecycledText(mainDomain);
+  },
+  getRecycledText(text) {
+    return text
         .split(/[_.-]/)
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-},
+        .join('');
+  },
   prepareEventData(adData, pageUrl) {
     return {
       pageUrl: pageUrl,
