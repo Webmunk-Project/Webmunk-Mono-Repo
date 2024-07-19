@@ -150,12 +150,12 @@ const extensionAdsAppMgr = {
     if (mainDomain.length <= 3) {
       const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
 
-      return this.getRecycledText(sanitizedTitle);
+      return this.formatToPascalCase(sanitizedTitle);
     }
 
-    return this.getRecycledText(mainDomain);
+    return this.formatToPascalCase(mainDomain);
   },
-  getRecycledText(text) {
+  formatToPascalCase(text) {
     return text
         .split(/[_.-]/)
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
