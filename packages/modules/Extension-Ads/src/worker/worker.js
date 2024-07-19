@@ -91,7 +91,7 @@ const extensionAdsAppMgr = {
     const url = item.src || item.href;
     return url && !url.startsWith("url(\"data");
   },
-  async processAdData({ title, company, text, content }, tabUrl, clickedUrl) {
+  async processAdData({ title, text, content }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
@@ -105,18 +105,13 @@ const extensionAdsAppMgr = {
 
         uniqueUrls.add(normalizedUrl);
 
-        try {
-          let redirectResult = {};
+        let redirectResult = {};
 
-          if (allowedRedirectTypes.includes(item.type)) {
-            redirectResult = await this.testRedirect(normalizedUrl);
-          }
-
-          return { ...item, ...redirectResult, initialUrl: normalizedUrl };
-        } catch (error) {
-          console.error(`Error processing URL ${normalizedUrl}:`, error);
-          return null; // Return null or handle error as needed
+        if (allowedRedirectTypes.includes(item.type)) {
+          redirectResult = await this.testRedirect(normalizedUrl);
         }
+
+        return { ...item, ...redirectResult, initialUrl: normalizedUrl };
       })
     );
 
@@ -125,6 +120,7 @@ const extensionAdsAppMgr = {
 
     // processedContent should already be properly sorted on the content script side, but we might need to add sorting here as well
     const successRedirectItem = filteredProcessedContent.find((item) => item.redirected);
+
     const clickedItem = clickedUrl
       && filteredProcessedContent.find((item) => item.initialUrl === clickedUrl);
 
@@ -133,6 +129,7 @@ const extensionAdsAppMgr = {
     }
 
     const mainContentItem = clickedItem || successRedirectItem || filteredProcessedContent[0];
+    const company = this.getCompanyName(mainContentItem.redirectedUrl || mainContentItem.initialUrl, title);
 
     return {
       title,
@@ -143,6 +140,26 @@ const extensionAdsAppMgr = {
       redirectedUrl: mainContentItem.redirectedUrl,
       content: filteredProcessedContent
     };
+  },
+  getCompanyName(url, title) {
+    const domain = (new URL(url)).hostname?.replace('www.', '');
+    const mainDomain = domain.split('.')[0];
+
+    // Based on research, domains with a length of 1 to 4 characters are typically not company names,
+    // but common domain extensions (e.g., com, net, org, ru, ua).
+    if (mainDomain.length <= 3) {
+      const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
+
+      return this.formatToPascalCase(sanitizedTitle);
+    }
+
+    return this.formatToPascalCase(mainDomain);
+  },
+  formatToPascalCase(text) {
+    return text
+        .split(/[_.-]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
   },
   prepareEventData(adData, pageUrl) {
     return {

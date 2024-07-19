@@ -767,14 +767,45 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return content;
     },
     extractAdData(frameId, elem = null) {
-      const { title, company, text } = this.extractTexts(frameId, elem);
+      const { title, text } = this.extractTexts(frameId, elem);
       const content = this.extractContent(frameId, elem);
 
-      return { title, company, text, content };
+      return { title, text, content };
     },
     extractTexts(frameId, element) {
-      // TODO: implement texts extractor
-      return { title: null, company: null, text: null };
+      if (!element) {
+        return { title: null, text: null };
+      }
+
+      // Selectors array to identify text elements
+      const selectors = [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span',
+        'yt-formatted-string', 'body-text', 'title-text'
+      ];
+
+      const elements = Array.from(element.querySelectorAll(selectors)).filter((el) => {
+        return !el.classList.contains('visually-hidden');
+      });
+
+      // Extract title text from the first non-empty element
+      const title = elements.find((el) => {
+        const textContent = el.textContent.trim();
+
+        return textContent !== '';
+      })?.textContent.trim() || null;
+
+      // Find the longest text element by sanitizing the content
+      const longestValue = elements.reduce((accumulator, elem) => {
+        const textContent = elem.textContent.trim();
+        const sanitizedTextContent = textContent.replace(/[^\w\s]/gi, '');
+
+        return sanitizedTextContent.length > accumulator.sanitizedTextContent.length ? { textContent, sanitizedTextContent } : accumulator;
+      }, {
+        textContent: '',
+        sanitizedTextContent: ''
+      });
+
+      return { title, text: longestValue.textContent };
     },
     extractContent(frameId, elt) {
       let content = [];
