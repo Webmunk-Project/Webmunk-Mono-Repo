@@ -147,7 +147,7 @@ const extensionAdsAppMgr = {
 
     // Based on research, domains with a length of 1 to 4 characters are typically not company names,
     // but common domain extensions (e.g., com, net, org, ru, ua).
-    if (mainDomain.length >= 1 && mainDomain.length <= 4) {
+    if (mainDomain.length <= 3) {
       const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
 
       return this.getRecycledText(sanitizedTitle);
