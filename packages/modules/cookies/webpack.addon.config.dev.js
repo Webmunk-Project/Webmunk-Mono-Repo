@@ -2,16 +2,9 @@ var _ = require('lodash')
 var webpack = require('webpack')
 const { mergeWithCustomize } = require('webpack-merge')
 const baseConfig = require('./webpack.addon.config.base')("chrome")
-const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const manifestVersion = "3";
-const mergeManifests = require('@webmunk/utils-scripts').mergeManifests
-const copyDir = require('@webmunk/utils-scripts').copyDir
-
-let {manifest, processedManifestModule} = mergeManifests("@webmunk",__dirname,"src","src/chrome");
-const baseManifest = manifest;
-copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
-
 const package = require('./package.json')
+
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
     if (key === 'module.rules') {
@@ -63,22 +56,6 @@ module.exports = mergeWithCustomize({
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,
     }),
-    new webpack.ProvidePlugin({
-      "React": "react",
-    }),
-    new WebpackExtensionManifestPlugin({
-      config: {
-        base: baseManifest,
-        extend: {
-          "name":baseManifest.name+"_dev",
-          "version": package.version+"."+parseInt((Date.now()-1665497117452)/100000),
-          "manifest_version":parseInt(manifestVersion),
-          "action": {
-            "default_popup": "popup/popup.html",
-          }
-        }
-      }
-    })
   ]
 })
 //console.log("module.exports: ",module.exports.plugins)

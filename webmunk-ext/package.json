@@ -14,6 +14,7 @@
     "@babel/preset-react": "^7.24.7",
     "@corex/deepmerge": "^2.6.148",
     "@types/styled-components": "^5.1.34",
+    "@webmunk/cookies-scrapper-module": "file:../packages/modules/cookies",
     "@webmunk/extension-ads": "file:../packages/modules/Extension-Ads",
     "@webmunk/utils": "^1.0.19",
     "@webmunk/utils-scripts": "1.0.18",

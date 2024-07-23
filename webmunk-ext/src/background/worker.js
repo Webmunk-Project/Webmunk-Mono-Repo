@@ -4,6 +4,7 @@ import { wmSessionMgr } from '@webmunk/utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker.js";
+import "@webmunk/cookies-scrapper-module/worker";
 
 const appMgr =  {
   initialize:function(){
