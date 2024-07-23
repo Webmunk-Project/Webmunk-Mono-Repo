@@ -1,13 +1,13 @@
 {
   "name": "@webmunk/cookies-scrapper-module",
   "version": "1.0.0",
-  "description": "Browser extension for building Webmunk studies.",
+  "description": "Browser extension to query and modify cookies.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:dev": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js"
   },
-  "author": "Chris J. Karr",
+  "author": "Maks Zhaldak",
   "license": "Apache-2.0",
   "devDependencies": {
     "eslint": "^8.25.0",
@@ -15,5 +15,9 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.0"
+  },
+  "exports": {
+    "./worker": "./dist/worker.bundle",
+    "./content": "./dist/content.bundle"
   }
 }
