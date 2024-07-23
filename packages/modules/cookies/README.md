@@ -1,5 +1,14 @@
 # Browser Cookie Module
 
+## Description
+This module tracks cookies on a web page.
+
+## Build Instructions
+To build the module, use the following command:
+```bash
+npm run build:dev
+```
+
 ## License and Other Project Information
 
 Copyright 2022-2024 The Fradkin Foundation and the President & Fellows of Harvard College

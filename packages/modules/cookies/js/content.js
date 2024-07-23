@@ -4,7 +4,7 @@
   function recordCookies() {
      const url = window.location.href;
     // if (locationFilterMatches(window.location, config['cookie-filters'])) {
-      if (url === 'about:blank' || !url || url === '') {
+      if (!url || url === 'about:blank') {
         return;
       }
 

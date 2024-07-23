@@ -7,9 +7,7 @@
 	"description": "A new webmunk project",
 
     "minimum_chrome_version": "88",
-    "permissions": [
-        "cookies"
-                    ],
+    "permissions": [],
     "host_permissions": ["<all_urls>", "*://*/*"],
 
 	"background": { "service_worker": "background.bundle.js" },

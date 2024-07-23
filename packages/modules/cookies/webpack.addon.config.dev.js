@@ -56,9 +56,6 @@ module.exports = mergeWithCustomize({
     new webpack.optimize.LimitChunkCountPlugin({
       maxChunks: 1,
     }),
-    new webpack.ProvidePlugin({
-      "React": "react",
-    })
   ]
 })
 //console.log("module.exports: ",module.exports.plugins)

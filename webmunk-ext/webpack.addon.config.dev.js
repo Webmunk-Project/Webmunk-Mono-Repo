@@ -74,7 +74,7 @@ module.exports = mergeWithCustomize({
           "version": package.version+"."+parseInt((Date.now()-1665497117452)/100000),
           "manifest_version":parseInt(manifestVersion),
           "action": {
-            "default_popup": "popup/popup.html"
+            "default_popup": "popup/popup.html",
           }
         }
       }

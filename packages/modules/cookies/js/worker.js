@@ -1,9 +1,22 @@
-const cookieAppMgr = {
+const cookiesAppMgr = {
   initialize: async function() {
-    self.messenger?.addReceiver('cookieAppMgr', this);
-
     this.registerMessageHandler();
   },
+
+  registerMessageHandler() {
+    console.log('[Cookies] Initialized.');
+
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      this.handleMessage(request, sender, sendResponse);
+    });
+  },
+
+  handleMessage(request, sender, sendResponse) {
+    if (request.content === 'record_cookies') {
+      this.recordCookies(request, sender, sendResponse);
+    }
+  },
+
   recordCookies(request, sender, sendResponse) {
     console.log('[Cookie] Recording cookies for ' + request.url + '...');
 
@@ -28,7 +41,7 @@ const cookieAppMgr = {
         //     generator: 'browser-cookies',
         //     payload: payload // eslint-disable-line object-shorthand
         //   };
-
+        //
         //   // handleMessage(newRequest, sender, sendResponse);
         // }
       });
@@ -37,18 +50,8 @@ const cookieAppMgr = {
     }
 
     return false;
-  },
-
-  registerMessageHandler() {
-    console.log('[Cookies] Initialized.');
-
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.content === 'record_cookies') {
-        this.recordCookies(request, sender, sendResponse);
-      }
-    });
   }
-}
+};
 
-cookieAppMgr.initialize();
-export {cookieAppMgr}
+cookiesAppMgr.initialize();
+export { cookiesAppMgr };

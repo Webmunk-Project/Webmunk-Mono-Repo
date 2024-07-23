@@ -1,5 +1,5 @@
 {
-  "name": "webmunk_browser_extension",
+  "name": "@webmunk/cookies-scrapper-module",
   "version": "1.0.0",
   "description": "Browser extension for building Webmunk studies.",
   "main": "index.js",

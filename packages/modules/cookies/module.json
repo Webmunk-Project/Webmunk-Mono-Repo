@@ -1,18 +1,8 @@
 {
-  "name": "Cookie Logger",
-  "service_worker_scripts": [
-    "js/worker.js"
-  ],
-  "content_scripts": [
-    "js/content.js"
-  ],
-  "permissions": [
-  	"cookies",
-    "tabs",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ]
+  "name": "Cookies Scrapper",
+  "permissions": [{"name": "cookies", "justification": "to query and modify cookies"},
+                  {"name": "tabs", "justification": "to interact with the browser's tab system"},
+                  {"name": "scripting", "justification": "to execute script in different contexts"}
+                ],
+  "host_permissions": []
 }
