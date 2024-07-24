@@ -3,7 +3,7 @@ const emailInput = document.getElementById('emailInput');
 const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
-const randomIdentifier = document.getElementById('randomIdentifier');
+const formattedIdentifier = document.getElementById('randomIdentifier');
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
@@ -32,7 +32,7 @@ continueButton.addEventListener('click', async () => {
   chrome.storage.local.set({ identifier: identifier }, () => {
     getStartedContainer.style.display = 'none';
     studyExtensionContainer.style.display = 'block';
-    randomIdentifier.innerHTML = formatIdentifier(identifier);
+    formattedIdentifier.innerHTML = formatIdentifier(identifier);
     fullIdentifier = identifier;
 
     chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
@@ -77,7 +77,7 @@ function displayIdentifier() {
     if (identifier) {
       getStartedContainer.style.display = 'none';
       studyExtensionContainer.style.display = 'block';
-      randomIdentifier.innerHTML = formatIdentifier(identifier);
+      formattedIdentifier.innerHTML = formatIdentifier(identifier);
       fullIdentifier = identifier;
     }
   });
