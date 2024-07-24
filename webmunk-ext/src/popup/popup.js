@@ -65,10 +65,10 @@ async function getIdentifier(email) {
 }
 
 function formatIdentifier(identifier) {
-  const firstEightSymbols = identifier.substring(0, 10);
-  const lastEightSymbols = identifier.substring(identifier.length - 10);
+  const firstTenSymbols = identifier.substring(0, 10);
+  const lastTenSymbols = identifier.substring(identifier.length - 10);
 
-  return `${firstEightSymbols}...${lastEightSymbols}`;
+  return `${firstTenSymbols}...${lastTenSymbols}`;
 }
 
 function displayIdentifier() {
