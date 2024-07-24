@@ -3,7 +3,8 @@ const emailInput = document.getElementById('emailInput');
 const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
-const randomIdentifier = document.getElementById('randomIdentifier');
+const formattedIdentifier = document.getElementById('formattedIdentifier');
+let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
@@ -17,10 +18,13 @@ continueButton.addEventListener('click', async () => {
     return;
   }
 
+  continueButton.disabled = true;
+
   const identifier = await getIdentifier(email);
 
   if (!identifier) {
     alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+    continueButton.disabled = false;
 
     return;
   }
@@ -28,12 +32,15 @@ continueButton.addEventListener('click', async () => {
   chrome.storage.local.set({ identifier: identifier }, () => {
     getStartedContainer.style.display = 'none';
     studyExtensionContainer.style.display = 'block';
-    randomIdentifier.innerHTML = identifier;
+    formattedIdentifier.innerHTML = formatIdentifier(identifier);
+    fullIdentifier = identifier;
+
+    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
   });
 });
 
 copyButton.addEventListener('click', async () => {
-  await navigator.clipboard.writeText(randomIdentifier.innerHTML);
+  await navigator.clipboard.writeText(fullIdentifier);
   alert('Identifier copied to clipboard');
 });
 
@@ -56,6 +63,13 @@ async function getIdentifier(email) {
   }
 }
 
+function formatIdentifier(identifier) {
+  const firstTenSymbols = identifier.substring(0, 10);
+  const lastTenSymbols = identifier.substring(identifier.length - 10);
+
+  return `${firstTenSymbols}...${lastTenSymbols}`;
+}
+
 function displayIdentifier() {
   chrome.storage.local.get('identifier', (result) => {
     const identifier = result.identifier;
@@ -63,7 +77,8 @@ function displayIdentifier() {
     if (identifier) {
       getStartedContainer.style.display = 'none';
       studyExtensionContainer.style.display = 'block';
-      randomIdentifier.innerHTML = identifier;
+      formattedIdentifier.innerHTML = formatIdentifier(identifier);
+      fullIdentifier = identifier;
     }
   });
 }
