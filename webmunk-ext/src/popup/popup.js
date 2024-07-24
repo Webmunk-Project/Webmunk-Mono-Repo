@@ -3,7 +3,7 @@ const emailInput = document.getElementById('emailInput');
 const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
-const formattedIdentifier = document.getElementById('randomIdentifier');
+const formattedIdentifier = document.getElementById('formattedIdentifier');
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
