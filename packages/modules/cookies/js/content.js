@@ -2,19 +2,18 @@
 
 (function () {
   function recordCookies() {
-     const url = window.location.href;
+    const url = window.location.href;
+    const pageTitle = document.title
     // if (locationFilterMatches(window.location, config['cookie-filters'])) {
-      if (!url || url === 'about:blank') {
-        return;
-      }
+    if (!url || url === 'about:blank') {
+      return;
+    }
 
     console.log('[Cookies] Recording cookies from ' + window.location + '...');
     chrome.runtime.sendMessage({
-      action: 'record_cookies',
-      content: 'record_cookies',
-      url: window.location.href,
-      pageTitle: document.title
-    });
+      action: 'cookiesAppMgr.recordCookies',
+      data: { pageTitle, url } }
+    );
     // } else {
     //   console.log('[Cookies] Skipping ' + window.location + '.')
     // }

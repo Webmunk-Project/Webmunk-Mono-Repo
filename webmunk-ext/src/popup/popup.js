@@ -4,6 +4,8 @@ const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
 const randomIdentifier = document.getElementById('randomIdentifier');
+let isPrivacyCheckSent = false;
+let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
@@ -25,15 +27,21 @@ continueButton.addEventListener('click', async () => {
     return;
   }
 
+  if (!isPrivacyCheckSent) {
+    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+    isPrivacyCheckSent = true;
+  }
+
   chrome.storage.local.set({ identifier: identifier }, () => {
     getStartedContainer.style.display = 'none';
     studyExtensionContainer.style.display = 'block';
-    randomIdentifier.innerHTML = identifier;
+    randomIdentifier.innerHTML = formatIdentifier(identifier);
+    fullIdentifier = identifier;
   });
 });
 
 copyButton.addEventListener('click', async () => {
-  await navigator.clipboard.writeText(randomIdentifier.innerHTML);
+  await navigator.clipboard.writeText(fullIdentifier);
   alert('Identifier copied to clipboard');
 });
 
@@ -56,6 +64,13 @@ async function getIdentifier(email) {
   }
 }
 
+function formatIdentifier(identifier) {
+  const firstEightSymbols = identifier.substring(0, 10);
+  const lastEightSymbols = identifier.substring(identifier.length - 10);
+
+  return `${firstEightSymbols}...${lastEightSymbols}`;
+}
+
 function displayIdentifier() {
   chrome.storage.local.get('identifier', (result) => {
     const identifier = result.identifier;
@@ -63,7 +78,8 @@ function displayIdentifier() {
     if (identifier) {
       getStartedContainer.style.display = 'none';
       studyExtensionContainer.style.display = 'block';
-      randomIdentifier.innerHTML = identifier;
+      randomIdentifier.innerHTML = formatIdentifier(identifier);
+      fullIdentifier = identifier;
     }
   });
 }
