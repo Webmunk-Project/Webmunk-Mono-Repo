@@ -4,7 +4,6 @@ const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
 const randomIdentifier = document.getElementById('randomIdentifier');
-let isPrivacyCheckSent = false;
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
@@ -19,17 +18,15 @@ continueButton.addEventListener('click', async () => {
     return;
   }
 
+  continueButton.disabled = true;
+
   const identifier = await getIdentifier(email);
 
   if (!identifier) {
     alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+    continueButton.disabled = false;
 
     return;
-  }
-
-  if (!isPrivacyCheckSent) {
-    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
-    isPrivacyCheckSent = true;
   }
 
   chrome.storage.local.set({ identifier: identifier }, () => {
@@ -37,6 +34,8 @@ continueButton.addEventListener('click', async () => {
     studyExtensionContainer.style.display = 'block';
     randomIdentifier.innerHTML = formatIdentifier(identifier);
     fullIdentifier = identifier;
+
+    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
   });
 });
 
