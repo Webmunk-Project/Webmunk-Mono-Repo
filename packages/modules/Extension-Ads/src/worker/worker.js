@@ -126,6 +126,8 @@ const extensionAdsAppMgr = {
     // Filter out any null values due to errors
     const filteredProcessedContent = processedContent.filter(result => !!result);
 
+    if (!filteredProcessedContent.length) return;
+
     // processedContent should already be properly sorted on the content script side, but we might need to add sorting here as well
     const successRedirectItem = filteredProcessedContent.find((item) => item.redirected);
 
