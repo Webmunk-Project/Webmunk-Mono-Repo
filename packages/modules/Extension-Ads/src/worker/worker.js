@@ -91,7 +91,7 @@ const extensionAdsAppMgr = {
     const url = item.src || item.href;
     return url && !url.startsWith("url(\"data");
   },
-  async processAdData({ title, text, content }, tabUrl, clickedUrl) {
+  async processAdData({ title, text, content, coordinates }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
@@ -135,10 +135,11 @@ const extensionAdsAppMgr = {
       title,
       company,
       text,
+      coordinates,
       initialUrl: mainContentItem.initialUrl,
       redirected: mainContentItem.redirected,
       redirectedUrl: mainContentItem.redirectedUrl,
-      content: filteredProcessedContent
+      content: filteredProcessedContent,
     };
   },
   getCompanyName(url, title) {

@@ -767,16 +767,16 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return content;
     },
     extractAdData(frameId, elem = null) {
-      const { title, text } = this.extractTexts(frameId, elem);
-      const content = this.extractContent(frameId, elem);
+      // for iframes elem is document
+      const element = elem || document;
 
-      return { title, text, content };
+      const { title, text } = this.extractTexts(frameId, element);
+      const content = this.extractContent(frameId, element);
+      const coordinates = this.getAdsCoordinates(element);
+
+      return { title, text, content, coordinates };
     },
     extractTexts(frameId, element) {
-      if (!element) {
-        return { title: null, text: null };
-      }
-
       // Selectors array to identify text elements
       const selectors = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span',
@@ -790,7 +790,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       // Extract title text from the first non-empty element
       const title = elements.find((el) => {
         const textContent = el.textContent.trim();
-
         return textContent !== '';
       })?.textContent.trim() || null;
 
@@ -809,15 +808,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     },
     extractContent(frameId, elt) {
       let content = [];
-      let root = document;
-      if (frameId === 0) root = elt;
-      const aArray = Array.from(root.querySelectorAll("a"));
-      const imgArray = Array.from(root.querySelectorAll("img"));
-      const divArray = Array.from(root.querySelectorAll("div"));
-      const videoArray = Array.from(root.querySelectorAll("video"));
+      const aArray = Array.from(elt.querySelectorAll("a"));
+      const imgArray = Array.from(elt.querySelectorAll("img"));
+      const divArray = Array.from(elt.querySelectorAll("div"));
+      const videoArray = Array.from(elt.querySelectorAll("video"));
 
       const scopeArray = [...aArray, ...imgArray, ...videoArray];
-      if (frameId === 0) scopeArray.push(root)
+      if (frameId === 0) scopeArray.push(elt)
       scopeArray.forEach(i => {
         let href = i.getAttribute("href");
         let src = i.getAttribute("src");
@@ -840,7 +837,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           return;
         }
 
-        // let's avoid useless buttons
         if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
           let o = {type:i.localName}
           src && (o.src = src);
@@ -861,6 +857,16 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
       return content;
+    },
+
+    getAdsCoordinates(element) {
+      // for iframe elements
+      if (typeof element.getBoundingClientRect !== 'function') {
+        return null;
+      }
+
+      const rect = element.getBoundingClientRect();
+      return rect;
     },
     safeObserverHandler:async function() {
         let i = 0;
