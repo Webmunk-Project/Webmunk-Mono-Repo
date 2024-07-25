@@ -860,13 +860,23 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     },
 
     getAdsCoordinates(element) {
-      // for iframe elements
+      // для елементів iframe
       if (typeof element.getBoundingClientRect !== 'function') {
         return null;
       }
 
       const rect = element.getBoundingClientRect();
-      return rect;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+      return {
+        top: rect.top + scrollTop,
+        left: rect.left + scrollLeft,
+        bottom: rect.bottom + scrollTop,
+        right: rect.right + scrollLeft,
+        width: rect.width,
+        height: rect.height
+      };
     },
     safeObserverHandler:async function() {
         let i = 0;
