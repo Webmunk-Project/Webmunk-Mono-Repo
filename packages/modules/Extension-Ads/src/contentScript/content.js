@@ -769,8 +769,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     extractAdData(frameId, elem = null) {
       const { title, text } = this.extractTexts(frameId, elem);
       const content = this.extractContent(frameId, elem);
+      const coordinates = this.getAdsCoordinates(elem);
 
-      return { title, text, content };
+      return { title, text, content, coordinates };
     },
     extractTexts(frameId, element) {
       if (!element) {
@@ -861,6 +862,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
       return content;
+    },
+    getAdsCoordinates(element) {
+      if(!element) return;
+
+      const rect = element.getBoundingClientRect();
+
+      return rect;
     },
     safeObserverHandler:async function() {
         let i = 0;
