@@ -777,6 +777,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       return { title, text, content, coordinates };
     },
     extractTexts(frameId, element) {
+      // Selectors array to identify text elements
       const selectors = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span',
         'yt-formatted-string', 'body-text', 'title-text'
