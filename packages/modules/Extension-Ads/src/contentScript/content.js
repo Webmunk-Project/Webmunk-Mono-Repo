@@ -787,11 +787,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         return !el.classList.contains('visually-hidden');
       });
 
+      // Extract title text from the first non-empty element
       const title = elements.find((el) => {
         const textContent = el.textContent.trim();
         return textContent !== '';
       })?.textContent.trim() || null;
 
+      // Find the longest text element by sanitizing the content
       const longestValue = elements.reduce((accumulator, elem) => {
         const textContent = elem.textContent.trim();
         const sanitizedTextContent = textContent.replace(/[^\w\s]/gi, '');
