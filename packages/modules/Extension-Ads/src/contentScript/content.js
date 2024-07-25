@@ -860,7 +860,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     },
 
     getAdsCoordinates(element) {
-      // для елементів iframe
+      // for iframe elements
       if (typeof element.getBoundingClientRect !== 'function') {
         return null;
       }
