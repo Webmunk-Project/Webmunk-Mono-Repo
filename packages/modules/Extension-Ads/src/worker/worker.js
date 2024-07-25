@@ -54,7 +54,7 @@ const extensionAdsAppMgr = {
         }
       }
     } catch (error) {
-      console.log(`Exception fetching for redirects ${url}`, error);
+      console.warn(`Exception fetching for redirects ${url}`, error);
     }
 
     return result;
@@ -65,26 +65,34 @@ const extensionAdsAppMgr = {
           {frameId: data.frameId}
       )
   },
-  normalizeUrl(url, originUrl) {
+  normalizeUrl(url, tabUrl) {
     try {
-      url = url.trim().replace(/(\s\d+x,?)/g, '');
+      const normalizedUrl = url.trim().replace(/(\s\d+x,?)/g, '');
 
-      if (url.startsWith("//")) {
-        let protocol = /^((http|https):)/.exec(originUrl)[1];
-        return protocol + url;
-      } else if (url.startsWith("/")) {
-        let origin = /^(.*?:\/\/[^\/]+)/.exec(originUrl)[1];
-        return origin + url;
-      } else if (url.startsWith("url(")) {
-        let matches = /url\("(.*)"\)/.exec(url);
-        if (matches) return matches[1];
-      } else if (url.startsWith("blob:")) {
-        url = url.slice(5);
+      switch (true) {
+        case (normalizedUrl.startsWith('//')): {
+          const protocol = /^((http|https):)/.exec(tabUrl)[1];
+          return protocol + normalizedUrl;
+        }
+        case (normalizedUrl.startsWith('/')): {
+          const origin = /^(.*?:\/\/[^\/]+)/.exec(tabUrl)[1];
+          return origin + normalizedUrl;
+        }
+        case (normalizedUrl.startsWith('url(')): {
+          const matches = /url\('(.*)'\)/.exec(normalizedUrl);
+          return matches?.length ? matches[1] : normalizedUrl;
+        }
+        case (normalizedUrl.startsWith('blob:')): {
+          return normalizedUrl.slice(5);
+        }
+        default: {
+          return normalizedUrl;
+        }
       }
     } catch (e) {
-      console.log("Exception occurred while normalizing URL:", e);
+      console.warn('Exception occurred while normalizing URL: ', e);
+      return url;
     }
-    return url;
   },
   contentFilterPredicate(item) {
     // TODO: move all content filters to this ONE place
@@ -146,7 +154,7 @@ const extensionAdsAppMgr = {
     const domain = (new URL(url)).hostname?.replace('www.', '');
     const mainDomain = domain.split('.')[0];
 
-    // Based on research, domains with a length of 1 to 4 characters are typically not company names,
+    // Based on research, domains with a length <=3 characters are typically not company names,
     // but common domain extensions (e.g., com, net, org, ru, ua).
     if (mainDomain.length <= 3) {
       const sanitizedTitle = title.toLowerCase().replace(/(?<=\S)[^\w\s]+(?=\S)/gi, '');
@@ -163,13 +171,18 @@ const extensionAdsAppMgr = {
         .join('');
   },
   prepareEventData(adData, pageUrl) {
-    return {
-      pageUrl: pageUrl,
-      initialUrl: adData.initialUrl,
-      redirected: adData.redirected,
-      redirectedUrl: adData.redirectedUrl,
-      content: adData.content,
-    };
+    const {
+      title,
+      company,
+      text,
+      coordinates,
+      initialUrl,
+      redirected,
+      redirectedUrl,
+      content,
+    } = adData;
+
+    return { pageUrl: pageUrl, title, company, text, coordinates, initialUrl, redirected, redirectedUrl, content };
   },
   async sendAdsIfNeeded(tabId) {
     if (!this.tabData[tabId].ads.size) return;
@@ -195,16 +208,7 @@ const extensionAdsAppMgr = {
     if (!adsData.length) return;
 
     const results = await Promise.all(
-      adsData.map(async (data) => {
-        try {
-          const result = await this.processAdData(data, tabUrl, null);
-
-          return result;
-        } catch (error) {
-
-          return null;
-        }
-      })
+      adsData.map(async (data) => await this.processAdData(data, tabUrl, null))
     );
 
     results.forEach((result) => {
