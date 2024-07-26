@@ -11,16 +11,21 @@ const extensionAdsAppMgr = {
 
     chrome.tabs.onRemoved.addListener((tabId) => delete this.tabData[tabId]);
 
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, { title, url, status }) => {
-      // create or update tabData
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      const { title, url, status } = tab;
+
+       // create or update tabData
       if (!this.tabData[tabId]) {
-        this.tabData[tabId] = { ads: new Map(), title, url, status };
+          this.tabData[tabId] = { ads: new Map(), title, url, status, prevUrl: null };
       } else if (status === 'loading') {
-        this.tabData[tabId].ads.clear();
-      } else {
-        this.tabData[tabId] = { ...this.tabData[tabId], title, url, status };
+          if (this.tabData[tabId].url !== url) {
+              this.tabData[tabId].prevUrl = this.tabData[tabId].url;
+          }
+          this.tabData[tabId].ads.clear();
       }
-    });
+
+      this.tabData[tabId] = { ...this.tabData[tabId], title, url, status };
+  });
   },
   captureRegion(){
       return chrome.tabs.captureVisibleTab().then( (imageUri) => {
