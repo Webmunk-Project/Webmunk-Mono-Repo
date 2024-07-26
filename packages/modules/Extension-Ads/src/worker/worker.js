@@ -16,12 +16,12 @@ const extensionAdsAppMgr = {
 
        // create or update tabData
       if (!this.tabData[tabId]) {
-          this.tabData[tabId] = { ads: new Map(), title, url, status, prevUrl: null };
+        this.tabData[tabId] = { ads: new Map(), title, url, status, prevUrl: null };
       } else if (status === 'loading') {
-          if (this.tabData[tabId].url !== url) {
-              this.tabData[tabId].prevUrl = this.tabData[tabId].url;
-          }
-          this.tabData[tabId].ads.clear();
+        if (this.tabData[tabId].url !== url) {
+          this.tabData[tabId].prevUrl = this.tabData[tabId].url;
+        }
+        this.tabData[tabId].ads.clear();
       }
 
       this.tabData[tabId] = { ...this.tabData[tabId], title, url, status };
