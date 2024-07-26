@@ -868,14 +868,16 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       const rect = element.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+      const documentHeight = document.documentElement.scrollHeight;
+      const documentWidth = document.documentElement.scrollWidth;
 
       return {
         top: rect.top + scrollTop,
         left: rect.left + scrollLeft,
-        bottom: rect.bottom + scrollTop,
-        right: rect.right + scrollLeft,
         width: rect.width,
-        height: rect.height
+        height: rect.height,
+        documentHeight: documentHeight,
+        documentWidth: documentWidth
       };
     },
     safeObserverHandler:async function() {
