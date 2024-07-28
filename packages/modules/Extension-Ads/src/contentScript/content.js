@@ -866,7 +866,19 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
 
       const rect = element.getBoundingClientRect();
-      return rect;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+      const documentHeight = document.documentElement.scrollHeight;
+      const documentWidth = document.documentElement.scrollWidth;
+
+      return {
+        top: rect.top + scrollTop,
+        left: rect.left + scrollLeft,
+        width: rect.width,
+        height: rect.height,
+        documentHeight: documentHeight,
+        documentWidth: documentWidth
+      };
     },
     safeObserverHandler:async function() {
         let i = 0;
