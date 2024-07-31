@@ -462,14 +462,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       window.addEventListener('message', (event) => {
         if (event.data.action === 'getCoordinates') {
           const iframes = document.querySelectorAll('iframe');
-          let targetIframe = null;
-
-          for (let i = 0; i < iframes.length; i++) {
-            if (iframes[i].contentWindow === event.source) {
-              targetIframe = iframes[i];
-              break;
-            }
-          }
+          const targetIframe = Array.from(iframes).find((iframe) => iframe.contentWindow === event.source);
 
           if (targetIframe) {
             const rect = targetIframe.getBoundingClientRect();
