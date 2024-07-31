@@ -487,6 +487,14 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
                 },
                 event.origin
               );
+            } else {
+              event.source.postMessage(
+                {
+                  action: 'iframeCoordinatesResponse',
+                  coordinates: null
+                },
+                event.origin
+              );
             }
           }
         });
