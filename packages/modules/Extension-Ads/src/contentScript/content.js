@@ -458,30 +458,31 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           this.initialAdContentSent = true;
         });
 
+        window.addEventListener('message', (event) => {
+          if (event.data.action === 'iframeCoordinatesRequest') {
+            const iframes = document.querySelectorAll('iframe');
+            const targetIframe = Array.from(iframes).find((iframe) => iframe.contentWindow === event.source);
 
-      window.addEventListener('message', (event) => {
-        if (event.data.action === 'getCoordinates') {
-          const iframes = document.querySelectorAll('iframe');
-          const targetIframe = Array.from(iframes).find((iframe) => iframe.contentWindow === event.source);
-
-          if (targetIframe) {
-            const rect = targetIframe.getBoundingClientRect();
-            const coordinates = {
-              top: rect.top + window.scrollY,
-              left: rect.left + window.scrollX,
-              width: rect.width,
-              height: rect.height,
-              documentHeight: document.documentElement.scrollHeight,
-              documentWidth: document.documentElement.scrollWidth,
-            };
-            event.source.postMessage({
-                action: 'coordinates',
-                src: event.data.src,
-                coordinates: coordinates
-            }, event.origin);
+            if (targetIframe) {
+              const rect = targetIframe.getBoundingClientRect();
+              const coordinates = {
+                top: rect.top + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+                height: rect.height,
+                documentHeight: document.documentElement.scrollHeight,
+                documentWidth: document.documentElement.scrollWidth,
+              };
+              event.source.postMessage(
+                {
+                  action: 'iframeCoordinatesResponse',
+                  coordinates: coordinates
+                },
+                event.origin
+              );
+            }
           }
-        }
-      });
+        });
 
         document.addEventListener('click', async (event) => {
           const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
@@ -491,6 +492,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           const clickedUrl = event.target.tagName === 'A'
             ? event.target.href
             : event.target.closest('a')?.href;
+
           const meta = this.extractMeta();
           const adData = await this.extractAdData(0, adElement);
 
@@ -500,6 +502,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         this.postMessageMgr = new PostMessageMgr();
         this.postMessageMgr.setReceiver((data) => this.mainReceivePostMessage(data))
       }
+
       this.iframeSourceObserver = new MutationObserver(this.iframeSourceModified);
 
       //vAPI.domMutationTime = Date.now();
@@ -883,27 +886,30 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
       return content;
     },
+    async getIframeElementCoordinates() {
+      return new Promise((resolve) => {
+        const handleMessage = (event) => {
+          if (event.data.action === 'iframeCoordinatesResponse') {
+            window.removeEventListener('message', handleMessage);
+            resolve(event.data.coordinates);
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        window.top.postMessage(
+          {
+            action: 'iframeCoordinatesRequest',
+          },
+          '*'
+        );
+      });
+    },
     async getAdsCoordinates(element) {
       // for iframe elements
       if (typeof element.getBoundingClientRect !== 'function') {
-        const src = window.location.href;
-
-        window.top.postMessage({
-            action: 'getCoordinates',
-            src: src
-        }, '*');
-
-        return new Promise((resolve) => {
-            function handleMessage(event) {
-                if (event.data.action === 'coordinates' && event.data.src === src) {
-                    window.removeEventListener('message', handleMessage);
-                    resolve(event.data.coordinates);
-                }
-            }
-
-            window.addEventListener('message', handleMessage);
-        });
-    }
+        return await this.getIframeElementCoordinates();
+      }
 
       const rect = element.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
