@@ -297,10 +297,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     getAllExceptionSelectors() {
       return this.exceptions.join(',\n');
     }
-    processNodes(nodes, pselectorAction, pselectorRaw) {
+    async processNodes(nodes, pselectorAction, pselectorRaw) {
       const adsData = [];
 
-      nodes.forEach(node => {
+      await Promise.all(nodes.map(async (node) => {
         debugLog.procedural && node.setAttribute('data-webmunk-considered-processNodes', 'true');
 
         if (!adsMgr.hasAnAdsParent(node, 1000000)) {
@@ -308,8 +308,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
 
         if (!isFrame() && adsMgr.initialAdContentSent) {
-          const adData = adsMgr.extractAdData(0, node);
-          adsData.push(adData)
+          const adData = await adsMgr.extractAdData(0, node);
+          adsData.push(adData);
         }
 
         if (!isFrame() && !node.hasAttribute('data-click-handler-added')) {
@@ -326,13 +326,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               : event.target.closest('a')?.href;
 
             const meta = adsMgr.extractMeta();
-            const adData = adsMgr.extractAdData(0, node);
+            const adData = await adsMgr.extractAdData(0, node);
 
             await chrome.runtime.sendMessage({ action: adsMgr.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
             await node.setAttribute('data-click-processed', 'false');
           });
         }
-      });
+      }));
 
       if (adsData.length) {
         const meta = adsMgr.extractMeta();
@@ -418,7 +418,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           }
 
           const meta = this.extractMeta();
-          const frameData = this.extractAdData(this.frameId);
+          const frameData = await this.extractAdData(this.frameId);
 
           chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adContent', data: { meta, adsData: [frameData] } });
 
@@ -432,7 +432,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               : event.target.closest('a')?.href;
 
             const meta = this.extractMeta();
-            const adData = this.extractAdData(this.frameId);
+            const adData = await this.extractAdData(this.frameId);
 
             await chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
             await document.body.setAttribute('data-click-processed', 'false');
@@ -451,14 +451,14 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             .forEach(elem => elem.localName !== 'iframe' && adElements.push(elem));
 
           const meta = this.extractMeta();
-          const adsData = adElements.map((elem) => this.extractAdData(0, elem));
+          const adsData = await Promise.all(adElements.map(async (elem) => await this.extractAdData(0, elem)));
 
           chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adContent', data: { meta, adsData } });
 
           this.initialAdContentSent = true;
         });
 
-        document.addEventListener('click', (event) => {
+        document.addEventListener('click', async (event) => {
           const adElement = adElements.find((elt) => elt === event.target || elt.contains(event.target));
 
           if (!adElement) return;
@@ -466,15 +466,43 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           const clickedUrl = event.target.tagName === 'A'
             ? event.target.href
             : event.target.closest('a')?.href;
+
           const meta = this.extractMeta();
-          const adData = this.extractAdData(0, adElement);
+          const adData = await this.extractAdData(0, adElement);
 
           chrome.runtime.sendMessage({ action: this.getMainAppMgrName() + '.adClicked', data: { clickedUrl, meta, adData } });
+        });
+
+        window.addEventListener('message', async (event) => {
+          if (event.data.action === 'iframeCoordinatesRequest') {
+            const iframes = document.querySelectorAll('iframe');
+            const targetIframe = Array.from(iframes).find((iframe) => iframe.contentWindow === event.source);
+
+            if (targetIframe) {
+              const coordinates = await this.getAdsCoordinates(targetIframe);
+              event.source.postMessage(
+                {
+                  action: 'iframeCoordinatesResponse',
+                  coordinates: coordinates
+                },
+                event.origin
+              );
+            } else {
+              event.source.postMessage(
+                {
+                  action: 'iframeCoordinatesResponse',
+                  coordinates: null
+                },
+                event.origin
+              );
+            }
+          }
         });
 
         this.postMessageMgr = new PostMessageMgr();
         this.postMessageMgr.setReceiver((data) => this.mainReceivePostMessage(data))
       }
+
       this.iframeSourceObserver = new MutationObserver(this.iframeSourceModified);
 
       //vAPI.domMutationTime = Date.now();
@@ -766,13 +794,13 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       })
       return content;
     },
-    extractAdData(frameId, elem = null) {
+    async extractAdData(frameId, elem = null) {
       // for iframes elem is document
       const element = elem || document;
 
       const { title, text } = this.extractTexts(frameId, element);
       const content = this.extractContent(frameId, element);
-      const coordinates = this.getAdsCoordinates(element);
+      const coordinates = await this.getAdsCoordinates(element);
 
       return { title, text, content, coordinates };
     },
@@ -858,11 +886,23 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       debugLog.content && console.log(`extractContent: ${frameId}`,elt?elt:"",content,document)
       return content;
     },
+    async getIframeElementCoordinates() {
+      return new Promise((resolve) => {
+        const handleMessage = (event) => {
+          if (event.data.action === 'iframeCoordinatesResponse') {
+            window.removeEventListener('message', handleMessage);
+            resolve(event.data.coordinates);
+          }
+        };
 
-    getAdsCoordinates(element) {
+        window.addEventListener('message', handleMessage);
+        window.top.postMessage({ action: 'iframeCoordinatesRequest' }, '*');
+      });
+    },
+    async getAdsCoordinates(element) {
       // for iframe elements
       if (typeof element.getBoundingClientRect !== 'function') {
-        return null;
+        return await this.getIframeElementCoordinates();
       }
 
       const rect = element.getBoundingClientRect();
