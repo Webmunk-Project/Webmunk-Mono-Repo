@@ -132,7 +132,8 @@ module.exports = function config(browser){
           { from: './assets/web_accessible_resources', to: './web_accessible_resources' },
           { from: './src/popup', to: './popup' },
           { from: './images', to: './images' },
-          { from: './src/survey', to: './survey' }
+          { from: './src/pages', to: './pages' },
+          { from: './surveys.json', to: './surveys.json' },
         ]
       }),
       new webpack.EnvironmentPlugin({

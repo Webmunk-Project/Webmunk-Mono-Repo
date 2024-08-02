@@ -12,7 +12,7 @@ getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
 
 async function loadSurveyLink() {
-    const response = await fetch('../survey/surveys.json');
+    const response = await fetch('../surveys.json');
     const data = await response.json();
     surveyLink = data[0];
 }
@@ -44,11 +44,14 @@ loadSurveyLink().then(() => {
       formattedIdentifier.innerHTML = formatIdentifier(identifier);
       fullIdentifier = identifier;
 
-      if (surveyLink) {
-        survey.href = `${surveyLink}?userId=${fullIdentifier}`;
-      }
-
       chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+      chrome.storage.local.get('surveyCompleted', (result) => {
+        if (!result.surveyCompleted) {
+          survey.href = `${surveyLink}?userId=${fullIdentifier}`;
+        } else {
+          survey.style.display = 'none';
+        }
+      });
     });
   });
 
@@ -98,11 +101,15 @@ function displayIdentifier() {
       getStartedContainer.style.display = 'none';
       studyExtensionContainer.style.display = 'block';
       formattedIdentifier.innerHTML = formatIdentifier(identifier);
-      fullIdentifier = identifier;
+      fullIdentifier = identifier
 
-      if (surveyLink) {
-        survey.href = `${surveyLink}?userId=${fullIdentifier}`;
-      }
+      chrome.storage.local.get('surveyCompleted', (result) => {
+        if (!result.surveyCompleted) {
+          survey.href = `${surveyLink}?userId=${fullIdentifier}`;
+        } else {
+          survey.style.display = 'none';
+        }
+      });
     }
   });
 }

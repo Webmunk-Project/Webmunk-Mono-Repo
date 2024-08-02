@@ -22,7 +22,7 @@
     ],
     "web_accessible_resources" :[
         {
-            "resources": ["assets/web_accessible_resources/*"],
+            "resources": ["assets/web_accessible_resources/*", "pages/*"],
              "matches": ["<all_urls>"]
         }
     ]
