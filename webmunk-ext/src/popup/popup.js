@@ -4,39 +4,59 @@ const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
 const formattedIdentifier = document.getElementById('formattedIdentifier');
+const survey = document.getElementById('survey');
+let surveyLink = '';
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
 
-continueButton.addEventListener('click', async () => {
-  const email = emailInput.value.trim().toLowerCase();
+async function loadSurveyLink() {
+    const response = await fetch('../survey/surveys.json');
+    const data = await response.json();
+    surveyLink = data[0];
+}
 
-  if (!email) {
-    alert('E-Mail Required\nPlease enter an e-mail address to continue.');
+loadSurveyLink().then(() => {
+  continueButton.addEventListener('click', async () => {
+    const email = emailInput.value.trim().toLowerCase();
 
-    return;
-  }
+    if (!email) {
+      alert('E-Mail Required\nPlease enter an e-mail address to continue.');
+      return;
+    }
 
-  continueButton.disabled = true;
+    continueButton.disabled = true;
+    continueButton.textContent = 'Wait...';
 
-  const identifier = await getIdentifier(email);
+    const identifier = await getIdentifier(email);
 
-  if (!identifier) {
-    alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
-    continueButton.disabled = false;
+    if (!identifier) {
+      alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+      continueButton.disabled = false;
+      continueButton.textContent = 'Continue';
+      return;
+    }
 
-    return;
-  }
+    chrome.storage.local.set({ identifier: identifier }, () => {
+      getStartedContainer.style.display = 'none';
+      studyExtensionContainer.style.display = 'block';
+      formattedIdentifier.innerHTML = formatIdentifier(identifier);
+      fullIdentifier = identifier;
 
-  chrome.storage.local.set({ identifier: identifier }, () => {
-    getStartedContainer.style.display = 'none';
-    studyExtensionContainer.style.display = 'block';
-    formattedIdentifier.innerHTML = formatIdentifier(identifier);
-    fullIdentifier = identifier;
+      if (surveyLink) {
+        survey.href = `${surveyLink}?userId=${fullIdentifier}`;
+      }
 
-    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+      chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+    });
   });
+
+  survey.addEventListener('click', () => {
+      chrome.tabs.create({ url: survey.href });
+  });
+
+  displayIdentifier();
 });
 
 copyButton.addEventListener('click', async () => {
@@ -79,8 +99,10 @@ function displayIdentifier() {
       studyExtensionContainer.style.display = 'block';
       formattedIdentifier.innerHTML = formatIdentifier(identifier);
       fullIdentifier = identifier;
+
+      if (surveyLink) {
+        survey.href = `${surveyLink}?userId=${fullIdentifier}`;
+      }
     }
   });
 }
-
-displayIdentifier();
