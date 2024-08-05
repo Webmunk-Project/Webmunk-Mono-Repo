@@ -6,7 +6,6 @@ export class RudderStack {
   }
 
   async track(event, properties) {
-    console.log(event, properties);
     const userId = await this._getUserIdentifier();
 
     if (!userId) {
