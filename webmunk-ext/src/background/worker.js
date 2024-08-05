@@ -6,34 +6,63 @@ import { wmSessionMgr } from '@webmunk/utils';
 import "@webmunk/extension-ads/worker.js";
 import "@webmunk/cookies-scrapper-module/worker";
 
-const appMgr =  {
-  initialize:function(){
-    messenger?.addReceiver('appMgr', this);
-    this.isSurveyCompletedAfterSurvey();
-  },
+const appMgr = {
+  surveys: [],
+  completedSurveys: [],
 
-  isSurveyCompletedAfterSurvey() {
-    const runtimeUrl = `chrome-extension://${chrome.runtime.id}/pages/survey-completed.html`;
+  initialize: async function () {
+    messenger?.addReceiver("appMgr", this);
+
+    chrome.storage.local.get('completedSurveys', (result) => {
+      this.completedSurveys = result.completedSurveys || [];
+      this.loadSurveys();
+    });
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      if (changeInfo.status === 'complete' && tab.url.includes('hbs.qualtrics.com/jfe/form/SV')) {
-        const urlParams = new URL(tab.url).searchParams;
-        const userId = urlParams.get('userId');
-
-        if (userId) {
-          chrome.storage.local.set({ openedSurveyID: userId });
-        }
-      }
-
-      if (changeInfo.status === 'complete' && tab.url === runtimeUrl) {
-        chrome.storage.local.get('openedSurveyID', (result) => {
-          if (result.openedSurveyID) {
-            chrome.storage.local.set({ surveyCompleted: true });
-          }
-        });
+      if (changeInfo.status === "complete") {
+        this.surveyCompleteListener(tabId, tab);
       }
     });
-  }
+  },
+
+  loadSurveys() {
+    fetch(chrome.runtime.getURL("../surveys.json"))
+      .then((response) => response.json())
+      .then((data) => {
+        const newSurveys = data.map((item) => ({
+          name: item.name,
+          url: item.url
+        }));
+
+        newSurveys.forEach((survey) => {
+          if (!this.surveys.some((existingSurvey) => existingSurvey.url === survey.url) && !this.completedSurveys.includes(survey.url)) {
+            this.surveys.push(survey);
+          }
+        });
+
+        chrome.storage.local.set({ surveys: this.surveys });
+      })
+  },
+
+  surveyCompleteListener(tabId, tab) {
+    const runtimeUrl = `chrome-extension://${chrome.runtime.id}/pages/survey-completed.html`;
+
+    chrome.storage.local.get("prevUrl", (result) => {
+      const prevUrl = result.prevUrl || null;
+
+      if (tab.url === runtimeUrl && prevUrl && this.surveys.some((survey) => prevUrl.includes(survey.url))) {
+        if (!this.completedSurveys.includes(prevUrl)) {
+          this.completedSurveys.push(prevUrl);
+        }
+
+        this.surveys = this.surveys.filter((survey) => survey.url !== prevUrl);
+        chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
+        console.log(`The survey ${prevUrl} was completed`)
+      }
+
+      chrome.storage.local.set({ prevUrl: tab.url });
+    });
+  },
 };
 
 appMgr.initialize();

@@ -4,62 +4,67 @@ const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
 const formattedIdentifier = document.getElementById('formattedIdentifier');
-const survey = document.getElementById('survey');
 let surveyLink = '';
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
 
-async function loadSurveyLink() {
-    const response = await fetch('../surveys.json');
-    const data = await response.json();
-    surveyLink = data[0];
+document.addEventListener("DOMContentLoaded", () => {
+  displayIdentifier();
+  loadSurveyUrls();
+});
+
+function loadSurveyUrls() {
+  chrome.storage.local.get('surveys', (result) => {
+    const surveys = result.surveys || [];
+    const taskList = document.getElementById('taskList');
+    const tasksStatus = document.getElementById('tasks-status');
+
+    taskList.innerHTML = '';
+
+    surveys.forEach((survey) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = survey.url;
+      link.textContent = survey.name;
+      link.target = '_blank';
+      listItem.appendChild(link);
+      taskList.appendChild(listItem);
+    });
+
+    tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
+  });
 }
 
-loadSurveyLink().then(() => {
-  continueButton.addEventListener('click', async () => {
-    const email = emailInput.value.trim().toLowerCase();
+continueButton.addEventListener('click', async () => {
+  const email = emailInput.value.trim().toLowerCase();
 
-    if (!email) {
-      alert('E-Mail Required\nPlease enter an e-mail address to continue.');
-      return;
-    }
+  if (!email) {
+    alert('E-Mail Required\nPlease enter an e-mail address to continue.');
+    return;
+  }
 
-    continueButton.disabled = true;
-    continueButton.textContent = 'Wait...';
+  continueButton.disabled = true;
+  continueButton.textContent = 'Wait...';
 
-    const identifier = await getIdentifier(email);
+  const identifier = await getIdentifier(email);
 
-    if (!identifier) {
-      alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
-      continueButton.disabled = false;
-      continueButton.textContent = 'Continue';
-      return;
-    }
+  if (!identifier) {
+    alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+    continueButton.disabled = false;
+    continueButton.textContent = 'Continue';
+    return;
+  }
 
-    chrome.storage.local.set({ identifier: identifier }, () => {
-      getStartedContainer.style.display = 'none';
-      studyExtensionContainer.style.display = 'block';
-      formattedIdentifier.innerHTML = formatIdentifier(identifier);
-      fullIdentifier = identifier;
+  chrome.storage.local.set({ identifier: identifier }, () => {
+    getStartedContainer.style.display = 'none';
+    studyExtensionContainer.style.display = 'block';
+    formattedIdentifier.innerHTML = formatIdentifier(identifier);
+    fullIdentifier = identifier;
 
-      chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
-      chrome.storage.local.get('surveyCompleted', (result) => {
-        if (!result.surveyCompleted) {
-          survey.href = `${surveyLink}?userId=${fullIdentifier}`;
-        } else {
-          survey.style.display = 'none';
-        }
-      });
-    });
+    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
   });
-
-  survey.addEventListener('click', () => {
-      chrome.tabs.create({ url: survey.href });
-  });
-
-  displayIdentifier();
 });
 
 copyButton.addEventListener('click', async () => {
@@ -102,14 +107,6 @@ function displayIdentifier() {
       studyExtensionContainer.style.display = 'block';
       formattedIdentifier.innerHTML = formatIdentifier(identifier);
       fullIdentifier = identifier
-
-      chrome.storage.local.get('surveyCompleted', (result) => {
-        if (!result.surveyCompleted) {
-          survey.href = `${surveyLink}?userId=${fullIdentifier}`;
-        } else {
-          survey.style.display = 'none';
-        }
-      });
     }
   });
 }
