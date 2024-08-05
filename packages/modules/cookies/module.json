@@ -1,5 +1,5 @@
 {
-  "name": "Cookies Scrapper",
+  "name": "Cookies Scraper",
   "permissions": [{"name": "cookies", "justification": "to query and modify cookies"},
                   {"name": "tabs", "justification": "to interact with the browser's tab system"},
                   {"name": "scripting", "justification": "to execute script in different contexts"}
