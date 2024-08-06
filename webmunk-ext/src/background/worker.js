@@ -8,25 +8,25 @@ import "@webmunk/extension-ads/worker.js";
 import "@webmunk/cookies-scraper/worker";
 
 const appMgr =  {
+  surveys: [],
+  completedSurveys: [],
   rudderStack: new RudderStack(),
   async initialize(){
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
+
     await this.initSurveys();
   },
-
   async onModuleEvent(event, data) {
     await this.rudderStack.track(event, data);
   },
-
   async initSurveys() {
       const result = await chrome.storage.local.get('completedSurveys');
       this.completedSurveys = result.completedSurveys || [];
       await this.loadSurveys();
   },
-
   async loadSurveys() {
     const response = await fetch(chrome.runtime.getURL('../surveys.json'));
     const data = await response.json();
@@ -43,26 +43,28 @@ const appMgr =  {
 
     await chrome.storage.local.set({ surveys: this.surveys });
   },
-
   async surveyCompleteListener(tabId, changeInfo, tab) {
-    if (changeInfo.status === "complete") {
-      const runtimeUrl = `chrome-extension://${chrome.runtime.id}/pages/survey-completed.html`;
+    const runtimeUrl = `chrome-extension://${chrome.runtime.id}/pages/survey-completed.html`;
 
-      const result = await chrome.storage.local.get("prevUrl");
-      const prevUrl = result.prevUrl || null;
+    if (changeInfo.status !== 'complete' || tab.url !== runtimeUrl) {
+      return;
+    }
 
-      if (tab.url === runtimeUrl && prevUrl && this.surveys.some((survey) => prevUrl.includes(survey.url))) {
-        if (!this.completedSurveys.includes(prevUrl)) {
-          this.completedSurveys.push(prevUrl);
-        }
+    const openerTabUrl = (await chrome.tabs.get(tab.openerTabId)).url;
 
-        this.surveys = this.surveys.filter((survey) => survey.url !== prevUrl);
+    if (openerTabUrl && this.surveys.some((survey) => openerTabUrl === survey.url)) {
+      await chrome.tabs.remove(tab.openerTabId);
 
-        await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
-        console.log(`The survey ${prevUrl} was completed`);
+      if (this.completedSurveys.includes(openerTabUrl)) {
+        return;
       }
 
-      await chrome.storage.local.set({ prevUrl: tab.url });
+      this.completedSurveys.push(openerTabUrl);
+      this.surveys = this.surveys.filter((survey) => survey.url !== openerTabUrl);
+
+      await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
+
+      console.log(`The survey ${openerTabUrl} was completed`);
     }
   },
 };
