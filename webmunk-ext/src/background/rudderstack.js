@@ -1,12 +1,6 @@
-import { Analytics } from "@rudderstack/analytics-js-service-worker";
-import webext from "./webext";
+import { Analytics } from '@rudderstack/analytics-js-service-worker';
 
 export class RudderStack {
-  static events = Object.freeze({
-    AD_DETECTED: 'ad_detected',
-    AD_CLICKED: 'ad_clicked',
-  });
-
   constructor() {
       this._client = new Analytics('2hv3OHj4joAaarruwt337mRuFhx','https://unibrixdmyrfcl.dataplane.rudderstack.com');
   }
@@ -17,10 +11,6 @@ export class RudderStack {
     if (!userId) {
       console.error('There is no user identifier. Please register.');
       return;
-    }
-
-    if (!this._isSupportedEvent(event)) {
-      throw new Error('Unsupported event!');
     }
 
     return new Promise((resolve, reject) => {
@@ -50,12 +40,8 @@ export class RudderStack {
     });
   }
 
-  _isSupportedEvent(event) {
-    return Object.values(RudderStack.events).includes(event);
-  }
-
   async _getUserIdentifier() {
-    const result = await webext.storage.local.get('identifier');
+    const result = await chrome.storage.local.get('identifier');
     return result.identifier;
   }
 }
