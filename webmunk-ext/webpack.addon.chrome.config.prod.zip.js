@@ -3,6 +3,7 @@ const webpack = require('webpack');
 const { mergeWithCustomize } = require('webpack-merge');
 const baseConfig = require('./webpack.addon.config.base')("chrome");
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+const ZipPlugin = require('zip-webpack-plugin');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils-scripts').mergeManifests;
 const copyDir = require('@webmunk/utils-scripts').copyDir;
@@ -27,7 +28,7 @@ module.exports = mergeWithCustomize({
 
     return undefined
   }})(baseConfig, {
-  mode: 'development',
+  mode: 'production',
   devtool: 'inline-source-map',
   devServer: {},
   plugins: [
@@ -38,7 +39,7 @@ module.exports = mergeWithCustomize({
       config: {
         base: baseManifest,
         extend: {
-          "name":baseManifest.name+"_dev",
+          "name":baseManifest.name+"_prod",
           "version": package.version+"."+parseInt((Date.now()-1665497117452)/100000),
           "manifest_version":parseInt(manifestVersion),
           "action": {
@@ -46,6 +47,10 @@ module.exports = mergeWithCustomize({
           }
         }
       }
+    }),
+    new ZipPlugin({
+      path: '../builds',
+      filename: `${package.name}_prod.zip`,
     })
   ]
 })

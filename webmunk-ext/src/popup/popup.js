@@ -1,3 +1,5 @@
+import { ENROLL_URL } from '../config';
+
 const continueButton = document.getElementById('continueButton');
 const emailInput = document.getElementById('emailInput');
 const getStartedContainer = document.getElementById('getStartedContainer');
@@ -46,8 +48,7 @@ copyButton.addEventListener('click', async () => {
 
 async function getIdentifier(email) {
   try {
-    const url = 'https://europe-west2-webmunk-427616.cloudfunctions.net/user-enroll';
-    const response = await fetch(url, {
+    const response = await fetch(ENROLL_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
