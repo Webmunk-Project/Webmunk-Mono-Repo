@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function loadSurveyUrls() {
   chrome.storage.local.get('surveys', (result) => {
     const surveys = result.surveys || [];
-    const taskList = document.getElementById('taskList');
+    const taskList = document.getElementById('task-list');
     const tasksStatus = document.getElementById('tasks-status');
 
     taskList.innerHTML = '';
@@ -106,7 +106,7 @@ function displayIdentifier() {
       getStartedContainer.style.display = 'none';
       studyExtensionContainer.style.display = 'block';
       formattedIdentifier.innerHTML = formatIdentifier(identifier);
-      fullIdentifier = identifier
+      fullIdentifier = identifier;
     }
   });
 }
