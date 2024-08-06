@@ -1,21 +1,24 @@
 // dont remove next line, all webmunk modules use messenger utility
 import { messenger } from "@webmunk/utils"
 import { wmSessionMgr } from '@webmunk/utils';
+import { RudderStack } from './rudderstack';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker.js";
-import "@webmunk/cookies-scrapper-module/worker";
+import "@webmunk/cookies-scraper/worker";
 
-const appMgr = {
-  surveys: [],
-  completedSurveys: [],
-
-  initialize: async function () {
-    messenger?.addReceiver("appMgr", this);
-
-    await this.initSurveys();
-
+const appMgr =  {
+  rudderStack: new RudderStack(),
+  async initialize(){
+    messenger.addReceiver('appMgr', this);
+    messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
+    messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
+    await this.initSurveys();
+  },
+
+  async onModuleEvent(event, data) {
+    await this.rudderStack.track(event, data);
   },
 
   async initSurveys() {

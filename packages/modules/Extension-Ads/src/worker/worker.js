@@ -1,13 +1,17 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
-import { RudderStack } from './rudderstack';
+
+const moduleEvents = Object.freeze({
+  AD_DETECTED: 'ad_detected',
+  AD_CLICKED: 'ad_clicked',
+});
 
 const extensionAdsAppMgr = {
   tabData: {},
-  rudderStack: new RudderStack(),
+  eventEmitter: self.messenger.registerModule('ads-scraper'),
   throttler: new TimeThrottler(1,200),
   initialize: async function() {
-    self.messenger?.addReceiver('extensionAdsAppMgr', this);
+    self.messenger.addReceiver('extensionAdsAppMgr', this);
 
     chrome.tabs.onRemoved.addListener((tabId) => delete this.tabData[tabId]);
 
@@ -193,22 +197,18 @@ const extensionAdsAppMgr = {
 
     return { pageUrl: pageUrl, title, company, text, coordinates, initialUrl, redirected, redirectedUrl, content };
   },
-  async sendAdsIfNeeded(tabId) {
+  sendAdsIfNeeded(tabId) {
     if (!this.tabData[tabId].ads.size) return;
 
     const newAds = Array.from(this.tabData[tabId].ads.values()).filter(ad => !ad.sentAt)
 
     if (!newAds.length) return;
 
-    await Promise.all(
-      newAds.map(async (ad) => {
-        const eventData = this.prepareEventData(ad, this.tabData[tabId].url);
-        await this.rudderStack.track(RudderStack.events.AD_DETECTED, eventData);
-        ad.sentAt = Date.now();
-      })
-    );
-
-    await this.rudderStack.flush();
+    newAds.forEach((ad) => {
+      const eventData = this.prepareEventData(ad, this.tabData[tabId].url);
+      this.eventEmitter.emit(moduleEvents.AD_DETECTED, eventData);
+      ad.sentAt = Date.now();
+    })
   },
   async _onMessage_adContent(data, from) {
     const { id: tabId, url: tabUrl } = from.tab;
@@ -229,11 +229,11 @@ const extensionAdsAppMgr = {
     if (this.tabData[tabId].status === 'complete') {
       console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
       console.log('Tab data:', this.tabData[tabId]);
-      await this.sendAdsIfNeeded(tabId);
+      this.sendAdsIfNeeded(tabId);
     }
   },
   async _onMessage_adClicked(data, from) {
-    const { id: tabId, url: tabUrl } = from.tab;
+    const { url: tabUrl } = from.tab;
     const { meta, adData, clickedUrl } = data;
 
     if (clickedUrl) {
@@ -243,8 +243,7 @@ const extensionAdsAppMgr = {
       console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
       console.log('Event data:', eventData);
 
-      await this.rudderStack.track(RudderStack.events.AD_CLICKED, eventData);
-      await this.rudderStack.flush();
+      this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
     } else {
       console.log("Clicked URL not found.");
     }
@@ -367,4 +366,7 @@ const extensionAdsAppMgr = {
 };
 
 extensionAdsAppMgr.initialize();
+
 exports.extensionAdsAppMgr = extensionAdsAppMgr;
+exports.events = moduleEvents;
+export { extensionAdsAppMgr, moduleEvents as events };
