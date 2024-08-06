@@ -4,7 +4,6 @@ const getStartedContainer = document.getElementById('getStartedContainer');
 const studyExtensionContainer = document.getElementById('studyExtensionContainer');
 const copyButton = document.getElementById('copyButton');
 const formattedIdentifier = document.getElementById('formattedIdentifier');
-let surveyLink = '';
 let fullIdentifier = '';
 
 getStartedContainer.style.display = 'block';
