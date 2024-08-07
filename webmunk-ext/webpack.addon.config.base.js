@@ -1,144 +1,37 @@
-const path = require('path')
-const CopyPlugin = require('copy-webpack-plugin')
-
-const webpack = require('webpack')
-const { config } = require('dotenv')
-const { parsed } = config({ path: `./.env.${process.env.BUILD_ENV}` })
-const manifestVersion = "3";
+const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = function config(browser){
   return {
     entry: {
-      'content': [
-        './src/content/content.js'
-      ],
+      'content': ['./src/content/content.js'],
       'options': ['/src/options/options.js'],
-      'background': ['./src/background/worker.js']
+      'background': ['./src/background/worker.js'],
+      'popup/popup': ['./src/popup/popup.js']
     },
     output: {
       path: path.join(__dirname, 'dist/'),
-      filename: '[name].bundle.js',
+      filename: '[name].js',
       publicPath: "."
     },
     resolve: {
       extensions: ['.tsx','.ts', '.js']
     },
-    module: {
-      rules: [
-        {
-          test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-          use: [
-            {
-              loader: 'file-loader',
-              options: {
-                name: '[name].[ext]',
-                outputPath: 'fonts/'
-              }
-            }
-          ]
-        },
-        {
-          test: /\.tsx?$/,
-          use: [
-            {
-              loader: 'ts-loader',
-              options: {
-              }
-            },
-            {
-              loader: 'webpack-preprocessor-loader',
-              options: {
-                params: {
-                  target: 'addon',
-                  mode: 'development'
-                }
-              }
-            }
-          ],
-          exclude: /node_modules/
-        },
-        {
-          test: /\.(js|jsx)$/,
-          use: [
-            'babel-loader',
-            {
-              loader: 'babel-loader',
-              options: {
-                presets: ['@babel/preset-react'],
-                plugins: [
-                  '@babel/plugin-transform-class-properties',
-                  '@babel/plugin-transform-optional-chaining'
-                ]
-              }
-            },
-            {
-              loader: 'webpack-preprocessor-loader',
-              options: {
-                directives: {
-                  secret: true
-                },
-                params: {
-                  target: 'addon',
-                  mode: 'development',
-                  manifestVersion
-                }
-              }
-            }
-          ],
-          exclude: /node_modules/
-        },
-        {
-          test: /\.css$/,
-          loader: 'style-loader',
-          exclude: /node_modules/
-        },
-        {
-          test: /\.css$/,
-          loader: 'css-loader',
-          exclude: /node_modules/,
-          options: {
-            url: url => {
-              // resourcePath - path to css file
-              // Don't handle `chosen` urls
-              if (url.includes('chosen.min.css')) {
-                return false
-              }
-              return true
-            }
-          }
-        },
-        {
-          test: /\.(jpe?g|png|gif|woff|woff(2)|eot|ttf|svg)(\?[a-z0-9=.]+)?$/,
-          exclude: /node_modules/,
-          use: [
-            {
-              loader: 'url-loader',
-              options: {
-                limit: 10000,
-                esModule: false
-              }
-            }
-          ]
-        },
-      ]
-    },
     plugins: [
-      new webpack.optimize.LimitChunkCountPlugin({
-        maxChunks: 1,
-      }),
       new CopyPlugin({
         patterns: [
           { from: './assets/icons', to: './icons' },
           { from: './assets/web_accessible_resources', to: './web_accessible_resources' },
-          { from: './src/popup', to: './popup' },
+          { from: './src/popup/popup.html', to: './popup/popup.html' },
+          { from: './src/popup/popup.css', to: './popup/popup.css' },
           { from: './images', to: './images' },
           { from: './src/pages', to: './pages' },
           { from: './surveys.json', to: './surveys.json' },
         ]
       }),
-      new webpack.EnvironmentPlugin({
-        ...parsed,
-        BUILD_ENV: process.env.BUILD_ENV,
+      new Dotenv({
+        path: `./.env.${process.env.BUILD_ENV}`,
       })
     ]
   }

@@ -10,11 +10,11 @@
     "permissions": [],
     "host_permissions": ["<all_urls>", "*://*/*"],
 
-	"background": { "service_worker": "background.bundle.js" },
+	"background": { "service_worker": "background.js" },
     "content_scripts": [
         {
             "matches": [ "<all_urls>" ],
-            "js": ["content.bundle.js"],
+            "js": ["content.js"],
             "run_at": "document_start",
             "all_frames": true ,
             "match_about_blank": true
