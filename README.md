@@ -16,9 +16,3 @@ And in the src
 
 ## Generating your extension in the webpack template case.
 `npm run addon:dev:hot`
-
-## Generating your extension in the webpack template case with production environment.
-`npm run addon:build:prod`
-
-## Generating the ZIP version of your extension with production environment.
-`npm run addon:build:prod-zip`
