@@ -120,7 +120,6 @@ module.exports = function config(browser){
             }
           ]
         },
-
       ]
     },
     plugins: [
@@ -132,7 +131,9 @@ module.exports = function config(browser){
           { from: './assets/icons', to: './icons' },
           { from: './assets/web_accessible_resources', to: './web_accessible_resources' },
           { from: './src/popup', to: './popup' },
-          { from: './images', to: './images' }
+          { from: './images', to: './images' },
+          { from: './src/pages', to: './pages' },
+          { from: './surveys.json', to: './surveys.json' },
         ]
       }),
       new webpack.EnvironmentPlugin({

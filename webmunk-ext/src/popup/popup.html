@@ -38,9 +38,8 @@
                     <button class="button" id="copyButton">Copy</button>
                 </div>
                 <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 10px;">
-                    <p style="font-weight: 500">Please complete these tasks.</p>
-                    <ul style="line-height: 40px; font-size: 18px; cursor: pointer; color: blue;">
-                        <li>Complete intake survey</li>
+                    <p id="tasks-status" style="font-weight: 500"></p>
+                    <ul id="task-list" style="line-height: 30px; font-size: 18px; cursor: pointer; color: blue;">
                     </ul>
                     <p style="font-size: 14px;">Tasks will be removed after completion (it may take a few hours to refresh)</p>
                 </div>
@@ -48,7 +47,7 @@
         </div>
     </div>
 
-<script src="popup.js"></script>
+<script type="module" src="popup.js"></script>
 
 </body>
 </html>
