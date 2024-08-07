@@ -26,6 +26,8 @@ module.exports = function config(browser){
           { from: './src/popup/popup.html', to: './popup/popup.html' },
           { from: './src/popup/popup.css', to: './popup/popup.css' },
           { from: './images', to: './images' },
+          { from: './src/pages', to: './pages' },
+          { from: './surveys.json', to: './surveys.json' },
         ]
       }),
       new Dotenv({

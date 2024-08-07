@@ -11,23 +11,50 @@ let fullIdentifier = '';
 getStartedContainer.style.display = 'block';
 studyExtensionContainer.style.display = 'none';
 
+document.addEventListener("DOMContentLoaded", () => {
+  displayIdentifier();
+  loadSurveyUrls();
+});
+
+function loadSurveyUrls() {
+  chrome.storage.local.get('surveys', (result) => {
+    const surveys = result.surveys || [];
+    const taskList = document.getElementById('task-list');
+    const tasksStatus = document.getElementById('tasks-status');
+
+    taskList.innerHTML = '';
+
+    surveys.forEach((survey) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = survey.url;
+      link.textContent = survey.name;
+      link.target = '_blank';
+      listItem.appendChild(link);
+      taskList.appendChild(listItem);
+    });
+
+    tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
+  });
+}
+
 continueButton.addEventListener('click', async () => {
   const email = emailInput.value.trim().toLowerCase();
 
   if (!email) {
     alert('E-Mail Required\nPlease enter an e-mail address to continue.');
-
     return;
   }
 
   continueButton.disabled = true;
+  continueButton.textContent = 'Wait...';
 
   const identifier = await getIdentifier(email);
 
   if (!identifier) {
     alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
     continueButton.disabled = false;
-
+    continueButton.textContent = 'Continue';
     return;
   }
 
@@ -83,5 +110,3 @@ function displayIdentifier() {
     }
   });
 }
-
-displayIdentifier();

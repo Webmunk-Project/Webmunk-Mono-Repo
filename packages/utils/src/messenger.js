@@ -1,36 +1,69 @@
-import { v4 as uuidv4 } from 'uuid';
-
 class Messenger {
-  constructor(external=true) {
-    this._methodPrefix = '_onMessage_'
-    this._receivers = []
-    this._frameIds = []
-    this._promises = []
+  constructor(external= true) {
+    this._modules = new Map();
+    this._methodPrefix = '_onMessage_';
+    this._receivers = [];
+    this._frameIds = [];
+    this._promises = [];
     this.external = external;
-    this._registerHandlers()
-    this.addReceiver('Messenger', this)
+    this._registerHandlers();
+    this.addReceiver('Messenger', this);
   }
+
   actionFor(receiverName, action){
     if (!this._receivers[receiverName]) return false;
     else if (!this._receivers[receiverName][action]) return false;
     else return true;
   }
+
   _registerHandlers() {
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this))
     if (this.external) chrome.runtime.onMessageExternal.addListener(this._onMessage.bind(this))
   }
+
+  registerModule(moduleName) {
+    if (!moduleName || typeof moduleName !== 'string') {
+      throw new Error('Module name is not valid!');
+    }
+
+    const moduleEventEmitter = {
+      emit: (name, data) => this._modules.get(moduleName).forEach((listener) => listener(name, data))
+    };
+
+    // register module with empty listeners array
+    this._modules.set(moduleName, []);
+
+    return moduleEventEmitter;
+  }
+
+  addModuleListener(moduleName, listener) {
+    if (!this._modules.has(moduleName)) {
+      throw new Error('A module with this name has not been registered yet.');
+    }
+
+    if (typeof listener !== 'function') {
+      throw new Error('Listener is not a function.');
+    }
+
+    this._modules.get(moduleName).push(listener);
+    console.log(this._modules);
+  }
+
   addReceiver(receiverName, receiver) {
     this._receivers[receiverName] = receiver
   }
+
   _onEventTabDestroyed(tabId) {
     this._onContextDestroy(tabId)
   }
+
   _onContextDestroy(tabId) {
     if (this._promises[tabId]) {
       console.log('Messenger._onContextDestroy releasing  tab info' + tabId)
       delete this._promises[tabId]
     }
   }
+
   _onMessage(message, from, reply) {
     var error
     if (message.type == 'chromex.dispatch' || message.type == 'SIGN_CONNECT') {
@@ -117,6 +150,7 @@ class Messenger {
     // we are async
     return true
   }
+
   sendToMainPage(tabId, name, action, data, frameId) {
     return new Promise(function(resolve, reject) {
       chrome.tabs.sendMessage(
@@ -139,15 +173,18 @@ class Messenger {
       )
     })
   }
+
   _rememberFramePromise(tabId, frameName, resolve) {
     if (!this._promises[tabId]) {
       this._promises[tabId] = []
     }
     this._promises[tabId][frameName] = resolve
   }
+
   getLastFrameResolveMethod(tabId, frameName) {
     return this._promises[tabId][frameName]
   }
+
   sendToFrame(tabId, name, action, data) {
     return new Promise((resolve, reject) => {
       // this is to resolve externally a dialog
@@ -178,6 +215,7 @@ class Messenger {
       }, 200)
     })
   }
+
   _onMessage_relay(data, from, _reply) {
     if (typeof data.data == 'object') {
       data.data.frameId = from.frameId
@@ -193,15 +231,18 @@ class Messenger {
       return response
     })
   }
+
   _onMessage_getFrameId(_data, from, reply) {
     reply(from.frameId)
   }
+
   _onMessage_ping(_data, from, reply) {
     reply({success:true})
   }
 }
 
-let messenger = new Messenger()
-self.messenger = messenger;
+const messenger = new Messenger();
 
+self.messenger = messenger;
 exports.messenger = messenger;
+export { messenger };
