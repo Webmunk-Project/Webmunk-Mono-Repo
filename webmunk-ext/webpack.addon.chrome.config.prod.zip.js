@@ -12,6 +12,15 @@ const baseManifest = manifest;
 copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
 const package = require('./package.json');
 
+const getCurrentDate = () => {
+  const date = new Date();
+  const day = (`0${date.getDate()}`).slice(-2);
+  const month = (`0${date.getMonth() + 1}`).slice(-2);
+  const year = date.getFullYear();
+
+  return `${day}_${month}_${year}`;
+};
+
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
     if (key === 'module.rules') {
@@ -50,7 +59,7 @@ module.exports = mergeWithCustomize({
     }),
     new ZipPlugin({
       path: '../builds',
-      filename: `${package.name}_prod.zip`,
+      filename: `${package.name}_prod_${getCurrentDate()}.zip`,
     })
   ]
 })
