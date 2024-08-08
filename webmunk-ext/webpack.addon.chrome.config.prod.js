@@ -4,11 +4,11 @@ const { mergeWithCustomize } = require('webpack-merge');
 const baseConfig = require('./webpack.addon.config.base')("chrome");
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const manifestVersion = "3";
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require('path');
 const mergeManifests = require('@webmunk/utils-scripts').mergeManifests;
-const copyDir = require('@webmunk/utils-scripts').copyDir;
 const { manifest } = mergeManifests("@webmunk",__dirname,"src","src/chrome");
 const baseManifest = manifest;
-copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
 const package = require('./package.json');
 
 module.exports = mergeWithCustomize({
@@ -33,6 +33,14 @@ module.exports = mergeWithCustomize({
   plugins: [
     new webpack.ProvidePlugin({
       process: 'process/browser',
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'node_modules/@webmunk/extension-ads/ublock'),
+          to: path.resolve(__dirname, 'dist/wm/ublock')
+        }
+      ]
     }),
     new WebpackExtensionManifestPlugin({
       config: {
