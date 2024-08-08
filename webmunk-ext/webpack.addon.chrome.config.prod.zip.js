@@ -4,8 +4,6 @@ const { mergeWithCustomize } = require('webpack-merge');
 const baseConfig = require('./webpack.addon.config.base')("chrome");
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const ZipPlugin = require('zip-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const path = require('path');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils-scripts').mergeManifests;
 const { manifest } = mergeManifests("@webmunk",__dirname,"src","src/chrome");
@@ -56,14 +54,6 @@ module.exports = mergeWithCustomize({
           }
         }
       }
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: path.resolve(__dirname, 'node_modules/@webmunk/extension-ads/ublock'),
-          to: path.resolve(__dirname, 'dist/wm/ublock')
-        }
-      ]
     }),
     new ZipPlugin({
       path: '../builds',
