@@ -7,8 +7,5 @@
                   {"name":"alarms","justification":"session management and cleaning"},
                   {"name":"privacy","justification":"used by ublock to customize network and services settings"}
                 ],
-  "host_permissions": [],
-  "options_ui": {
-    "page": "wm/options/options.html"
-  }
+  "host_permissions": []
 }

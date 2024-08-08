@@ -1,8 +1,9 @@
 import { Analytics } from '@rudderstack/analytics-js-service-worker';
+import { RUDDERSTACK_DATA_PLANE, RUDDERSTACK_WRITE_KEY } from '../config';
 
 export class RudderStack {
   constructor() {
-      this._client = new Analytics('2hv3OHj4joAaarruwt337mRuFhx','https://unibrixdmyrfcl.dataplane.rudderstack.com');
+      this._client = new Analytics(RUDDERSTACK_WRITE_KEY, RUDDERSTACK_DATA_PLANE);
   }
 
   async track(event, properties) {

@@ -6,10 +6,8 @@ const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugi
 const ZipPlugin = require('zip-webpack-plugin');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils-scripts').mergeManifests;
-const copyDir = require('@webmunk/utils-scripts').copyDir;
 const { manifest } = mergeManifests("@webmunk",__dirname,"src","src/chrome");
 const baseManifest = manifest;
-copyDir("@webmunk",__dirname,"/src","/.","/dist/wm");
 const package = require('./package.json');
 
 const getCurrentDate = () => {
