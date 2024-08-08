@@ -1,9 +1,9 @@
 import { Analytics } from '@rudderstack/analytics-js-service-worker';
-import { WEBMUNK_DATA_PLANE, WEBMUNK_WRITE_KEY } from '../config';
+import { RUDDERSTACK_DATA_PLANE, RUDDERSTACK_WRITE_KEY } from '../config';
 
 export class RudderStack {
   constructor() {
-      this._client = new Analytics(WEBMUNK_WRITE_KEY, WEBMUNK_DATA_PLANE);
+      this._client = new Analytics(RUDDERSTACK_WRITE_KEY, RUDDERSTACK_DATA_PLANE);
   }
 
   async track(event, properties) {
