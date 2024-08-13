@@ -7,7 +7,7 @@ import { RudderStack } from './rudderstack';
 import "@webmunk/extension-ads/worker.js";
 import "@webmunk/cookies-scraper/worker";
 
-const moduleEvents = Object.freeze({
+const events = Object.freeze({
   SURVEY_COMPLETED: 'survey_completed',
 });
 
@@ -69,7 +69,7 @@ const appMgr =  {
       await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
 
       console.log(`The survey ${openerTabUrl} was completed`);
-      await this.onModuleEvent(moduleEvents.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
+      await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
   },
 };
