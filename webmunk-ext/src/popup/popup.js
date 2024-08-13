@@ -29,7 +29,7 @@ class Popup {
     const email = this.emailInput.value.trim().toLowerCase();
 
     if (!email) {
-      this.notification.warning('E-Mail Required\nPlease enter an e-mail address to continue.');
+      this.notification.warning('Please enter an e-mail address to continue.');
       return;
     }
 
@@ -132,7 +132,7 @@ class Notification {
     this.notificationMessage = document.getElementById('notification-message');
   }
 
-  show(message, duration, backgroundColor) {
+  show(message, duration = 3000, backgroundColor) {
     this.notificationMessage.textContent = message;
     this.notification.style.backgroundColor = backgroundColor;
     this.notification.style.display = 'block';
@@ -142,15 +142,15 @@ class Notification {
     }, duration);
   }
 
-  error(message, duration = 3000) {
+  error(message, duration) {
     this.show(message, duration, '#f44336');
   }
 
-  warning(message, duration = 3000) {
+  warning(message, duration) {
     this.show(message, duration, '#ff9800');
   }
 
-  info(message, duration = 3000) {
+  info(message, duration) {
     this.show(message, duration, '#2196F3');
   }
 }
