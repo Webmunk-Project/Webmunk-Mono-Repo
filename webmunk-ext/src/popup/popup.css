@@ -49,15 +49,12 @@
 }
 
 #notification {
-    width: 100%;
     position: absolute;
 
-    padding: 10px;
+    padding: 10px 0;
+    width: 100%;
 
-    color: white;
-    font-size: 14px;
     text-align: center;
-
     animation: notify 1s linear forwards;
 }
 
@@ -68,6 +65,16 @@
     to {
         bottom: 0;
     }
+}
+
+#notification-message {
+    margin: 0 10px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+    font-size: 14px;
 }
 
 .button {
