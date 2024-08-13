@@ -14,12 +14,12 @@ class EnrollmentManager {
   }
 
   init() {
-    this.displayAccordantContainer();
-    this.loadSurveyUrls();
-    this.setupEventListeners();
+    this.initListeners();
+    this.initView();
+    this.initSurveys();
   }
 
-  setupEventListeners() {
+  initListeners() {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
   }
@@ -42,7 +42,7 @@ class EnrollmentManager {
       return;
     }
 
-    chrome.storage.local.set({ identifier: identifier }, () => {
+    await chrome.storage.local.set({ identifier: identifier }, () => {
       this.showStudyExtensionContainer(identifier);
       chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
     });
@@ -73,6 +73,11 @@ class EnrollmentManager {
     this.fullIdentifier = identifier;
   }
 
+  showGetStartedContainer() {
+    this.getStartedContainer.style.display = 'block';
+    this.studyExtensionContainer.style.display = 'none';
+  }
+
   formatIdentifier(identifier) {
     const firstTenSymbols = identifier.substring(0, 10);
     const lastTenSymbols = identifier.substring(identifier.length - 10);
@@ -80,39 +85,32 @@ class EnrollmentManager {
     return `${firstTenSymbols}...${lastTenSymbols}`;
   }
 
-  displayAccordantContainer() {
-    chrome.storage.local.get('identifier', (result) => {
-      const identifier = result.identifier;
+  async initView() {
+    const result = await chrome.storage.local.get('identifier');
+    const identifier = result.identifier;
 
-      if (identifier) {
-        this.showStudyExtensionContainer(identifier);
-      } else {
-        this.getStartedContainer.style.display = 'block';
-        this.studyExtensionContainer.style.display = 'none';
-      }
-    });
+    identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
   }
 
-  loadSurveyUrls() {
-    chrome.storage.local.get('surveys', (result) => {
-      const surveys = result.surveys || [];
-      const taskList = document.getElementById('task-list');
-      const tasksStatus = document.getElementById('tasks-status');
+  async initSurveys() {
+    const result = await chrome.storage.local.get('surveys');
+    const surveys = result.surveys || [];
+    const taskList = document.getElementById('task-list');
+    const tasksStatus = document.getElementById('tasks-status');
 
-      taskList.innerHTML = '';
+    taskList.innerHTML = '';
 
-      surveys.forEach((survey) => {
-        const listItem = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = survey.url;
-        link.textContent = survey.name;
-        link.target = '_blank';
-        listItem.appendChild(link);
-        taskList.appendChild(listItem);
-      });
-
-      tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
+    surveys.forEach((survey) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = survey.url;
+      link.textContent = survey.name;
+      link.target = '_blank';
+      listItem.appendChild(link);
+      taskList.appendChild(listItem);
     });
+
+    tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
   }
 
   async copyIdentifier() {
@@ -126,7 +124,4 @@ class EnrollmentManager {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  new EnrollmentManager();
-});
-
+document.addEventListener('DOMContentLoaded', () => new EnrollmentManager());
