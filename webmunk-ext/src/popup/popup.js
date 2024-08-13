@@ -1,112 +1,132 @@
 import { ENROLL_URL } from '../config';
 
-const continueButton = document.getElementById('continueButton');
-const emailInput = document.getElementById('emailInput');
-const getStartedContainer = document.getElementById('getStartedContainer');
-const studyExtensionContainer = document.getElementById('studyExtensionContainer');
-const copyButton = document.getElementById('copyButton');
-const formattedIdentifier = document.getElementById('formattedIdentifier');
-let fullIdentifier = '';
+class EnrollmentManager {
+  constructor() {
+    this.continueButton = document.getElementById('continueButton');
+    this.emailInput = document.getElementById('emailInput');
+    this.getStartedContainer = document.getElementById('getStartedContainer');
+    this.studyExtensionContainer = document.getElementById('studyExtensionContainer');
+    this.copyButton = document.getElementById('copyButton');
+    this.formattedIdentifier = document.getElementById('formattedIdentifier');
+    this.fullIdentifier = '';
 
-getStartedContainer.style.display = 'block';
-studyExtensionContainer.style.display = 'none';
-
-document.addEventListener("DOMContentLoaded", () => {
-  displayIdentifier();
-  loadSurveyUrls();
-});
-
-function loadSurveyUrls() {
-  chrome.storage.local.get('surveys', (result) => {
-    const surveys = result.surveys || [];
-    const taskList = document.getElementById('task-list');
-    const tasksStatus = document.getElementById('tasks-status');
-
-    taskList.innerHTML = '';
-
-    surveys.forEach((survey) => {
-      const listItem = document.createElement('li');
-      const link = document.createElement('a');
-      link.href = survey.url;
-      link.textContent = survey.name;
-      link.target = '_blank';
-      listItem.appendChild(link);
-      taskList.appendChild(listItem);
-    });
-
-    tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
-  });
-}
-
-continueButton.addEventListener('click', async () => {
-  const email = emailInput.value.trim().toLowerCase();
-
-  if (!email) {
-    alert('E-Mail Required\nPlease enter an e-mail address to continue.');
-    return;
+    this.init();
   }
 
-  continueButton.disabled = true;
-  continueButton.textContent = 'Wait...';
-
-  const identifier = await getIdentifier(email);
-
-  if (!identifier) {
-    alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
-    continueButton.disabled = false;
-    continueButton.textContent = 'Continue';
-    return;
+  init() {
+    this.displayAccordantContainer();
+    this.loadSurveyUrls();
+    this.setupEventListeners();
   }
 
-  chrome.storage.local.set({ identifier: identifier }, () => {
-    getStartedContainer.style.display = 'none';
-    studyExtensionContainer.style.display = 'block';
-    formattedIdentifier.innerHTML = formatIdentifier(identifier);
-    fullIdentifier = identifier;
-
-    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
-  });
-});
-
-copyButton.addEventListener('click', async () => {
-  await navigator.clipboard.writeText(fullIdentifier);
-  alert('Identifier copied to clipboard');
-});
-
-async function getIdentifier(email) {
-  try {
-    const response = await fetch(ENROLL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email: email })
-    });
-
-    const data = await response.json();
-    return data.userId;
-  } catch (e) {
-    console.error(e);
-    return null;
+  setupEventListeners() {
+    this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
+    this.copyButton.addEventListener('click', () => this.copyIdentifier());
   }
-}
 
-function formatIdentifier(identifier) {
-  const firstTenSymbols = identifier.substring(0, 10);
-  const lastTenSymbols = identifier.substring(identifier.length - 10);
+  async onContinueButtonClick() {
+    const email = this.emailInput.value.trim().toLowerCase();
 
-  return `${firstTenSymbols}...${lastTenSymbols}`;
-}
-
-function displayIdentifier() {
-  chrome.storage.local.get('identifier', (result) => {
-    const identifier = result.identifier;
-
-    if (identifier) {
-      getStartedContainer.style.display = 'none';
-      studyExtensionContainer.style.display = 'block';
-      formattedIdentifier.innerHTML = formatIdentifier(identifier);
-      fullIdentifier = identifier;
+    if (!email) {
+      alert('E-Mail Required\nPlease enter an e-mail address to continue.');
+      return;
     }
-  });
+
+    this.setButtonState(true, 'Wait...');
+
+    const identifier = await this.getIdentifier(email);
+
+    if (!identifier) {
+      alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+      this.setButtonState(false, 'Continue');
+      return;
+    }
+
+    chrome.storage.local.set({ identifier: identifier }, () => {
+      this.showStudyExtensionContainer(identifier);
+      chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+    });
+  }
+
+  async getIdentifier(email) {
+    try {
+      const response = await fetch(ENROLL_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+      });
+
+      const data = await response.json();
+      return data.userId;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  showStudyExtensionContainer(identifier) {
+    this.getStartedContainer.style.display = 'none';
+    this.studyExtensionContainer.style.display = 'block';
+    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
+    this.fullIdentifier = identifier;
+  }
+
+  formatIdentifier(identifier) {
+    const firstTenSymbols = identifier.substring(0, 10);
+    const lastTenSymbols = identifier.substring(identifier.length - 10);
+
+    return `${firstTenSymbols}...${lastTenSymbols}`;
+  }
+
+  displayAccordantContainer() {
+    chrome.storage.local.get('identifier', (result) => {
+      const identifier = result.identifier;
+
+      if (identifier) {
+        this.showStudyExtensionContainer(identifier);
+      } else {
+        this.getStartedContainer.style.display = 'block';
+        this.studyExtensionContainer.style.display = 'none';
+      }
+    });
+  }
+
+  loadSurveyUrls() {
+    chrome.storage.local.get('surveys', (result) => {
+      const surveys = result.surveys || [];
+      const taskList = document.getElementById('task-list');
+      const tasksStatus = document.getElementById('tasks-status');
+
+      taskList.innerHTML = '';
+
+      surveys.forEach((survey) => {
+        const listItem = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = survey.url;
+        link.textContent = survey.name;
+        link.target = '_blank';
+        listItem.appendChild(link);
+        taskList.appendChild(listItem);
+      });
+
+      tasksStatus.textContent = surveys.length ? 'Please complete these tasks:' : 'All tasks are completed!';
+    });
+  }
+
+  async copyIdentifier() {
+    await navigator.clipboard.writeText(this.fullIdentifier);
+    alert('Identifier copied to clipboard');
+  }
+
+  setButtonState(isDisabled, text) {
+    this.continueButton.disabled = isDisabled;
+    this.continueButton.textContent = text;
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  new EnrollmentManager();
+});
+
