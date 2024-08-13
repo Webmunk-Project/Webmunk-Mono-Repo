@@ -1,6 +1,6 @@
 import { ENROLL_URL } from '../config';
 
-class EnrollmentManager {
+class Popup {
   constructor() {
     this.continueButton = document.getElementById('continueButton');
     this.emailInput = document.getElementById('emailInput');
@@ -9,6 +9,7 @@ class EnrollmentManager {
     this.copyButton = document.getElementById('copyButton');
     this.formattedIdentifier = document.getElementById('formattedIdentifier');
     this.fullIdentifier = '';
+    this.notification = new Notification();
 
     this.init();
   }
@@ -28,7 +29,7 @@ class EnrollmentManager {
     const email = this.emailInput.value.trim().toLowerCase();
 
     if (!email) {
-      alert('E-Mail Required\nPlease enter an e-mail address to continue.');
+      this.notification.warning('E-Mail Required\nPlease enter an e-mail address to continue.');
       return;
     }
 
@@ -37,15 +38,14 @@ class EnrollmentManager {
     const identifier = await this.getIdentifier(email);
 
     if (!identifier) {
-      alert('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
+      this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
       this.setButtonState(false, 'Continue');
       return;
     }
 
-    await chrome.storage.local.set({ identifier: identifier }, () => {
-      this.showStudyExtensionContainer(identifier);
-      chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
-    });
+    await chrome.storage.local.set({ identifier });
+    this.showStudyExtensionContainer(identifier);
+    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
   }
 
   async getIdentifier(email) {
@@ -61,7 +61,7 @@ class EnrollmentManager {
       const data = await response.json();
       return data.userId;
     } catch (e) {
-      console.error(e);
+      this.notification.error(e);
       return null;
     }
   }
@@ -115,7 +115,7 @@ class EnrollmentManager {
 
   async copyIdentifier() {
     await navigator.clipboard.writeText(this.fullIdentifier);
-    alert('Identifier copied to clipboard');
+    this.notification.info('Identifier copied to clipboard');
   }
 
   setButtonState(isDisabled, text) {
@@ -124,4 +124,33 @@ class EnrollmentManager {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new EnrollmentManager());
+document.addEventListener('DOMContentLoaded', () => new Popup());
+
+class Notification {
+  constructor() {
+    this.notification = document.getElementById('notification');
+    this.notificationMessage = document.getElementById('notification-message');
+  }
+
+  show(message, duration, backgroundColor) {
+    this.notificationMessage.textContent = message;
+    this.notification.style.backgroundColor = backgroundColor;
+    this.notification.style.display = 'block';
+
+    setTimeout(() => {
+        this.notification.style.display = 'none';
+    }, duration);
+  }
+
+  error(message, duration = 3000) {
+    this.show(message, duration, '#f44336');
+  }
+
+  warning(message, duration = 3000) {
+    this.show(message, duration, '#ff9800');
+  }
+
+  info(message, duration = 3000) {
+    this.show(message, duration, '#2196F3');
+  }
+}
