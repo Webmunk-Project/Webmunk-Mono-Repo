@@ -226,11 +226,9 @@ const extensionAdsAppMgr = {
       }
     });
 
-    if (this.tabData[tabId].status === 'complete') {
-      console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
-      console.log('Tab data:', this.tabData[tabId]);
-      this.sendAdsIfNeeded(tabId);
-    }
+    console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
+    console.log('Tab data:', this.tabData[tabId]);
+    this.sendAdsIfNeeded(tabId);
   },
   async _onMessage_adClicked(data, from) {
     const { url: tabUrl } = from.tab;
