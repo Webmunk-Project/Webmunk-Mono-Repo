@@ -48,7 +48,7 @@
     border-radius: 5%;
 }
 
-#notification {
+#notification-container {
     position: absolute;
 
     padding: 10px 0;
