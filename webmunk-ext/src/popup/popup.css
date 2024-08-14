@@ -48,7 +48,7 @@
     border-radius: 5%;
 }
 
-#notification-container {
+.notification {
     position: absolute;
 
     padding: 10px 0;
@@ -67,7 +67,7 @@
     }
 }
 
-#notification-message {
+.notification-message {
     margin: 0 10px;
 
     white-space: nowrap;

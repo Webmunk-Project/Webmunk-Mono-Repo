@@ -1,6 +1,6 @@
 export class Notification {
     constructor() {
-      this.notification = document.getElementById('notification-container');
+      this.notification = document.getElementById('notification');
       this.notificationMessage = document.getElementById('notification-message');
     }
 
