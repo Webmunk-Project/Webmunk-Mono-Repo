@@ -48,6 +48,35 @@
     border-radius: 5%;
 }
 
+.notification {
+    position: absolute;
+
+    padding: 10px 0;
+    width: 100%;
+
+    text-align: center;
+    animation: notify 1s linear forwards;
+}
+
+@keyframes notify {
+    from {
+        bottom: -100px;
+    }
+    to {
+        bottom: 0;
+    }
+}
+
+.notification-message {
+    margin: 0 10px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+    font-size: 14px;
+}
+
 .button {
     padding: 10px;
     display: flex;

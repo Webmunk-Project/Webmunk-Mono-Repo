@@ -25,6 +25,15 @@
   "scripts": {
     "addon:dev:hot": "MANIFEST_VERSION=3 BUILD_ENV=development webpack --config webpack.addon.config.dev.js",
     "addon:build:prod": "MANIFEST_VERSION=3 BUILD_ENV=production webpack --config webpack.addon.chrome.config.prod.js",
-    "addon:build:prod-zip": "MANIFEST_VERSION=3 BUILD_ENV=production webpack --config webpack.addon.chrome.config.prod.zip.js"
+    "addon:build:prod-zip": "MANIFEST_VERSION=3 BUILD_ENV=production webpack --config webpack.addon.chrome.config.prod.zip.js",
+    "format": "prettier --write .",
+    "lint": "eslint 'src/**/*.js'",
+    "lint:fix": "eslint 'src/**/*.js' --fix"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3"
   }
 }

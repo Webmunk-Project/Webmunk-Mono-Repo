@@ -32,7 +32,7 @@ const appMgr =  {
       await this.loadSurveys();
   },
   async loadSurveys() {
-    const response = await fetch(chrome.runtime.getURL('../surveys.json'));
+    const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
     const data = await response.json();
     const newSurveys = data.map((item) => ({
       name: item.name,

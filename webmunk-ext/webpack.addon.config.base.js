@@ -27,7 +27,7 @@ module.exports = function config(browser){
           { from: './src/popup/popup.css', to: './popup/popup.css' },
           { from: './images', to: './images' },
           { from: './src/pages', to: './pages' },
-          { from: './surveys.json', to: './surveys.json' },
+          { from: './src/data', to: './data' },
           {
             from: path.resolve(__dirname, 'node_modules/@webmunk/extension-ads/ublock'),
             to: path.resolve(__dirname, 'dist/wm/ublock')
