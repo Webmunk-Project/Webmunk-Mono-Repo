@@ -5,7 +5,7 @@ export class RateService {
   }
 
   async initializeLastNotificationTime() {
-    this.lastNotificationTimestamp = await this.getLastNotificationTime();
+    this.lastNotificationTimestamp = await this.getLastAdsRateNotificationTime();
   }
 
   async shouldNotify() {
@@ -16,23 +16,17 @@ export class RateService {
     }
 
     this.lastNotificationTimestamp = currentTime;
-    await chrome.storage.local.set({ lastNotificationTime: currentTime });
+    await chrome.storage.local.set({ lastAdsRateNotificationTime: currentTime });
     return true;
   }
 
-  async getLastNotificationTime() {
-    const result = await chrome.storage.local.get('lastNotificationTime');
-    return result.lastNotificationTime || 0;
+  async getLastAdsRateNotificationTime() {
+    const result = await chrome.storage.local.get('lastAdsRateNotificationTime');
+    return result.lastAdsRateNotificationTime || 0;
   }
 
   async send(tabId) {
     if (!await this.shouldNotify()) return;
-
-    await chrome.tabs.sendMessage(
-      tabId,
-      { action: 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING' },
-      { frameId: 0 }
-    );
 
     return new Promise((resolve, reject) => {
       const messageListener = (message, sender, sendResponse) => {
@@ -52,6 +46,12 @@ export class RateService {
 
       chrome.runtime.onMessage.addListener(messageListener);
       chrome.tabs.onRemoved.addListener(tabCloseListener);
+
+      chrome.tabs.sendMessage(
+        tabId,
+        { action: 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING' },
+        { frameId: 0 }
+      );
     });
   }
 }
