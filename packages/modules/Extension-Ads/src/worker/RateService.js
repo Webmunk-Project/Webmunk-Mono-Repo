@@ -9,7 +9,7 @@ export class RateService {
   }
 
   async shouldNotify() {
-    const currentTime = new Date().getTime();
+    const currentTime = Date.now();
 
     if (this.lastNotificationTimestamp && (currentTime - this.lastNotificationTimestamp) < 1200000) {
       return false;
@@ -30,13 +30,13 @@ export class RateService {
 
     await chrome.tabs.sendMessage(
       tabId,
-      { action: 'SHOW_NOTIFICATION' },
+      { action: 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING' },
       { frameId: 0 }
     );
 
     return new Promise((resolve, reject) => {
       const messageListener = (message, sender, sendResponse) => {
-        if (message.action === 'AD_RATING_RESPONSE') {
+        if (message.action === 'CONTENT_SERVICE_RESPONSE_AD_RATING_SUBMITTED') {
           chrome.runtime.onMessage.removeListener(messageListener);
           chrome.tabs.onRemoved.removeListener(tabCloseListener);
           resolve(message.response);

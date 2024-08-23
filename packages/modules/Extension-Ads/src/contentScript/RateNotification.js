@@ -4,7 +4,7 @@ export class RateNotification {
   }
 
   handleMessage(message, sender, sendResponse) {
-    if (message.action === 'SHOW_NOTIFICATION') {
+    if (message.action === 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING') {
       this.showAdRatingNotification();
     }
   }
@@ -164,7 +164,7 @@ export class RateNotification {
 
   sendResponseToService(response) {
     chrome.runtime.sendMessage({
-      action: 'AD_RATING_RESPONSE',
+      action: 'CONTENT_SERVICE_RESPONSE_AD_RATING_SUBMITTED',
       response
     });
   }

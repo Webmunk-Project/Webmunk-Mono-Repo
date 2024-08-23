@@ -1,7 +1,7 @@
 import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 import './contentscript-extra'
-import { RateNotification } from './rate-notification'
+import { RateNotification } from './RateNotification'
 
 const debugLog = {
   traverse: false,
