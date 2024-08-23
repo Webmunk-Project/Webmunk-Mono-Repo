@@ -256,9 +256,7 @@ const extensionAdsAppMgr = {
     if (clickedUrl) {
       const trackedAd = this.tabData[tabId].ads.get(clickedUrl);
 
-      const result = await this.processAdData(adData, tabUrl, clickedUrl);
-      result.adId = trackedAd ? trackedAd.adId : result.adId;
-      const eventData = this.prepareEventData(result, tabUrl);
+      const eventData = this.prepareEventData(trackedAd, tabUrl);
 
       console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
       console.log('Event data:', eventData);

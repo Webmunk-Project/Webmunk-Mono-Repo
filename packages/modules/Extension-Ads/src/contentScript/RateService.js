@@ -1,10 +1,10 @@
-export class RateNotification {
+export class RateService {
   constructor() {
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
   }
 
   handleMessage(message, sender, sendResponse) {
-    if (message.action === 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING') {
+    if (message.action === 'extensionAds.rateService.adRatingRequest') {
       this.showAdRatingNotification();
     }
   }
@@ -164,7 +164,7 @@ export class RateNotification {
 
   sendResponseToService(response) {
     chrome.runtime.sendMessage({
-      action: 'CONTENT_SERVICE_RESPONSE_AD_RATING_SUBMITTED',
+      action: 'extensionAds.rateService.adRatingResponse',
       response
     });
   }

@@ -11,12 +11,11 @@ export class RateService {
   async shouldNotify() {
     const currentTime = Date.now();
 
+    // 20 min
     if (this.lastNotificationTimestamp && (currentTime - this.lastNotificationTimestamp) < 1200000) {
       return false;
     }
 
-    this.lastNotificationTimestamp = currentTime;
-    await chrome.storage.local.set({ lastAdsRateNotificationTime: currentTime });
     return true;
   }
 
@@ -30,9 +29,13 @@ export class RateService {
 
     return new Promise((resolve, reject) => {
       const messageListener = (message, sender, sendResponse) => {
-        if (message.action === 'CONTENT_SERVICE_RESPONSE_AD_RATING_SUBMITTED') {
+        if (message.action === 'extensionAds.rateService.adRatingResponse') {
           chrome.runtime.onMessage.removeListener(messageListener);
           chrome.tabs.onRemoved.removeListener(tabCloseListener);
+
+          this.lastNotificationTimestamp = Date.now();
+          chrome.storage.local.set({ lastAdsRateNotificationTime: this.lastNotificationTimestamp });
+
           resolve(message.response);
         }
       };
@@ -49,7 +52,7 @@ export class RateService {
 
       chrome.tabs.sendMessage(
         tabId,
-        { action: 'SERVICE_CONTENT_REQUEST_SHOW_AD_RATING' },
+        { action: 'extensionAds.rateService.adRatingRequest' },
         { frameId: 0 }
       );
     });
