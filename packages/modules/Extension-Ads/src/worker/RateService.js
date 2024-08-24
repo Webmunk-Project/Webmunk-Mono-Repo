@@ -27,14 +27,14 @@ export class RateService {
   async send(tabId) {
     if (!await this.shouldNotify()) return;
 
+    this.lastNotificationTimestamp = Date.now();
+    chrome.storage.local.set({ lastAdsRateNotificationTime: this.lastNotificationTimestamp });
+
     return new Promise((resolve, reject) => {
       const messageListener = (message, sender, sendResponse) => {
         if (message.action === 'extensionAds.rateService.adRatingResponse') {
           chrome.runtime.onMessage.removeListener(messageListener);
           chrome.tabs.onRemoved.removeListener(tabCloseListener);
-
-          this.lastNotificationTimestamp = Date.now();
-          chrome.storage.local.set({ lastAdsRateNotificationTime: this.lastNotificationTimestamp });
 
           resolve(message.response);
         }

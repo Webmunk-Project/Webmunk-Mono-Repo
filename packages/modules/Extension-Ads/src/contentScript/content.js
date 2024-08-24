@@ -1,7 +1,7 @@
 import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 import './contentscript-extra'
-import { RateService } from './RateService'
+import { RateService } from './RateService';
 
 const debugLog = {
   traverse: false,

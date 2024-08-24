@@ -1,7 +1,7 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
-import { v4 as uuidv4 } from 'uuid';
 import { RateService } from './RateService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const moduleEvents = Object.freeze({
   AD_DETECTED: 'ad_detected',
@@ -253,19 +253,34 @@ const extensionAdsAppMgr = {
     const { id: tabId, url: tabUrl } = from.tab;
     const { meta, adData, clickedUrl } = data;
 
-    if (clickedUrl) {
-      const trackedAd = this.tabData[tabId].ads.get(clickedUrl);
+    let trackedAd = this.tabData[tabId].ads.get(clickedUrl);
 
-      const eventData = this.prepareEventData(trackedAd, tabUrl);
+    // If not found, search all URLs in content
+    if (!trackedAd && adData?.content) {
+        for (const item of adData.content) {
+            const { href, src, redirectedUrl, initialUrl } = item;
+            const urlsToCheck = [href, src, redirectedUrl, initialUrl];
 
-      console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
-      console.log('Event data:', eventData);
+            for (const url of urlsToCheck) {
+                if (url && this.tabData[tabId].ads.has(url)) {
+                    trackedAd = this.tabData[tabId].ads.get(url);
+                    break;
+                }
+            }
 
-      this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
-    } else {
-      console.log("Clicked URL not found.");
+            if (trackedAd) break;
+        }
     }
-  },
+
+    if (trackedAd) {
+        const eventData = this.prepareEventData(trackedAd, tabUrl);
+        console.log(`%cUser clicked on an ad: ${eventData.adId}`, 'color: orange');
+        console.log('Event data:', eventData);
+        this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
+    } else {
+        console.log("No tracked ad found for clicked URL.");
+    }
+},
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
           return this.captureRegion();
