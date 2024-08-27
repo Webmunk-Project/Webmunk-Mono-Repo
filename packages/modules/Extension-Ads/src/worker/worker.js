@@ -1,15 +1,19 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
+import { RateService } from './RateService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const moduleEvents = Object.freeze({
   AD_DETECTED: 'ad_detected',
   AD_CLICKED: 'ad_clicked',
+  ADS_RATED: 'ads_rated',
 });
 
 const extensionAdsAppMgr = {
   tabData: {},
   eventEmitter: self.messenger.registerModule('ads-scraper'),
   throttler: new TimeThrottler(1,200),
+  rateService: new RateService(),
   initialize: async function() {
     self.messenger.addReceiver('extensionAdsAppMgr', this);
 
@@ -114,6 +118,7 @@ const extensionAdsAppMgr = {
     const uniqueUrls = new Set();
     const allowedRedirectTypes = ['a', 'div'];
     const filteredContent = content.filter(this.contentFilterPredicate);
+    const adId = uuidv4();
 
     const processedContent = await Promise.all(
       filteredContent.map(async (item) => {
@@ -155,6 +160,7 @@ const extensionAdsAppMgr = {
     return {
       title,
       company,
+      adId,
       text,
       coordinates,
       initialUrl: mainContentItem.initialUrl,
@@ -186,6 +192,7 @@ const extensionAdsAppMgr = {
   prepareEventData(adData, pageUrl) {
     const {
       title,
+      adId,
       company,
       text,
       coordinates,
@@ -195,7 +202,18 @@ const extensionAdsAppMgr = {
       content,
     } = adData;
 
-    return { pageUrl: pageUrl, title, company, text, coordinates, initialUrl, redirected, redirectedUrl, content };
+    return { pageUrl: pageUrl, title, company, text, coordinates, initialUrl, redirected, redirectedUrl, content, adId };
+  },
+  async rateAdsIfNeeded(tabId) {
+    if (!this.tabData[tabId].ads.size) return;
+
+    const response = await this.rateService.send(tabId);
+
+    if (!response) return;
+
+    const adIds = Array.from(this.tabData[tabId].ads.values()).map((ad) => ad.adId);
+
+    this.eventEmitter.emit(moduleEvents.ADS_RATED, { mark: response, adIds });
   },
   sendAdsIfNeeded(tabId) {
     if (!this.tabData[tabId].ads.size) return;
@@ -228,23 +246,44 @@ const extensionAdsAppMgr = {
 
     console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
     console.log('Tab data:', this.tabData[tabId]);
+    this.rateAdsIfNeeded(tabId);
     this.sendAdsIfNeeded(tabId);
   },
   async _onMessage_adClicked(data, from) {
-    const { url: tabUrl } = from.tab;
+    const { id: tabId, url: tabUrl } = from.tab;
     const { meta, adData, clickedUrl } = data;
 
-    if (clickedUrl) {
-      const result = await this.processAdData(adData, tabUrl, clickedUrl);
-      const eventData = this.prepareEventData(result, tabUrl);
+    const trackedAd = this.findTrackedAd(tabId, clickedUrl, adData);
 
-      console.log(`%cUser clicked on an ad: ${clickedUrl}`, 'color: orange');
-      console.log('Event data:', eventData);
-
-      this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
+    if (trackedAd) {
+        const eventData = this.prepareEventData(trackedAd, tabUrl);
+        console.log(`%cUser clicked on an ad: ${eventData.adId}`, 'color: orange');
+        console.log('Event data:', eventData);
+        this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
     } else {
-      console.log("Clicked URL not found.");
+        console.log("No tracked ad found for clicked URL.");
     }
+  },
+  findTrackedAd(tabId, clickedUrl, adData) {
+    let trackedAd = this.tabData[tabId].ads.get(clickedUrl);
+
+    // If not found, search all URLs in content
+    if (!trackedAd && adData?.content) {
+      const contentItem = adData.content.find((item) => {
+        const { href, src, redirectedUrl, initialUrl } = item;
+        const urlsToCheck = [href, src, redirectedUrl, initialUrl];
+
+        return urlsToCheck.some((url) => url && this.tabData[tabId].ads.has(url));
+      });
+
+      if (contentItem) {
+        const { href, src, redirectedUrl, initialUrl } = contentItem;
+        const urlsToCheck = [href, src, redirectedUrl, initialUrl];
+        trackedAd = this.tabData[tabId].ads.get(urlsToCheck.find((url) => url && this.tabData[tabId].ads.has(url)));
+      }
+    }
+
+    return trackedAd;
   },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {

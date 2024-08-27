@@ -1,6 +1,7 @@
 import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 import './contentscript-extra'
+import { RateService } from './RateService';
 
 const debugLog = {
   traverse: false,
@@ -381,6 +382,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       attributeFilter: [ 'src' ]
     },
     urlToIframeEltMap: new Map(),
+    rateService: new RateService(),
     isAd: false,
     isVisible: true,
     actionsMessageMain: ['isFrameAnAd','isDisplayNone'],
