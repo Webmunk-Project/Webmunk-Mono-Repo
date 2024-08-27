@@ -253,24 +253,7 @@ const extensionAdsAppMgr = {
     const { id: tabId, url: tabUrl } = from.tab;
     const { meta, adData, clickedUrl } = data;
 
-    let trackedAd = this.tabData[tabId].ads.get(clickedUrl);
-
-    // If not found, search all URLs in content
-    if (!trackedAd && adData?.content) {
-        for (const item of adData.content) {
-            const { href, src, redirectedUrl, initialUrl } = item;
-            const urlsToCheck = [href, src, redirectedUrl, initialUrl];
-
-            for (const url of urlsToCheck) {
-                if (url && this.tabData[tabId].ads.has(url)) {
-                    trackedAd = this.tabData[tabId].ads.get(url);
-                    break;
-                }
-            }
-
-            if (trackedAd) break;
-        }
-    }
+    const trackedAd = this.findTrackedAd(tabId, clickedUrl, adData);
 
     if (trackedAd) {
         const eventData = this.prepareEventData(trackedAd, tabUrl);
@@ -280,7 +263,28 @@ const extensionAdsAppMgr = {
     } else {
         console.log("No tracked ad found for clicked URL.");
     }
-},
+  },
+  findTrackedAd(tabId, clickedUrl, adData) {
+    let trackedAd = this.tabData[tabId].ads.get(clickedUrl);
+
+    // If not found, search all URLs in content
+    if (!trackedAd && adData?.content) {
+      trackedAd = adData.content.find((item) => {
+        const { href, src, redirectedUrl, initialUrl } = item;
+        const urlsToCheck = [href, src, redirectedUrl, initialUrl];
+
+        return urlsToCheck.some((url) => url && this.tabData[tabId].ads.has(url));
+      });
+
+      if (trackedAd) {
+        const { href, src, redirectedUrl, initialUrl } = trackedAd;
+        const urlsToCheck = [href, src, redirectedUrl, initialUrl];
+        trackedAd = this.tabData[tabId].ads.get(urlsToCheck.find((url) => url && this.tabData[tabId].ads.has(url)));
+      }
+    }
+
+    return trackedAd;
+  },
   _onMessage_captureRegion: function(request, _from) {
       return this.throttler.add(async () => {
           return this.captureRegion();
