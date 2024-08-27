@@ -269,15 +269,15 @@ const extensionAdsAppMgr = {
 
     // If not found, search all URLs in content
     if (!trackedAd && adData?.content) {
-      trackedAd = adData.content.find((item) => {
+      const contentItem = adData.content.find((item) => {
         const { href, src, redirectedUrl, initialUrl } = item;
         const urlsToCheck = [href, src, redirectedUrl, initialUrl];
 
         return urlsToCheck.some((url) => url && this.tabData[tabId].ads.has(url));
       });
 
-      if (trackedAd) {
-        const { href, src, redirectedUrl, initialUrl } = trackedAd;
+      if (contentItem) {
+        const { href, src, redirectedUrl, initialUrl } = contentItem;
         const urlsToCheck = [href, src, redirectedUrl, initialUrl];
         trackedAd = this.tabData[tabId].ads.get(urlsToCheck.find((url) => url && this.tabData[tabId].ads.has(url)));
       }
