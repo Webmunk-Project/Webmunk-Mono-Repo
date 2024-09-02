@@ -1,0 +1,14 @@
+[
+    {
+      "name": "Amazon",
+      "url": "https://www.amazon.com/adprefs"
+    },
+    {
+      "name": "Facebook/Instagram",
+      "url": "https://accountscenter.facebook.com/ad_preferences/ad_settings/data_from_partners"
+    },
+    {
+      "name": "Google/YouTube",
+      "url": "https://myadcenter.google.com/personalizationoff"
+    }
+  ]

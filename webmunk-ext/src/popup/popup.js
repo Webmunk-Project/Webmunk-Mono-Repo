@@ -7,8 +7,13 @@ class Popup {
     this.emailInput = document.getElementById('emailInput');
     this.getStartedContainer = document.getElementById('getStartedContainer');
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer');
+    this.settingsManagementContainer = document.getElementById('settingsManagementContainer');
     this.copyButton = document.getElementById('copyButton');
+    this.settingsButton = document.getElementById('settings-button');
     this.formattedIdentifier = document.getElementById('formattedIdentifier');
+    this.closeSettingsButton = document.getElementById('close-settings-button');
+    this.settingsList = document.getElementById('settingsListContainer');
+    this.checkSettingsButton = document.getElementById('check-settings-button');
     this.fullIdentifier = '';
     this.notification = new Notification();
 
@@ -24,6 +29,43 @@ class Popup {
   initListeners() {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
+    this.settingsButton.addEventListener('click', () => this.showSettingsManagements());
+    this.closeSettingsButton.addEventListener('click', () => this.closeSettings());
+    this.checkSettingsButton.addEventListener('click', () => this.checkSettings());
+  }
+
+  closeSettings() {
+    this.settingsList.innerHTML = '';
+    this.settingsManagementContainer.style.display = 'none';
+    this.studyExtensionContainer.style.display = 'block';
+  }
+
+  async showSettingsManagements() {
+    this.studyExtensionContainer.style.display = 'none';
+    this.settingsManagementContainer.style.display = 'block';
+    const settingsContent = await this.initSettings();
+    settingsContent.classList.add('list');
+
+    this.settingsList.appendChild(settingsContent);
+    this.settingsList.addEventListener('click', (event) => this.handleSettingsClick(event));
+  }
+
+  async checkSettings() {
+    const listItems = this.settingsList.querySelectorAll('li a');
+
+    for (const link of listItems) {
+      const url = link.href;
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', url });
+    }
+}
+
+  handleSettingsClick(event) {
+    const target = event.target.closest('a');
+
+    if (target) {
+      const url = target.href;
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', url });
+    }
   }
 
   async onContinueButtonClick() {
@@ -92,6 +134,36 @@ class Popup {
 
     identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
   }
+
+  async initSettings() {
+    const settingsResult = await chrome.storage.local.get('settings');
+    const checkedSettingsResult = await chrome.storage.local.get('checkedSettings');
+
+    const settings = settingsResult.settings || [];
+    const checkedSettings = checkedSettingsResult.checkedSettings || {};
+
+    const settingsList = document.createElement('ul');
+
+    settings.forEach((list) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = list.url;
+      link.textContent = list.name;
+      listItem.appendChild(link);
+
+      if (checkedSettings[list.url]) {
+        const checkmark = document.createElement('span');
+        checkmark.textContent = '✔️';
+        checkmark.style.marginLeft = '8px';
+        listItem.appendChild(checkmark);
+      }
+
+      settingsList.appendChild(listItem);
+    });
+
+    return settingsList;
+  }
+
 
   async initSurveys() {
     const result = await chrome.storage.local.get('surveys');
