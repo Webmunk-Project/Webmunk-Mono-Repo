@@ -9,6 +9,7 @@ This extension is designed for tracking ads and saving cookies. It allows you to
     npm i
     npm i @webmunk/cookies-scraper
     npm i @webmunk/extension-ads
+    npm i @webmunk/ad-personalization
     npm i @webmunk/utils
     ```
 
@@ -31,6 +32,7 @@ This extension is designed for tracking ads and saving cookies. It allows you to
 
 - `@webmunk/cookies-scraper`: Module for collecting and saving cookie information.
 - `@webmunk/extension-ads`: Module for tracking advertising elements on web pages.
+- `@webmunk/ad-personalization`: Module for setting up advertising personalization on designated websites.
 - `@webmunk/utils`: Utility module used for various tasks within the extension.
 
 ## Development and Testing

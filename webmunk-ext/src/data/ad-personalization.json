@@ -1,0 +1,28 @@
+[
+  {
+    "key": "amazonAdPrefs",
+    "name": "Amazon",
+    "url": "https://www.amazon.com/adprefs"
+  },
+  {
+    "key": "facebookActivityData",
+    "name": "Facebook Activity Information/Instagram",
+    "url": "https://accountscenter.facebook.com/ad_preferences/ad_settings/data_from_partners"
+  },
+  {
+    "key": "facebookAudienceAds",
+    "name": "Facebook Audience-based advertising",
+    "url": "https://accountscenter.facebook.com/ad_preferences/ad_settings/audience_based_advertising"
+  },
+  {
+    "key": "facebookCategories",
+    "name": "Facebook Categories",
+    "url": "https://www.facebook.com/adpreferences/ad_settings/?section=profile_information&entry_product=accounts_center"
+  },
+  {
+    "key": "googleYouTubeAds",
+    "name": "Google/YouTube",
+    "url": "https://myadcenter.google.com/personalizationoff"
+  }
+]
+

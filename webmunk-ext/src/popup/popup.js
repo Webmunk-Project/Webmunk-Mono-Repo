@@ -32,6 +32,7 @@ class Popup {
     this.settingsButton.addEventListener('click', () => this.showSettingsManagements());
     this.closeSettingsButton.addEventListener('click', () => this.closeSettings());
     this.checkSettingsButton.addEventListener('click', () => this.checkSettings());
+    this.settingsList.addEventListener('click', (event) => this.handleSettingsClick(event));
   }
 
   closeSettings() {
@@ -43,11 +44,11 @@ class Popup {
   async showSettingsManagements() {
     this.studyExtensionContainer.style.display = 'none';
     this.settingsManagementContainer.style.display = 'block';
+
     const settingsContent = await this.initSettings();
     settingsContent.classList.add('list');
 
     this.settingsList.appendChild(settingsContent);
-    this.settingsList.addEventListener('click', (event) => this.handleSettingsClick(event));
   }
 
   async checkSettings() {
@@ -55,7 +56,8 @@ class Popup {
 
     for (const link of listItems) {
       const url = link.href;
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', url });
+      const key = link.getAttribute('key');
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked',  data: { url, key } });
     }
 }
 
@@ -64,7 +66,8 @@ class Popup {
 
     if (target) {
       const url = target.href;
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', url });
+      const key = target.getAttribute('key');
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', data: { url, key } });
     }
   }
 
@@ -149,6 +152,7 @@ class Popup {
       const link = document.createElement('a');
       link.href = list.url;
       link.textContent = list.name;
+      link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
       if (checkedSettings[list.url]) {
