@@ -3,6 +3,16 @@
     "manifest_version": 3,
 	"name": "webmunk extension",
 	"version": "0.1.0",
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": "images/favicon.png"
+      },
+      "icons": {
+        "16": "images/favicon.png",
+        "32": "images/favicon.png",
+        "48": "images/favicon.png",
+        "128": "images/favicon.png"
+    },
 
 	"description": "A new webmunk project",
 
