@@ -19,6 +19,7 @@ const appMgr =  {
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
+    messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
 
     await this.initSurveys();

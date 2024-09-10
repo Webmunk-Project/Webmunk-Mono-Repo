@@ -121,14 +121,31 @@ export class AdPersonalization {
     trueBox.click();
 
     const saveButton = document.getElementById('optOutControl');
-    if (saveButton) saveButton.click();
+    if (saveButton) {
+      saveButton.click();
+
+      await new Promise((resolve) => {
+        const onTabUpdated = (tabId, changeInfo) => {
+          if (changeInfo.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(onTabUpdated);
+            resolve();
+          }
+        };
+
+        chrome.tabs.onUpdated.addListener(onTabUpdated);
+      });
+    }
 
     this.sendResponseToService(true);
 }
 
   async googleSettings() {
     const offButton = document.querySelector('[aria-label="Turn off"]');
-    if(offButton) return this.sendResponseToService(true);
+    if(offButton) {
+      this.addBlurEffect();
+
+      return this.sendResponseToService(true);
+    }
 
     const onButton = document.querySelector('[aria-label="Turn on"]');
     if (onButton) this.addBlurEffect();
