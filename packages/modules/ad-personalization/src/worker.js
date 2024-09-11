@@ -24,7 +24,7 @@ export class AdPersonalization {
     if (request.action === 'webmunkExt.popup.settingsClicked') {
       const { response, tabId } = await this.send(request.data);
       if (!response) return;
-      this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { url: request.data.url, toggle: response });
+      this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { data: request.data, value: response });
 
       await chrome.tabs.remove(tabId);
 
