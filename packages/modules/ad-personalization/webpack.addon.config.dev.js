@@ -1,26 +1,24 @@
-var _ = require('lodash')
-var webpack = require('webpack')
-const { mergeWithCustomize } = require('webpack-merge')
-const baseConfig = require('./webpack.addon.config.base')("chrome")
+var _ = require('lodash');
+var webpack = require('webpack');
+const { mergeWithCustomize } = require('webpack-merge');
+const baseConfig = require('./webpack.addon.config.base')("chrome");
 const manifestVersion = "3";
-const package = require('./package.json')
+const package = require('./package.json');
 
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
     if (key === 'module.rules') {
-      let _u = _.uniq([...a, ...b])
-      return _u
+      let _u = _.uniq([...a, ...b]);
+      return _u;
     }
-
-    return undefined
+    return undefined;
   },
   customizeObject(a, b, key) {
     if (key === 'module') {
       // Custom merging
-      return _.merge({}, a, b)
+      return _.merge({}, a, b);
     }
-
-    return undefined
+    return undefined;
   }
 })(baseConfig, {
   mode: 'development',
@@ -28,6 +26,11 @@ module.exports = mergeWithCustomize({
   devServer: {},
   module: {
     rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/
+      },
       {
         test: /\.js$/,
         use: [
@@ -47,9 +50,12 @@ module.exports = mergeWithCustomize({
       }
     ]
   },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
   plugins: [
     new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
   ]
-})
+});
