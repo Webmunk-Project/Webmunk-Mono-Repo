@@ -38,7 +38,7 @@ export class AdPersonalization {
       if (!response) return;
       this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { data: request.data, value: response });
 
-      setTimeout(async () => await chrome.tabs.remove(tabId), 2000);
+      setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
 
       const checkedSettingsResult = await chrome.storage.local.get('checkedSettings');
       const checkedSettings = checkedSettingsResult.checkedSettings || {};
