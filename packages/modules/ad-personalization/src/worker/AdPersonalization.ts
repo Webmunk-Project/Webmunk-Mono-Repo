@@ -11,7 +11,7 @@ interface Message {
 }
 
 interface MessageResponse {
-  response: any;
+  response: boolean;
   tabId: number;
 }
 

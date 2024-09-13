@@ -82,8 +82,6 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
 
       const isFirstElement = index === 0;
       await processElement(elements[index], isFirstElement);
-      console.log(`Виконано ${index + 1} з ${elements.length}`);
-
 
       if (index === elements.length - 1) {
         this.sendResponseToService(true);
