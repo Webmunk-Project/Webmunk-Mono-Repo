@@ -15,11 +15,11 @@ interface MessageResponse {
   tabId: number;
 }
 
-const moduleEvents = Object.freeze({
-  AD_PERSONALIZATION: 'ad_personalization',
-});
+enum moduleEvents {
+  AD_PERSONALIZATION = 'ad_personalization',
+};
 
-export class AdPersonalization {
+export class AdPersonalizationWorker {
   private eventEmitter: any;
 
   constructor() {
@@ -33,25 +33,25 @@ export class AdPersonalization {
   }
 
   async onPopupMessage(request: Message, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
-    if (request.action === 'webmunkExt.popup.settingsClicked') {
+    if (request.action === 'webmunkExt.popup.checkSettingsReq') {
       const { response, tabId } = await this.send(request.data);
       if (!response) return;
       this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { data: request.data, value: response });
 
       setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
 
-      const checkedSettingsResult = await chrome.storage.local.get('checkedSettings');
-      const checkedSettings = checkedSettingsResult.checkedSettings || {};
+      const checkedAdPersonalizationResult = await chrome.storage.local.get('checkedAdPersonalization');
+      const checkedAdPersonalization = checkedAdPersonalizationResult.checkedAdPersonalization || {};
 
-      checkedSettings[request.data.url] = response;
+      checkedAdPersonalization[request.data.url] = response;
 
-      await chrome.storage.local.set({ checkedSettings });
+      await chrome.storage.local.set({ checkedAdPersonalization });
     }
   }
 
   async initSettings() {
-    const result = config;
-    await chrome.storage.local.set({ settings: result });
+    const adPersonalization = config;
+    await chrome.storage.local.set({ adPersonalization });
   }
 
   async send(data: SendData): Promise<MessageResponse> {

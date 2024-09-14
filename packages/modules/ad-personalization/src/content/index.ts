@@ -1,4 +1,4 @@
-import { MainClass } from './MainClass';
+import { AdPersonalizationContent } from './AdPersonalization';
 
-const content = new MainClass();
+const content = new AdPersonalizationContent();
 content.initialize();

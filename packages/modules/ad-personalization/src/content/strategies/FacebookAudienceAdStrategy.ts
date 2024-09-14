@@ -1,4 +1,4 @@
-import { BaseStrategy } from '../BaseStrategy';
+import { BaseStrategy } from './BaseStrategy';
 
 export class FacebookAudienceAdStrategy extends BaseStrategy {
   public strategyKey = 'facebookAudienceAds';

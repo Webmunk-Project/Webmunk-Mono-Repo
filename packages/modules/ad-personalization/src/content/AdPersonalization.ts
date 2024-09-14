@@ -1,7 +1,7 @@
 import { StrategyFactory } from './StrategyFactory';
-import { BaseStrategy } from './BaseStrategy';
+import { BaseStrategy } from './strategies/BaseStrategy';
 
-export class MainClass {
+export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
   private strategiesMap: Map<string, BaseStrategy>;
 

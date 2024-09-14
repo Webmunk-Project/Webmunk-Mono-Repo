@@ -7,13 +7,13 @@ class Popup {
     this.emailInput = document.getElementById('emailInput');
     this.getStartedContainer = document.getElementById('getStartedContainer');
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer');
-    this.settingsManagementContainer = document.getElementById('settingsManagementContainer');
+    this.adPersonalizationContainer = document.getElementById('adPersonalizationContainer');
     this.copyButton = document.getElementById('copyButton');
-    this.settingsButton = document.getElementById('settings-button');
+    this.adPersonalizationButton = document.getElementById('ad-personalization-button');
     this.formattedIdentifier = document.getElementById('formattedIdentifier');
-    this.closeSettingsButton = document.getElementById('close-settings-button');
-    this.settingsList = document.getElementById('settingsListContainer');
-    this.checkSettingsButton = document.getElementById('check-settings-button');
+    this.closeAdPersonalizationButton = document.getElementById('close-ad-personalization-button');
+    this.adPersonalizationList = document.getElementById('adPersonalizationListContainer');
+    this.checkAdPersonalizationButton = document.getElementById('check-ad-personalization-button');
     this.fullIdentifier = '';
     this.notification = new Notification();
 
@@ -29,45 +29,45 @@ class Popup {
   initListeners() {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
-    this.settingsButton.addEventListener('click', () => this.showSettingsManagements());
-    this.closeSettingsButton.addEventListener('click', () => this.closeSettings());
-    this.checkSettingsButton.addEventListener('click', () => this.checkSettings());
-    this.settingsList.addEventListener('click', (event) => this.handleSettingsClick(event));
+    this.adPersonalizationButton.addEventListener('click', () => this.showAdPersonalizationContainer());
+    this.closeAdPersonalizationButton.addEventListener('click', () => this.closeAdPersonalization());
+    this.checkAdPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
+    this.adPersonalizationList.addEventListener('click', (event) => this.handleAdPersonalizationClick(event));
   }
 
-  closeSettings() {
-    this.settingsList.innerHTML = '';
-    this.settingsManagementContainer.style.display = 'none';
+  closeAdPersonalization() {
+    this.adPersonalizationList.innerHTML = '';
+    this.adPersonalizationContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
   }
 
-  async showSettingsManagements() {
+  async showAdPersonalizationContainer() {
     this.studyExtensionContainer.style.display = 'none';
-    this.settingsManagementContainer.style.display = 'block';
+    this.adPersonalizationContainer.style.display = 'block';
 
-    const settingsContent = await this.initSettings();
-    settingsContent.classList.add('list');
+    const adPersonalizationContent = await this.initAdPersonalization();
+    adPersonalizationContent.classList.add('list');
 
-    this.settingsList.appendChild(settingsContent);
+    this.adPersonalizationList.appendChild(adPersonalizationContent);
   }
 
-  async checkSettings() {
-    const listItems = this.settingsList.querySelectorAll('li a');
+  async checkAdPersonalization() {
+    const listItems = this.adPersonalizationList.querySelectorAll('li a');
 
     for (const link of listItems) {
       const url = link.href;
       const key = link.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked',  data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  data: { url, key } });
     }
 }
 
-  handleSettingsClick(event) {
+  handleAdPersonalizationClick(event) {
     const target = event.target.closest('a');
 
     if (target) {
       const url = target.href;
       const key = target.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.settingsClicked', data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { url, key } });
     }
   }
 
@@ -138,16 +138,16 @@ class Popup {
     identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
   }
 
-  async initSettings() {
-    const settingsResult = await chrome.storage.local.get('settings');
-    const checkedSettingsResult = await chrome.storage.local.get('checkedSettings');
+  async initAdPersonalization() {
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization');
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('checkedAdPersonalization');
 
-    const settings = settingsResult.settings || [];
-    const checkedSettings = checkedSettingsResult.checkedSettings || {};
+    const adPersonalization = adPersonalizationResult.adPersonalization || [];
+    const checkAdPersonalization = checkedAdPersonalizationResult.checkedAdPersonalization || {};
 
     const settingsList = document.createElement('ul');
 
-    settings.forEach((list) => {
+    adPersonalization.forEach((list) => {
       const listItem = document.createElement('li');
       const link = document.createElement('a');
       link.href = list.url;
@@ -155,7 +155,7 @@ class Popup {
       link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
-      if (checkedSettings[list.url]) {
+      if (checkAdPersonalization[list.url]) {
         const checkmark = document.createElement('span');
         checkmark.textContent = '✔️';
         checkmark.style.marginLeft = '8px';

@@ -1,4 +1,4 @@
-import { BaseStrategy } from '../BaseStrategy';
+import { BaseStrategy } from './BaseStrategy';
 
 export class GoogleAndYoutubeStrategy extends BaseStrategy {
   public strategyKey = 'googleYouTubeAds';

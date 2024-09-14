@@ -1,5 +1,5 @@
-import { BaseStrategy } from './BaseStrategy';
-import * as Strategies from './strategies/Strategies';
+import { BaseStrategy } from './strategies/BaseStrategy';
+import * as Strategies from './strategies';
 
 export class StrategyFactory {
   private strategiesMap: Map<string, BaseStrategy> = new Map();
@@ -10,8 +10,7 @@ export class StrategyFactory {
 
   private createAllStrategies(): void {
     Object.values(Strategies).forEach((Strategy) => {
-        const strategyInstance = new Strategy();
-        this.strategiesMap.set(strategyInstance.strategyKey, strategyInstance);
+      this.strategiesMap.set(new Strategy().strategyKey, new Strategy());
     })
   }
 
