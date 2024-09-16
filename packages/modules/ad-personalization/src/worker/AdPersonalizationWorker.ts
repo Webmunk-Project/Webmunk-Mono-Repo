@@ -40,18 +40,19 @@ export class AdPersonalizationWorker {
 
       setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
 
-      const checkedAdPersonalizationResult = await chrome.storage.local.get('checkedAdPersonalization');
+      const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
       const checkedAdPersonalization = checkedAdPersonalizationResult.checkedAdPersonalization || {};
 
       checkedAdPersonalization[request.data.url] = response;
 
-      await chrome.storage.local.set({ checkedAdPersonalization });
+      await chrome.storage.local.set({ 'adPersonalization.checkedItems': checkedAdPersonalization});
     }
   }
 
   async initSettings() {
     const adPersonalization = config;
-    await chrome.storage.local.set({ adPersonalization });
+    console.log(`china`, adPersonalization);
+    await chrome.storage.local.set({ 'adPersonalization.items': adPersonalization });
   }
 
   async send(data: SendData): Promise<MessageResponse> {

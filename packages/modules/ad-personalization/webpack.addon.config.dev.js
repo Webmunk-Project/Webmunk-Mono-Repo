@@ -52,10 +52,5 @@ module.exports = mergeWithCustomize({
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js']
-  },
-  plugins: [
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-    }),
-  ]
+  }
 });

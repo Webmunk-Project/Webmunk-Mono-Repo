@@ -139,11 +139,11 @@ class Popup {
   }
 
   async initAdPersonalization() {
-    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization');
-    const checkedAdPersonalizationResult = await chrome.storage.local.get('checkedAdPersonalization');
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
 
-    const adPersonalization = adPersonalizationResult.adPersonalization || [];
-    const checkAdPersonalization = checkedAdPersonalizationResult.checkedAdPersonalization || {};
+    const adPersonalization = adPersonalizationResult['adPersonalization.items'] || [];
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
 
     const settingsList = document.createElement('ul');
 
@@ -155,7 +155,7 @@ class Popup {
       link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
-      if (checkAdPersonalization[list.url]) {
+      if (checkedAdPersonalization[list.url]) {
         const checkmark = document.createElement('span');
         checkmark.textContent = '✔️';
         checkmark.style.marginLeft = '8px';
@@ -167,6 +167,7 @@ class Popup {
 
     return settingsList;
   }
+
 
 
   async initSurveys() {

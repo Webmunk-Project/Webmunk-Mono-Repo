@@ -1,4 +1,4 @@
-import { AdPersonalizationContent } from './AdPersonalization';
+import { AdPersonalizationContent } from './AdPersonalizationContent';
 
 const content = new AdPersonalizationContent();
 content.initialize();
