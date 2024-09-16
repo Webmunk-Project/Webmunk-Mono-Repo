@@ -1,9 +1,9 @@
+import { IStrategy } from './strategies/BaseStrategy';
 import { StrategyFactory } from './StrategyFactory';
-import { BaseStrategy } from './strategies/BaseStrategy';
 
 export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
-  private strategiesMap: Map<string, BaseStrategy>;
+  private strategiesMap: Map<string, IStrategy>;
 
   constructor() {
     this.strategyFactory = new StrategyFactory();

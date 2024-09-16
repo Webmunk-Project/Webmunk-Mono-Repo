@@ -1,4 +1,4 @@
-interface IStrategy {
+export interface IStrategy {
   strategyKey: string;
   execute(): Promise<void>;
 }

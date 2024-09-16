@@ -1,8 +1,8 @@
-import { BaseStrategy } from './strategies/BaseStrategy';
+import { IStrategy } from './strategies/BaseStrategy';
 import * as Strategies from './strategies';
 
 export class StrategyFactory {
-  private strategiesMap: Map<string, BaseStrategy> = new Map();
+  private strategiesMap: Map<string, IStrategy> = new Map();
 
   constructor() {
     this.createAllStrategies();
@@ -14,7 +14,7 @@ export class StrategyFactory {
     })
   }
 
-  public getStrategiesMap(): Map<string, BaseStrategy> {
+  public getStrategiesMap(): Map<string, IStrategy> {
     return this.strategiesMap;
   }
 }
