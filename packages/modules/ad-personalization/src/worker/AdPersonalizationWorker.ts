@@ -51,7 +51,6 @@ export class AdPersonalizationWorker {
 
   async initSettings() {
     const adPersonalization = config;
-    console.log(`china`, adPersonalization);
     await chrome.storage.local.set({ 'adPersonalization.items': adPersonalization });
   }
 
