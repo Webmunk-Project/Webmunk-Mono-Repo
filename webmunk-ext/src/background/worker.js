@@ -1,11 +1,11 @@
 // dont remove next line, all webmunk modules use messenger utility
-import { messenger } from "@webmunk/utils"
-import { wmSessionMgr } from '@webmunk/utils';
+import { messenger } from "@webmunk/utils";
 import { RudderStack } from './rudderstack';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker.js";
 import "@webmunk/cookies-scraper/worker";
+import "@webmunk/ad-personalization/worker";
 
 const events = Object.freeze({
   SURVEY_COMPLETED: 'survey_completed',
@@ -19,6 +19,7 @@ const appMgr =  {
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
+    messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
 
     await this.initSurveys();
@@ -27,9 +28,9 @@ const appMgr =  {
     await this.rudderStack.track(event, data);
   },
   async initSurveys() {
-      const result = await chrome.storage.local.get('completedSurveys');
-      this.completedSurveys = result.completedSurveys || [];
-      await this.loadSurveys();
+    const result = await chrome.storage.local.get('completedSurveys');
+    this.completedSurveys = result.completedSurveys || [];
+    await this.loadSurveys();
   },
   async loadSurveys() {
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));

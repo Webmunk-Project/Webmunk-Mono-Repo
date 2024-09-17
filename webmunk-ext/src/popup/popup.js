@@ -7,8 +7,13 @@ class Popup {
     this.emailInput = document.getElementById('emailInput');
     this.getStartedContainer = document.getElementById('getStartedContainer');
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer');
+    this.adPersonalizationContainer = document.getElementById('adPersonalizationContainer');
     this.copyButton = document.getElementById('copyButton');
+    this.adPersonalizationButton = document.getElementById('ad-personalization-button');
     this.formattedIdentifier = document.getElementById('formattedIdentifier');
+    this.closeAdPersonalizationButton = document.getElementById('close-ad-personalization-button');
+    this.adPersonalizationList = document.getElementById('adPersonalizationListContainer');
+    this.checkAdPersonalizationButton = document.getElementById('check-ad-personalization-button');
     this.fullIdentifier = '';
     this.notification = new Notification();
 
@@ -24,6 +29,46 @@ class Popup {
   initListeners() {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
+    this.adPersonalizationButton.addEventListener('click', () => this.showAdPersonalizationContainer());
+    this.closeAdPersonalizationButton.addEventListener('click', () => this.closeAdPersonalization());
+    this.checkAdPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
+    this.adPersonalizationList.addEventListener('click', (event) => this.handleAdPersonalizationClick(event));
+  }
+
+  closeAdPersonalization() {
+    this.adPersonalizationList.innerHTML = '';
+    this.adPersonalizationContainer.style.display = 'none';
+    this.studyExtensionContainer.style.display = 'block';
+  }
+
+  async showAdPersonalizationContainer() {
+    this.studyExtensionContainer.style.display = 'none';
+    this.adPersonalizationContainer.style.display = 'block';
+
+    const adPersonalizationContent = await this.initAdPersonalization();
+    adPersonalizationContent.classList.add('list');
+
+    this.adPersonalizationList.appendChild(adPersonalizationContent);
+  }
+
+  async checkAdPersonalization() {
+    const listItems = this.adPersonalizationList.querySelectorAll('li a');
+
+    for (const link of listItems) {
+      const url = link.href;
+      const key = link.getAttribute('key');
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  data: { url, key } });
+    }
+}
+
+  handleAdPersonalizationClick(event) {
+    const target = event.target.closest('a');
+
+    if (target) {
+      const url = target.href;
+      const key = target.getAttribute('key');
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { url, key } });
+    }
   }
 
   async onContinueButtonClick() {
@@ -97,6 +142,38 @@ class Popup {
 
     identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
   }
+
+  async initAdPersonalization() {
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+
+    const adPersonalization = adPersonalizationResult['adPersonalization.items'] || [];
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    const settingsList = document.createElement('ul');
+
+    adPersonalization.forEach((list) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = list.url;
+      link.textContent = list.name;
+      link.setAttribute('key', list.key);
+      listItem.appendChild(link);
+
+      if (checkedAdPersonalization[list.url]) {
+        const checkmark = document.createElement('span');
+        checkmark.textContent = '✔️';
+        checkmark.style.marginLeft = '8px';
+        listItem.appendChild(checkmark);
+      }
+
+      settingsList.appendChild(listItem);
+    });
+
+    return settingsList;
+  }
+
+
 
   async initSurveys() {
     const result = await chrome.storage.local.get('surveys');

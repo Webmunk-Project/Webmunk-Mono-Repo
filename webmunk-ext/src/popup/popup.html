@@ -10,8 +10,10 @@
     <div class="wrapper">
         <div class="main-container" id="getStartedContainer">
             <div class="navbar">
-                <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
-                <h1 class="title">Get Started</h1>
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
+                    <h1 class="title">Get Started</h1>
+                </div>
             </div>
 
             <div class="container">
@@ -25,8 +27,10 @@
 
         <div class="main-container" id="studyExtensionContainer">
             <div class="navbar">
-                <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
-                <h1 class="title">Study Browser Extension</h1>
+                <div style="display: flex; align-items: center;">
+                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
+                    <h1 class="title">Study Browser Extension</h1>
+                </div>
             </div>
 
             <div class="container">
@@ -37,14 +41,37 @@
                     </div>
                     <button class="button" id="copyButton">Copy</button>
                 </div>
+
                 <div style="display: flex; gap: 10px; flex-direction: column; margin-top: 10px;">
                     <p id="tasks-status" style="font-weight: 500"></p>
-                    <ul id="task-list" style="line-height: 30px; font-size: 18px; cursor: pointer; color: blue;">
+                    <ul id="task-list" class="list">
                     </ul>
                     <p style="font-size: 14px;">Tasks will be removed after completion (it may take a few hours to refresh)</p>
                 </div>
+
+                <div style="display: flex; justify-content: center;">
+                    <button id="ad-personalization-button" class="button button--width">Ad personalization</button>
+                </div>
             </div>
         </div>
+
+        <div class="main-container" id="adPersonalizationContainer" style="display: none;">
+            <div class="navbar">
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
+                    <h1 class="title">Ad personalization</h1>
+                </div>
+                <img id="close-ad-personalization-button" src="../images/left-arrow.svg" alt="left arrow" style="cursor: pointer; margin-right: 20px;">
+            </div>
+
+            <div id="adPersonalizationListContainer" class="container">
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+                <button id="check-ad-personalization-button" class="button button--width">Check and configure all</button>
+            </div>
+        </div>
+
         <div id="notification" class="notification" style="display: none;">
             <p id="notification-message" class="notification-message"></p>
         </div>

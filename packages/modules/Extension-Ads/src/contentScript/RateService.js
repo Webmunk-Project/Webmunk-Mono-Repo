@@ -14,48 +14,62 @@ export class RateService {
     styles.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+      .wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10000;
+
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
       .notification-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
+        top: 40%;
+        left: 40%;
         z-index: 10000;
 
         display: flex;
         flex-direction: column;
         gap: 15px;
-        width: 350px;
-        padding: 15px;
+        width: 410px;
+        padding: 15px 20px;
 
         background-color: #ffffff;
         border: 1px solid transparent;
         color: black;
         font-family: 'Roboto', sans-serif;
         border-radius: 10px;
+        opacity: 0;
         box-shadow:  0 0 10px rgba(0,0,0,0.2);
-        animation: appear 0.8s linear forwards;
+        animation: appear 0.5s linear forwards;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        pointer-events: all;
       }
 
       .notification-disappear {
-        animation: disappear 0.8s linear forwards;
+        animation: disappear 0.5s linear forwards;
       }
 
       @keyframes disappear {
-        from {
-          right: 20px;
+        0% {
+          opacity: 1;
         }
-
-        to {
-          right: -400px;
+        100% {
+          opacity: 0;
         }
       }
 
       @keyframes appear {
-        from {
-          right: -400px;
+        0% {
+          opacity: 0;
         }
-
-        to {
-          right: 20px;
+        100% {
+          opacity: 1;
         }
       }
 
@@ -112,6 +126,8 @@ export class RateService {
     `;
 
     document.head.appendChild(styles);
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('wrapper');
     const notificationContainer = document.createElement('div');
     notificationContainer.classList.add('notification-container');
 
@@ -125,7 +141,7 @@ export class RateService {
           </path>
         </svg>
       </div>
-      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3;">How relevant are the ads on the page to you?</p>
+      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3; text-align: center;">How relevant are the ads on the page to you?</p>
       <div style="display: flex; justify-content: center; flex-direction: row-reverse; align-items: center; margin-top: 5px; height: 30px;">
         <input value="5" id="star5" type="radio">
         <label class="star" for="star5"></label>
@@ -141,7 +157,8 @@ export class RateService {
     `;
 
     notificationContainer.innerHTML = notificationContent;
-    document.body.appendChild(notificationContainer);
+    wrapper.appendChild(notificationContainer);
+    document.body.appendChild(wrapper);
 
     document.getElementById('close-button').addEventListener('click', () => {
       this.sendResponseToService('skip');
