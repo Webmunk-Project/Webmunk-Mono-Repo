@@ -689,7 +689,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           }
       }
       if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document) {
-        console.log("Found iframe in mainFrame:", node);
         this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
       }
       if (node.nodeType === Node.ELEMENT_NODE) {
