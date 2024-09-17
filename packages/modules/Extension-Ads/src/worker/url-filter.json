@@ -1,0 +1,13 @@
+{
+    "filters": [
+      "https://static.xx.fbcdn.net/images/",
+      "data:image/",
+      "url(\"",
+      "#",
+      "javascript:void(0)",
+      "-webkit-linear-gradient",
+      "authuser=",
+      "answer.py",
+      "opendialog"
+    ]
+  }
