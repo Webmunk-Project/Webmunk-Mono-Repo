@@ -111,7 +111,6 @@ const extensionAdsAppMgr = {
     }
   },
   contentFilterPredicate(item) {
-    // TODO: move all content filters to this ONE place
     const filters = filtersData.filters;
     const url = item.src || item.href;
 
