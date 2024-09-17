@@ -821,13 +821,11 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     async extractAdData(frameId, elem = null) {
       // for iframes elem is document
       const element = elem || document;
-      console.log(`element`, elem);
 
       const { title, text } = this.extractTexts(frameId, element);
       const content = this.extractContent(frameId, element);
       const coordinates = await this.getAdsCoordinates(element);
 
-      console.log(`response about element`, {title, text, content, coordinates});
       return { title, text, content, coordinates };
     },
     extractTexts(frameId, element) {
