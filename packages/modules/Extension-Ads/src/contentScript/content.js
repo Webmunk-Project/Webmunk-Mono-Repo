@@ -449,8 +449,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         document.addEventListener('DOMContentLoaded', async (event) => {
           await this.wait(WAIT_BEFORE_EXTRACT);
 
-          document.querySelectorAll('[data-webmunk-isad]')
-            .forEach(elem => elem.localName !== 'iframe' && adElements.push(elem));
+          const elements =  document.querySelectorAll('[data-webmunk-isad]');
+          elements.forEach(elem => elem.localName !== 'iframe' && adElements.push(elem));
 
           const meta = this.extractMeta();
           const adsData = await Promise.all(adElements.map(async (elem) => await this.extractAdData(0, elem)));
@@ -647,23 +647,27 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       if (node.nodeType !== 1) return;
       if (this.ignoreTags.has(node.localName)) return;
       if (isFrame() && this.isAd) return;
-      if (node.localName === "iframe" && this.hasAnAdsParent(node,1)) {
-          setTimeout(()=>{
-              this.waitForFrameId(node).then(id => {
-                 //console.log(`Setting Iframe[${node.getAttribute("frameid")}] to data-webmunk-isad true `,node)
-                  node.setAttribute("data-webmunk-isad", true);
-                  chrome.runtime.sendMessage({
-                      action: "extensionAdsAppMgr.youAreAFrameAd",
-                      data: {
-                          frameId: parseInt(id, 10)
-                      }
-                  });
-              }).catch(e => {
-                  console.log(`EXCEPTION: Setting Iframe[UNKNOWN] to data-webmunk-isad true`, node);
-                  node.setAttribute("data-webmunk-isad", true);
-              });
-          }, 300);
-      }
+      if (node.localName === "iframe" && this.hasAnAdsParent(node, 1)) {
+        setTimeout(() => {
+            this.waitForFrameId(node).then(id => {
+                node.setAttribute("data-webmunk-isad", true);
+                chrome.runtime.sendMessage({
+                    action: "extensionAdsAppMgr.youAreAFrameAd",
+                    data: {
+                        frameId: parseInt(id, 10)
+                    }
+                });
+
+                const iframeDocument = node.contentDocument || node.contentWindow.document;
+                if (iframeDocument) {
+                    this.iframeSourceObserver.observe(iframeDocument, this.iframeSourceObserverOptions);
+                }
+            }).catch(e => {
+                console.log(`EXCEPTION: Setting Iframe[UNKNOWN] to data-webmunk-isad true`, node);
+                node.setAttribute("data-webmunk-isad", true);
+            });
+        }, 300);
+    }
       if (node.href && typeof node.href != "object" || node.src){
           urlIsAnAd = await chrome.runtime.sendMessage({
               action: "extensionAdsAppMgr.isUrlAnAds",
@@ -683,6 +687,9 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
                   this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
               }
           }
+      }
+      if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document) {
+        this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
       }
       if (node.nodeType === Node.ELEMENT_NODE) {
         for (const selector of this.cssSelectors) {
