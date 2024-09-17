@@ -729,20 +729,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         }
       }
     },
-    async extractAdDataFromIframe(iframe) {
-      return new Promise((resolve, reject) => {
-        const handleMessage = (event) => {
-          if (event.data.action === 'iframeAdDataResponse') {
-            window.removeEventListener('message', handleMessage);
-            resolve(event.data.adData);
-          }
-        };
-
-        window.addEventListener('message', handleMessage);
-
-        iframe.contentWindow.postMessage({ action: 'iframeAdDataRequest' }, '*');
-      });
-    },
     waitForFrameId:function(node, count = 50){
       return new Promise((resolve,reject) => {
         let frameId = node.getAttribute("frameid")
