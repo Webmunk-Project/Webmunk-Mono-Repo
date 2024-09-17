@@ -41,7 +41,7 @@ export class AdPersonalizationWorker {
       setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
 
       const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
-      const checkedAdPersonalization = checkedAdPersonalizationResult.checkedAdPersonalization || {};
+      const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
 
       checkedAdPersonalization[request.data.url] = response;
 

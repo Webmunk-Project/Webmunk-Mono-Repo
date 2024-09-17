@@ -173,8 +173,6 @@ class Popup {
     return settingsList;
   }
 
-
-
   async initSurveys() {
     const result = await chrome.storage.local.get('surveys');
     const surveys = result.surveys || [];
