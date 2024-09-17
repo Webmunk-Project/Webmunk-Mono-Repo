@@ -116,7 +116,7 @@ const extensionAdsAppMgr = {
     const url = item.src || item.href;
 
      // Check if the URL contains any of the filter strings
-     return url && !filters.some((filter) => url.includes(filter));
+    return url && !filters.some((filter) => url.includes(filter));
   },
   async processAdData({ title, text, content, coordinates }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();
