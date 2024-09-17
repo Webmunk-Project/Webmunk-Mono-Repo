@@ -8,6 +8,7 @@
     "-webkit-linear-gradient",
     "authuser=",
     "answer.py",
-    "opendialog"
+    "opendialog",
+    "https://adssettings.google.com/whythisad"
   ]
 }
