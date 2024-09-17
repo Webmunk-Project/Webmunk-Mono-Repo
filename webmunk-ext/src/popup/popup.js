@@ -34,6 +34,11 @@ class Popup {
       return;
     }
 
+    if (!this.emailValidation(email)) {
+      this.notification.warning('Please enter a valid e-mail address.');
+      return;
+    }
+
     this.setButtonState(true, 'Wait...');
 
     const identifier = await this.getIdentifier(email);
@@ -122,6 +127,11 @@ class Popup {
   setButtonState(isDisabled, text) {
     this.continueButton.disabled = isDisabled;
     this.continueButton.textContent = text;
+  }
+
+  emailValidation(email) {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailPattern.test(email);
   }
 }
 
