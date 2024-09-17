@@ -15,7 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmitOnError": true,
     "types": ["chrome"],
-    "sourceMap": true
+    "sourceMap": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

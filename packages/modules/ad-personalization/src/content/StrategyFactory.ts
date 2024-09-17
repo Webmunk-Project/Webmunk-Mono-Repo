@@ -10,9 +10,11 @@ export class StrategyFactory {
 
   private createAllStrategies(): void {
     Object.values(Strategies).forEach((Strategy) => {
-      this.strategiesMap.set(new Strategy().strategyKey, new Strategy());
-    })
+      const strategyInstance = new Strategy();
+      this.strategiesMap.set(strategyInstance.strategyKey, strategyInstance);
+    });
   }
+
 
   public getStrategiesMap(): Map<string, IStrategy> {
     return this.strategiesMap;
