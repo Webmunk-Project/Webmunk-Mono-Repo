@@ -868,12 +868,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           return;
         }
 
-        if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
-          let o = {type:i.localName}
-          src && (o.src = src);
-          href && (o.href = href);
-          content.push(o)
-        }
+        let o = {type:i.localName}
+        src && (o.src = src);
+        href && (o.href = href);
+        content.push(o)
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
