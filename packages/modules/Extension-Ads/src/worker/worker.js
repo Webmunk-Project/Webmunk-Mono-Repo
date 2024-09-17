@@ -2,6 +2,7 @@ import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
 import { RateService } from './RateService.js';
 import { v4 as uuidv4 } from 'uuid';
+import filtersData from './url-filter.json';
 
 const moduleEvents = Object.freeze({
   AD_DETECTED: 'ad_detected',
@@ -110,9 +111,11 @@ const extensionAdsAppMgr = {
     }
   },
   contentFilterPredicate(item) {
-    // TODO: move all content filters to this ONE place
+    const filters = filtersData.filters;
     const url = item.src || item.href;
-    return url && !url.startsWith("url(\"data");
+
+     // Check if the URL contains any of the filter strings
+    return url && !filters.some((filter) => url.includes(filter));
   },
   async processAdData({ title, text, content, coordinates }, tabUrl, clickedUrl) {
     const uniqueUrls = new Set();

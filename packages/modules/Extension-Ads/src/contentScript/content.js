@@ -856,12 +856,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         let href = i.getAttribute("href");
         let src = i.getAttribute("src");
 
-        if (src && (src.startsWith('https://static.xx.fbcdn.net/images/') || src.startsWith('data:image/svg+xml'))) {
-          return;
-        }
-
-        if (href && href.startsWith('#')) return;
-
         if (i.localName === "video" || i.getAttribute("role") === "presentation") {
           const videoSrc = Array.from(i.querySelectorAll("source")).map(source => source.getAttribute("src")).filter(src => src);
 
@@ -874,12 +868,10 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           return;
         }
 
-        if (!href || !href.startsWith("https://adssettings.google.com/whythisad")){
-          let o = {type:i.localName}
-          src && (o.src = src);
-          href && (o.href = href);
-          content.push(o)
-        }
+        let o = {type:i.localName}
+        src && (o.src = src);
+        href && (o.href = href);
+        content.push(o)
       })
       divArray.forEach(i => {
         if (i.style.backgroundImage && i.style.backgroundImage!=""){
