@@ -39,7 +39,7 @@ This extension is designed for tracking ads and saving cookies. It allows you to
 The extension utilizes an event-based system to manage interactions between different components. This system ensures that various parts of the extension can communicate and react to changes in a decoupled manner. Here are some of the key events used:
 
 1. webmunkExt.popup.checkSettingsReq:
-Description: Sent when checking the personalization settings for a specific ad URL.
+Description: Sent to the ad-personalization module when checking the personalization settings for a specific ad URL.
   Data: { url: string, key: string }
 
 2. cookiesAppMgr.checkPrivacy:
@@ -52,15 +52,6 @@ Description: Stores which ad personalization items have been checked by the user
 
 2. adPersonalization.items
 Description: Stores the list of ad personalization items. This includes URLs, names, and keys for each ad.
-
-3. identifier
-Description: Stores the user identifier after successful enrollment. This is used for identifying the user across sessions.
-
-4. surveys
-Description: Stores a list of surveys that need to be completed. This includes survey URLs and names.
-
-5. completedSurveys
-Description: Stores a list of URLs for surveys that have already been completed.
 
 ## Development and Testing
 

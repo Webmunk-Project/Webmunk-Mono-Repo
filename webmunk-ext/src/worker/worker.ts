@@ -1,7 +1,7 @@
 // dont remove next line, all webmunk modules use messenger utility
 // @ts-ignore
 import { messenger } from "@webmunk/utils";
-import { RudderStack } from './rudderstack';
+import { RudderStack } from './Rudderstack';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker.js";
@@ -95,6 +95,3 @@ export class Worker {
     }
   }
 };
-
-const worker = new Worker();
-worker.initialize();

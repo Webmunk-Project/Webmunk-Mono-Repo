@@ -7,7 +7,7 @@ module.exports = function config(browser){
     entry: {
       'content': ['./src/content/content.js'],
       'options': ['/src/options/options.js'],
-      'background': ['./src/background/worker.ts'],
+      'background': ['./src/worker/index.ts'],
       'popup/popup': ['./src/popup/popup.ts']
     },
     output: {
