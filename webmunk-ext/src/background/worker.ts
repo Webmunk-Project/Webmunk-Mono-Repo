@@ -1,4 +1,5 @@
 // dont remove next line, all webmunk modules use messenger utility
+// @ts-ignore
 import { messenger } from "@webmunk/utils";
 import { RudderStack } from './rudderstack';
 
@@ -7,15 +8,30 @@ import "@webmunk/extension-ads/worker.js";
 import "@webmunk/cookies-scraper/worker";
 import "@webmunk/ad-personalization/worker";
 
-const events = Object.freeze({
-  SURVEY_COMPLETED: 'survey_completed',
-});
+interface Survey {
+  name: string;
+  url: string;
+}
 
-const appMgr =  {
-  surveys: [],
-  completedSurveys: [],
-  rudderStack: new RudderStack(),
-  async initialize(){
+interface SurveyData {
+  name: string;
+  url: string;
+}
+
+enum events {
+  SURVEY_COMPLETED = 'survey_completed',
+};
+
+export class Worker {
+  private surveys: Survey[] = [];
+  private completedSurveys: string[] = [];
+  private rudderStack: RudderStack;
+
+  constructor() {
+    this.rudderStack = new RudderStack();
+  }
+
+  public async initialize(): Promise<void> {
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
@@ -23,19 +39,22 @@ const appMgr =  {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
 
     await this.initSurveys();
-  },
-  async onModuleEvent(event, data) {
+  }
+
+  private async onModuleEvent(event: string, data: any): Promise<void> {
     await this.rudderStack.track(event, data);
-  },
-  async initSurveys() {
+  }
+
+  private async initSurveys(): Promise<void>  {
     const result = await chrome.storage.local.get('completedSurveys');
     this.completedSurveys = result.completedSurveys || [];
     await this.loadSurveys();
-  },
-  async loadSurveys() {
+  }
+
+  private async loadSurveys(): Promise<void> {
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
-    const data = await response.json();
-    const newSurveys = data.map((item) => ({
+    const data: SurveyData[] = await response.json();
+    const newSurveys: Survey[] = data.map((item) => ({
       name: item.name,
       url: item.url
     }));
@@ -47,18 +66,20 @@ const appMgr =  {
     });
 
     await chrome.storage.local.set({ surveys: this.surveys });
-  },
-  async surveyCompleteListener(tabId, changeInfo, tab) {
+  }
+
+  async surveyCompleteListener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
     const runtimeUrl = `chrome-extension://${chrome.runtime.id}/pages/survey-completed.html`;
 
     if (changeInfo.status !== 'complete' || tab.url !== runtimeUrl) {
       return;
     }
 
-    const openerTabUrl = (await chrome.tabs.get(tab.openerTabId)).url;
+    const openerTabId = tab.openerTabId;
+    const openerTabUrl = openerTabId ? (await chrome.tabs.get(openerTabId)).url : undefined;
 
     if (openerTabUrl && this.surveys.some((survey) => openerTabUrl === survey.url)) {
-      await chrome.tabs.remove(tab.openerTabId);
+      await chrome.tabs.remove(tab.openerTabId!);
 
       if (this.completedSurveys.includes(openerTabUrl)) {
         return;
@@ -72,7 +93,8 @@ const appMgr =  {
       console.log(`The survey ${openerTabUrl} was completed`);
       await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
-  },
+  }
 };
 
-appMgr.initialize();
+const worker = new Worker();
+worker.initialize();
