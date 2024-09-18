@@ -32,7 +32,7 @@ export class CookiesWorker {
     this.eventEmitter.emit(moduleEvents.PRIVACY_SETTINGS, privacySettings);
   }
 
-  public async _onMessage_recordCookies(data: RequestData) {
+  public async _onMessage_recordCookies(data: RequestData): Promise<void> {
     const { url, pageTitle } = data;
     const cookies = await chrome.cookies.getAll({ url: url });
 
