@@ -3,7 +3,7 @@ import { messenger } from "@webmunk/utils";
 import { RudderStack } from './rudderstack';
 
 // this is where you could import your webmunk modules worker scripts
-import "@webmunk/extension-ads/worker.js";
+import "@webmunk/extension-ads/worker";
 import "@webmunk/cookies-scraper/worker";
 import "@webmunk/ad-personalization/worker";
 

@@ -10,7 +10,7 @@ const moduleEvents = Object.freeze({
   ADS_RATED: 'ads_rated',
 });
 
-const extensionAdsAppMgr = {
+export const extensionAdsAppMgr = {
   tabData: {},
   eventEmitter: self.messenger.registerModule('ads-scraper'),
   throttler: new TimeThrottler(1,200),
@@ -404,9 +404,3 @@ const extensionAdsAppMgr = {
     else console.warn("EXCEPTION: extensionAdsAppMgr: no method for setting remote assets.json path")
   }
 };
-
-extensionAdsAppMgr.initialize();
-
-exports.extensionAdsAppMgr = extensionAdsAppMgr;
-exports.events = moduleEvents;
-export { extensionAdsAppMgr, moduleEvents as events };

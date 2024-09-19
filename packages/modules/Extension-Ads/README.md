@@ -1,12 +1,10 @@
-## Using the extension-ads module
-Once in your web extension directory
-`npm i @webmunk/extension-ads`
+# Browser Ad Scraping Module
 
-In your web extension content script:
-`import "@worker/extension-ads/content` 
+## Description
+The extension-ads module is designed for tracking and handling advertisements across various websites in your web extension. It provides tools for detecting, processing, and managing ads within the extension environment.
 
-In your web extension worker script:
-`import "@worker/extension-ads/worker` 
-
-If you have included module option UI in your manifest, then import your options script also:
-`import "@worker/extension-ads/options` 
+## Build Instructions
+To build the module, use the following command:
+```bash
+npm run build:dev
+```
