@@ -9,6 +9,15 @@ To build the module, use the following command:
 npm run build:dev
 ```
 
+# Event System
+The module uses a message-driven architecture for communication. It listens to and emits specific events for sending and receiving information related to cookies.
+
+## Events the Module Listens to:
+1. cookiesAppMgr.checkPrivacy
+Description: This event is triggered to check the privacy settings related to cookies on a website.
+  Data: None
+Action: The module retrieves privacy settings and emits relevant data about cookie handling and privacy.
+
 ## License and Other Project Information
 
 Copyright 2022-2024 The Fradkin Foundation and the President & Fellows of Harvard College

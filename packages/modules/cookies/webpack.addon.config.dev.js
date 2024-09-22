@@ -31,6 +31,11 @@ module.exports = mergeWithCustomize({
   module: {
     rules: [
       {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/
+      },
+      {
         test: /\.js$/,
         use: [
           'babel-loader',
@@ -49,13 +54,7 @@ module.exports = mergeWithCustomize({
       }
     ]
   },
-  plugins: [
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-    }),
-    new webpack.optimize.LimitChunkCountPlugin({
-      maxChunks: 1,
-    }),
-  ]
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  }
 })
-//console.log("module.exports: ",module.exports.plugins)
