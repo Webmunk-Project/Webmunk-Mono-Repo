@@ -4,7 +4,9 @@ import { Notification } from './notification';
 class Popup {
   constructor() {
     this.continueButton = document.getElementById('continueButton');
-    this.emailInput = document.getElementById('emailInput');
+    this.logInInput = document.getElementById('logInInput');
+    this.toggleInput = document.getElementById('toggleInput');
+    this.authInputLabel = document.getElementById('authInputLabel');
     this.getStartedContainer = document.getElementById('getStartedContainer');
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer');
     this.adPersonalizationContainer = document.getElementById('adPersonalizationContainer');
@@ -16,6 +18,7 @@ class Popup {
     this.checkAdPersonalizationButton = document.getElementById('check-ad-personalization-button');
     this.fullIdentifier = '';
     this.notification = new Notification();
+    this.isEmailMode = false;
 
     this.init();
   }
@@ -33,12 +36,27 @@ class Popup {
     this.closeAdPersonalizationButton.addEventListener('click', () => this.closeAdPersonalization());
     this.checkAdPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
     this.adPersonalizationList.addEventListener('click', (event) => this.handleAdPersonalizationClick(event));
+    this.toggleInput.addEventListener('change', () => this.toggleInputMode());
   }
 
   closeAdPersonalization() {
     this.adPersonalizationList.innerHTML = '';
     this.adPersonalizationContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
+  }
+
+  toggleInputMode() {
+    if (this.toggleInput.checked) {
+      this.logInInput.type = 'email';
+      this.logInInput.placeholder = 'Email';
+      this.authInputLabel.textContent = 'email';
+      this.isEmailMode = true;
+    } else {
+      this.logInInput.type = 'text';
+      this.logInInput.placeholder = 'Prolific Id';
+      this.authInputLabel.textContent = 'prolific id';
+      this.isEmailMode = false;
+    }
   }
 
   async showAdPersonalizationContainer() {
@@ -72,21 +90,15 @@ class Popup {
   }
 
   async onContinueButtonClick() {
-    const email = this.emailInput.value.trim().toLowerCase();
+    const inputValue = this.logInInput.value.trim();
 
-    if (!email) {
-      this.notification.warning('Please enter an e-mail address to continue.');
-      return;
-    }
-
-    if (!this.emailValidation(email)) {
-      this.notification.warning('Please enter a valid e-mail address.');
+    if (!this.validateInput(inputValue)) {
       return;
     }
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(email);
+    const identifier = await this.getIdentifier(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -97,6 +109,26 @@ class Popup {
     await chrome.storage.local.set({ identifier });
     this.showStudyExtensionContainer(identifier);
     chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+  }
+
+  validateInput(inputValue) {
+    if (!inputValue) {
+      this.notification.warning(this.isEmailMode ? 'Please enter an email address.' : 'Please enter a Prolific ID.');
+      return false;
+    }
+
+    const isValid = this.isEmailMode
+      ? this.emailValidation(inputValue)
+      : this.prolificIdValidation(inputValue);
+
+    if (!isValid) {
+      this.notification.warning(this.isEmailMode
+        ? 'Please enter a valid e-mail address.'
+        : 'Please enter a valid Prolific ID (24 alphanumeric characters).');
+      return false;
+    }
+
+    return true;
   }
 
   async getIdentifier(email) {
@@ -207,6 +239,11 @@ class Popup {
   emailValidation(email) {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
+  }
+
+  prolificIdValidation(id) {
+    const idPattern = /^[a-fA-F0-9]{24}$/;
+    return idPattern.test(id);
   }
 }
 
