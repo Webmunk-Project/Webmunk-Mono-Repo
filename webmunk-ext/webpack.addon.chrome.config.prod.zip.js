@@ -38,35 +38,6 @@ module.exports = mergeWithCustomize({
   mode: 'production',
   devtool: 'inline-source-map',
   devServer: {},
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/
-      },
-      {
-        test: /\.js$/,
-        use: [
-          'babel-loader',
-          {
-            loader: 'webpack-preprocessor-loader',
-            options: {
-              directives: {},
-              params: {
-                target: 'addon',
-                mode: 'development'
-              }
-            }
-          }
-        ],
-        exclude: /node_modules/
-      }
-    ]
-  },
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js']
-  },
   plugins: [
     new webpack.ProvidePlugin({
       process: 'process/browser',

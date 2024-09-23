@@ -1,5 +1,5 @@
 import { ENROLL_URL } from '../config';
-import { Notification } from './notification';
+import { Notification } from './Notification';
 
 interface AdPersonalizationItem {
   key: string;
