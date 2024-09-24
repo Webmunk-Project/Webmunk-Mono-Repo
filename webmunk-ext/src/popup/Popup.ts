@@ -73,7 +73,7 @@ class Popup {
     this.studyExtensionContainer.style.display = 'block';
   }
 
-  toggleInputMode() {
+  private toggleInputMode() {
     if (this.toggleInput.checked) {
       this.logInInput.type = 'email';
       this.logInInput.placeholder = 'Email';
@@ -87,7 +87,7 @@ class Popup {
     }
   }
 
-  async showAdPersonalizationContainer() {
+  private async showAdPersonalizationContainer() {
     this.studyExtensionContainer.style.display = 'none';
     this.adPersonalizationContainer.style.display = 'block';
 
@@ -106,7 +106,7 @@ class Popup {
       const key = anchorElement.getAttribute('key');
       chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  data: { url, key } });
     }
-}
+  }
 
   private handleAdPersonalizationClick(event: Event): void {
     const target = (event.target as HTMLElement).closest('a');
@@ -118,7 +118,7 @@ class Popup {
     }
   }
 
-  async onContinueButtonClick() {
+  private async onContinueButtonClick() {
     const inputValue = this.logInInput.value.trim();
 
     if (!this.validateInput(inputValue)) {
@@ -140,7 +140,7 @@ class Popup {
     chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
   }
 
-  validateInput(inputValue: string): boolean {
+  private validateInput(inputValue: string): boolean {
     if (!inputValue) {
       this.notification.warning(this.isEmailMode ? 'Please enter an email address.' : 'Please enter a Prolific ID.');
       return false;
@@ -270,7 +270,7 @@ class Popup {
     return emailPattern.test(email);
   }
 
-  prolificIdValidation(id: string): boolean {
+  private prolificIdValidation(id: string): boolean {
     const idPattern = /^[a-fA-F0-9]{24}$/;
     return idPattern.test(id);
   }
