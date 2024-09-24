@@ -3,11 +3,21 @@ import { BaseStrategy } from './BaseStrategy';
 export class FacebookAudienceAdStrategy extends BaseStrategy {
   public strategyKey = 'facebookAudienceAds';
   private blurApplied = false;
+  private isUrlChecked = false;
 
   async execute() {
     const processElement = async (el: HTMLElement, isFirstElement: boolean) => {
       if (el) {
         el.click();
+
+        let beforeUnloadListener = () => {
+          this.sendResponseToWorker(false, 'Not valid URL.');
+        };
+
+        if (!this.isUrlChecked) {
+          window.addEventListener('beforeunload', beforeUnloadListener);
+          this.isUrlChecked = true;
+        }
 
         await new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -15,14 +25,14 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
           'a[href^="/ad_preferences/ad_settings/audience_based_advertising"][aria-label="You may have interacted with their website, app or store."], a[href^="/ad_preferences/ad_settings/audience_based_advertising"][aria-label="They uploaded or used a list to reach you."]'
         );
 
+        if (openSettingsButton) window.removeEventListener('beforeunload', beforeUnloadListener);
+
         if (openSettingsButton.ariaLabel === 'They uploaded or used a list to reach you.') {
           await new Promise((resolve) => requestAnimationFrame(resolve));
-
           const backButtons = await this.waitForElements('[aria-label="Back"]');
           if (backButtons.length > 0) {
             backButtons[backButtons.length - 1].click();
           }
-
           return;
         }
 
@@ -33,7 +43,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         darkElements.forEach((darkElement) => (darkElement.style.display = 'none'));
 
         await new Promise((resolve) => requestAnimationFrame(resolve));
-        const toggleAdsButton = await this.waitForElement('[role="listitem"] [role="button"]') ;
+        const toggleAdsButton = await this.waitForElement('[role="listitem"] [role="button"]');
 
         if (toggleAdsButton && toggleAdsButton.textContent === 'Hide ads') {
           toggleAdsButton.click();
@@ -84,7 +94,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
       await processElement(elements[index], isFirstElement);
 
       if (index === elements.length - 1) {
-        this.sendResponseToService(true);
+        this.sendResponseToWorker(true);
       }
 
       index++;

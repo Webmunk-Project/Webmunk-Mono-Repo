@@ -16,13 +16,13 @@ export class AmazonStrategy extends BaseStrategy {
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    if (trueBox?.checked) return this.sendResponseToService(true);
+    if (trueBox?.checked) return this.sendResponseToWorker(true);
 
     trueBox?.click();
 
     const saveButton = document.getElementById('optOutControl');
     saveButton?.click();
 
-    this.sendResponseToService(true);
+    this.sendResponseToWorker(true);
   }
 }

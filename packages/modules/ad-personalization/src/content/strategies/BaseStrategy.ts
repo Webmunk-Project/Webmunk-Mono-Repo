@@ -102,10 +102,12 @@ export abstract class BaseStrategy implements IStrategy {
     });
   }
 
-  protected sendResponseToService(response: boolean): void {
+
+
+  protected sendResponseToWorker(response: boolean, error?: string): void {
     chrome.runtime.sendMessage({
       action: 'adsPersonalization.strategies.settingsResponse',
-      response
+      response: { value: response, error },
     });
   }
 }

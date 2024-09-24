@@ -73,9 +73,8 @@ class Popup {
     const listItems = this.adPersonalizationList.querySelectorAll('li a');
 
     for (const link of listItems) {
-      const url = link.href;
       const key = link.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  key });
     }
 }
 
@@ -83,9 +82,8 @@ class Popup {
     const target = event.target.closest('a');
 
     if (target) {
-      const url = target.href;
       const key = target.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', key });
     }
   }
 
@@ -187,12 +185,11 @@ class Popup {
     adPersonalization.forEach((list) => {
       const listItem = document.createElement('li');
       const link = document.createElement('a');
-      link.href = list.url;
       link.textContent = list.name;
       link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
-      if (checkedAdPersonalization[list.url]) {
+      if (checkedAdPersonalization[list.key]) {
         const checkmark = document.createElement('span');
         checkmark.textContent = '✔️';
         checkmark.style.marginLeft = '8px';

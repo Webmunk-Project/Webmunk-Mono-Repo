@@ -11,7 +11,7 @@ export class FacebookActivityStrategy extends BaseStrategy {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const trueBox = document.querySelector('[name="radio1"]') as HTMLInputElement;
 
-    if (trueBox.checked) return this.sendResponseToService(true);
+    if (trueBox.checked) return this.sendResponseToWorker(true);
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
     trueBox.click();
@@ -20,6 +20,6 @@ export class FacebookActivityStrategy extends BaseStrategy {
     const confirmButton = buttons[buttons.length - 1] as HTMLElement;
     confirmButton.click();
 
-    this.sendResponseToService(true);
+    this.sendResponseToWorker(true);
   }
 }

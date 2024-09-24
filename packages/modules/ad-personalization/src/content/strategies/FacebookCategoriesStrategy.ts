@@ -12,6 +12,6 @@ export class FacebookCategoriesStrategy extends BaseStrategy {
       box.click();
     });
 
-    this.sendResponseToService(true);
+    this.sendResponseToWorker(true);
   }
 }
