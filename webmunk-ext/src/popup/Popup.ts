@@ -14,7 +14,9 @@ interface SurveyItem {
 
 class Popup {
   private continueButton: HTMLButtonElement;
-  private emailInput: HTMLInputElement;
+  private logInInput: HTMLInputElement;
+  private toggleInput: HTMLInputElement;
+  private authInputLabel: HTMLElement;
   private getStartedContainer: HTMLElement;
   private studyExtensionContainer: HTMLElement;
   private adPersonalizationContainer: HTMLElement;
@@ -26,10 +28,13 @@ class Popup {
   private checkAdPersonalizationButton: HTMLButtonElement;
   private fullIdentifier: string;
   private notification: Notification;
+  private isEmailMode: boolean;
 
   constructor() {
     this.continueButton = document.getElementById('continueButton') as HTMLButtonElement;
-    this.emailInput = document.getElementById('emailInput') as HTMLInputElement;
+    this.logInInput = document.getElementById('logInInput') as HTMLInputElement;
+    this.toggleInput = document.getElementById('toggleInput') as HTMLInputElement;
+    this.authInputLabel = document.getElementById('authInputLabel') as HTMLElement;
     this.getStartedContainer = document.getElementById('getStartedContainer') as HTMLElement;
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer') as HTMLElement;
     this.adPersonalizationContainer = document.getElementById('adPersonalizationContainer') as HTMLElement;
@@ -37,10 +42,11 @@ class Popup {
     this.adPersonalizationButton = document.getElementById('ad-personalization-button') as HTMLButtonElement;
     this.formattedIdentifier = document.getElementById('formattedIdentifier') as HTMLElement;
     this.closeAdPersonalizationButton = document.getElementById('close-ad-personalization-button') as HTMLButtonElement;
-    this.adPersonalizationList = document.getElementById('adPersonalizationListContainer') as HTMLElement;
+    this.adPersonalizationList = document.getElementById('adPersonalizationListContainer') as HTMLButtonElement;
     this.checkAdPersonalizationButton = document.getElementById('check-ad-personalization-button') as HTMLButtonElement;
     this.fullIdentifier = '';
     this.notification = new Notification();
+    this.isEmailMode = false;
 
     this.init();
   }
@@ -58,6 +64,7 @@ class Popup {
     this.closeAdPersonalizationButton.addEventListener('click', () => this.closeAdPersonalization());
     this.checkAdPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
     this.adPersonalizationList.addEventListener('click', (event) => this.handleAdPersonalizationClick(event));
+    this.toggleInput.addEventListener('change', () => this.toggleInputMode());
   }
 
   private closeAdPersonalization(): void {
@@ -66,7 +73,21 @@ class Popup {
     this.studyExtensionContainer.style.display = 'block';
   }
 
-  private async showAdPersonalizationContainer(): Promise<void> {
+  toggleInputMode() {
+    if (this.toggleInput.checked) {
+      this.logInInput.type = 'email';
+      this.logInInput.placeholder = 'Email';
+      this.authInputLabel.textContent = 'email';
+      this.isEmailMode = true;
+    } else {
+      this.logInInput.type = 'text';
+      this.logInInput.placeholder = 'Prolific Id';
+      this.authInputLabel.textContent = 'prolific id';
+      this.isEmailMode = false;
+    }
+  }
+
+  async showAdPersonalizationContainer() {
     this.studyExtensionContainer.style.display = 'none';
     this.adPersonalizationContainer.style.display = 'block';
 
@@ -97,22 +118,16 @@ class Popup {
     }
   }
 
-  private async onContinueButtonClick(): Promise<void> {
-    const email = this.emailInput.value.trim().toLowerCase();
+  async onContinueButtonClick() {
+    const inputValue = this.logInInput.value.trim();
 
-    if (!email) {
-      this.notification.warning('Please enter an e-mail address to continue.');
-      return;
-    }
-
-    if (!this.emailValidation(email)) {
-      this.notification.warning('Please enter a valid e-mail address.');
+    if (!this.validateInput(inputValue)) {
       return;
     }
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(email);
+    const identifier = await this.getIdentifier(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -123,6 +138,26 @@ class Popup {
     await chrome.storage.local.set({ identifier });
     this.showStudyExtensionContainer(identifier);
     chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+  }
+
+  validateInput(inputValue: string): boolean {
+    if (!inputValue) {
+      this.notification.warning(this.isEmailMode ? 'Please enter an email address.' : 'Please enter a Prolific ID.');
+      return false;
+    }
+
+    const isValid = this.isEmailMode
+      ? this.emailValidation(inputValue)
+      : this.prolificIdValidation(inputValue);
+
+    if (!isValid) {
+      this.notification.warning(this.isEmailMode
+        ? 'Please enter a valid e-mail address.'
+        : 'Please enter a valid Prolific ID (24 alphanumeric characters).');
+      return false;
+    }
+
+    return true;
   }
 
   private async getIdentifier(email: string): Promise<string | null> {
@@ -233,6 +268,11 @@ class Popup {
   private emailValidation(email: string): boolean {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
+  }
+
+  prolificIdValidation(id: string): boolean {
+    const idPattern = /^[a-fA-F0-9]{24}$/;
+    return idPattern.test(id);
   }
 }
 
