@@ -176,9 +176,11 @@ class Popup {
   async initAdPersonalization() {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const invalidItemsResult = await chrome.storage.local.get('adPersonalization.invalidItems');
 
     const adPersonalization = adPersonalizationResult['adPersonalization.items'] || [];
     const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+    const invalidItems = invalidItemsResult['adPersonalization.invalidItems'] || [];
 
     const settingsList = document.createElement('ul');
 
@@ -189,9 +191,23 @@ class Popup {
       link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
-      if (checkedAdPersonalization[list.key]) {
+      const invalidItem = invalidItems.find((item) => item.key === list.key);
+      if (invalidItem) {
+        const invalidMark = document.createElement('span');
+        invalidMark.classList.add('tooltip');
+        invalidMark.textContent = '⚠️';
+        invalidMark.style.marginLeft = '8px';
+
+        const tooltipText = document.createElement('span');
+        tooltipText.classList.add('tooltiptext');
+
+        tooltipText.textContent = invalidItem.error;
+
+        invalidMark.appendChild(tooltipText);
+        listItem.appendChild(invalidMark);
+      } else if (checkedAdPersonalization[list.key]) {
         const checkmark = document.createElement('span');
-        checkmark.textContent = '✔️';
+        checkmark.textContent = '✅';
         checkmark.style.marginLeft = '8px';
         listItem.appendChild(checkmark);
       }

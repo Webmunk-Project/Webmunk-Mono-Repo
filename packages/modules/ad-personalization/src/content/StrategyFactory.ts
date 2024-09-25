@@ -15,7 +15,6 @@ export class StrategyFactory {
     });
   }
 
-
   public getStrategiesMap(): Map<string, IStrategy> {
     return this.strategiesMap;
   }

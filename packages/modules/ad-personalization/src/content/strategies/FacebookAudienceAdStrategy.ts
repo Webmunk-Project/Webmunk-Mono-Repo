@@ -11,7 +11,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         el.click();
 
         let beforeUnloadListener = () => {
-          this.sendResponseToWorker(false, 'Not valid URL.');
+          this.sendResponseToWorker(false, 'No valid URLs.');
         };
 
         if (!this.isUrlChecked) {

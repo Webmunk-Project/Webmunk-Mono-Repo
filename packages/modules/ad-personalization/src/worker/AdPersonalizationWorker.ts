@@ -25,58 +25,76 @@ export class AdPersonalizationWorker {
     this.eventEmitter = (self as any).messenger.registerModule('ad-personalization');
   }
 
-  initialize() {
+  public initialize() {
     (self as any).messenger.addReceiver('adPersonalization', this);
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this));
     this.initSettings();
   }
 
-  async onPopupMessage(request: Message, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  private async onPopupMessage(request: Message, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.checkSettingsReq') {
-      const url = await this.getAccordantUrl(request.key);
-      const { response, tabId } = await this.send(request.key, url);
-
-      if (response.error) {
-        await chrome.tabs.remove(tabId);
-        const nextUrl = await this.getAccordantUrl(request.key, true);
-        await this.send(request.key, nextUrl);
-        return;
-      }
-
-      await this.addWorkingUrl(request.key, url);
-
-      this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key: request.key, url, value: response.value });
-
-      setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
-
-      const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
-      const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
-
-      checkedAdPersonalization[request.key] = response;
-
-      await chrome.storage.local.set({ 'adPersonalization.checkedItems': checkedAdPersonalization });
+      await this.handleCheckSettingsRequest(request.key);
     }
   }
 
-  async initSettings() {
+  private async handleCheckSettingsRequest(key: string) {
+    let url = await this.getAccordantUrl(key);
+    let hasError = false;
+    let lastError: string | undefined = undefined;
+
+    while (url) {
+      const { response, tabId } = await this.send(key, url);
+
+      if (response.error) {
+        await this.removeWorkingUrl(key);
+        await this.removeCheckedItem(key);
+        await chrome.tabs.remove(tabId);
+
+        hasError = true;
+        lastError = response.error;
+        url = await this.getAccordantUrl(key, true);
+      } else {
+        await this.addWorkingUrl(key, url);
+        await this.removeFromInvalidItems(key);
+
+        this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, value: response.value });
+
+        setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
+
+        await this.addCheckedItem(key, response);
+
+        break;
+      }
+    }
+
+    if (hasError && !url) {
+      await this.addToInvalidItems(key, lastError || 'Unknown error');
+    }
+  }
+
+  private async initSettings() {
     const adPersonalization = config;
     await chrome.storage.local.set({ 'adPersonalization.items': adPersonalization });
   }
 
-  async getAccordantUrl(key: string, isNeedToUseNextUrl: boolean = false): Promise<string> {
+  private async getAccordantUrl(key: string, isNeedToUseNextUrl: boolean = false): Promise<string | null> {
     const selectedObject = config.find((object) => object.key === key)!;
 
     const storageData = await chrome.storage.local.get('adPersonalization.workingUrls');
     const workingUrls = storageData['adPersonalization.workingUrls'] || {};
 
-    if (workingUrls[key] && workingUrls[key].length > 0) {
-      return workingUrls[key][0];
+    if (workingUrls[key]) {
+      return workingUrls[key];
     }
 
     let currentIndex = this.urlIndexes[key] || 0;
 
     if (isNeedToUseNextUrl) {
-      currentIndex = (currentIndex + 1) % selectedObject.url.length;
+      currentIndex += 1;
+
+      if (currentIndex >= selectedObject.url.length) {
+        return null;
+      }
     }
 
     this.urlIndexes[key] = currentIndex;
@@ -84,21 +102,66 @@ export class AdPersonalizationWorker {
     return selectedObject.url[currentIndex];
   }
 
-  private async addWorkingUrl(key: string, url: string) {
+  private async addToInvalidItems(key: string, error: string): Promise<void> {
+    const invalidItemsResult = await chrome.storage.local.get('adPersonalization.invalidItems');
+    const invalidItems = invalidItemsResult['adPersonalization.invalidItems'] || [];
+
+    const existingItem = invalidItems.find((item: { key: string; error: string }) => item.key === key);
+
+    if (!existingItem) {
+      invalidItems.push({ key, error });
+      await chrome.storage.local.set({ 'adPersonalization.invalidItems': invalidItems });
+    }
+  }
+
+  private async removeFromInvalidItems(key: string): Promise<void> {
+    const invalidItemsResult = await chrome.storage.local.get('adPersonalization.invalidItems');
+    const invalidItems = invalidItemsResult['adPersonalization.invalidItems'] || [];
+
+    const updatedInvalidItems = invalidItems.filter((item: { key: string; error: string }) => item.key !== key);
+
+    await chrome.storage.local.set({ 'adPersonalization.invalidItems': updatedInvalidItems });
+  }
+
+  private async addWorkingUrl(key: string, url: string): Promise<void> {
     const storageData = await chrome.storage.local.get('adPersonalization.workingUrls');
     const workingUrls = storageData['adPersonalization.workingUrls'] || {};
 
-    if (!workingUrls[key]) {
-      workingUrls[key] = [];
-    }
-
-    if (!workingUrls[key].includes(url)) {
-      workingUrls[key].unshift(url);
-    }
+    workingUrls[key] = url;
 
     await chrome.storage.local.set({ 'adPersonalization.workingUrls': workingUrls });
   }
-  async send(key: string, url: string): Promise<MessageResponse> {
+
+  private async removeWorkingUrl(key: string): Promise<void> {
+    const storageData = await chrome.storage.local.get('adPersonalization.workingUrls');
+    const workingUrls = storageData['adPersonalization.workingUrls'] || {};
+
+    if (workingUrls[key]) {
+      delete workingUrls[key];
+      await chrome.storage.local.set({ 'adPersonalization.workingUrls': workingUrls });
+    }
+  }
+
+  private async addCheckedItem(key: string, response: any): Promise<void> {
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    checkedAdPersonalization[key] = response;
+
+    await chrome.storage.local.set({ 'adPersonalization.checkedItems': checkedAdPersonalization });
+  }
+
+  private async removeCheckedItem(key: string): Promise<void> {
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    if (checkedAdPersonalization[key]) {
+      delete checkedAdPersonalization[key];
+      await chrome.storage.local.set({ 'adPersonalization.checkedItems': checkedAdPersonalization });
+    }
+  }
+
+  private async send(key: string, url: string): Promise<MessageResponse> {
     return new Promise((resolve, reject) => {
       let createdTabId: number | null = null;
 
