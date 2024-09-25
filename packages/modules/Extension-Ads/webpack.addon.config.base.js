@@ -6,9 +6,9 @@ module.exports = function config(browser){
   return {
     entry: {
       'content': [
-        '/src/contentScript/vapi.js',
-        '/src/contentScript/vapi-client.js',
-        '/src/contentScript/index.ts'
+        '/src/content/vapi.js',
+        '/src/content/vapi-client.js',
+        '/src/content/index.ts'
       ],
       'options': ['/src/options/options.js'],
       'worker': ['./src/worker/vapi.js','./src/worker/vapi-common.js','./src/worker/vapi-background.js','./src/worker/background.js','./src/worker/start.js','./src/worker/index.ts']
