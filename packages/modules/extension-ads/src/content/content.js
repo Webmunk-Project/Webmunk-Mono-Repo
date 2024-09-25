@@ -685,7 +685,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               }
           }
       }
-      if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document) {
+      if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document && node.getAttribute("role") !== "presentation") {
         this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
       }
       if (node.nodeType === Node.ELEMENT_NODE) {

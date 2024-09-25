@@ -7,13 +7,39 @@ module.exports = function config(browser){
     entry: {
       'content': ['./src/content/content.js'],
       'options': ['/src/options/options.js'],
-      'background': ['./src/background/worker.js'],
-      'popup/popup': ['./src/popup/popup.js']
+      'background': ['./src/worker/index.ts'],
+      'popup/popup': ['./src/popup/Popup.ts']
     },
     output: {
       path: path.join(__dirname, 'dist/'),
       filename: '[name].js',
       publicPath: "."
+    },
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/
+        },
+        {
+          test: /\.js$/,
+          use: [
+            'babel-loader',
+            {
+              loader: 'webpack-preprocessor-loader',
+              options: {
+                directives: {},
+                params: {
+                  target: 'addon',
+                  mode: 'development'
+                }
+              }
+            }
+          ],
+          exclude: /node_modules/
+        }
+      ]
     },
     resolve: {
       extensions: ['.tsx','.ts', '.js']
