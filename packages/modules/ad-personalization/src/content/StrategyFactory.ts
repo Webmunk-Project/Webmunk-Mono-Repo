@@ -15,7 +15,7 @@ export class StrategyFactory {
     });
   }
 
-  public getStrategiesMap(): Map<string, IStrategy> {
-    return this.strategiesMap;
+  public getStrategy(key: string): IStrategy | undefined {
+    return this.strategiesMap.get(key);
   }
 }

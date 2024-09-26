@@ -1,5 +1,5 @@
 import { BaseStrategy } from './BaseStrategy';
-import { urlErrors } from '../../enums';
+import { ErrorMessages } from '../../ErrorMessages';
 
 export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
@@ -17,7 +17,7 @@ export class AmazonStrategy extends BaseStrategy {
     }
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
-    if (!boxes) return this.sendResponseToWorker(false, urlErrors.INVALID_URL);
+    if (!boxes) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
 
     this.addBlurEffect();
     const trueBox = Array.from(boxes).find((box) => box.value === '0');

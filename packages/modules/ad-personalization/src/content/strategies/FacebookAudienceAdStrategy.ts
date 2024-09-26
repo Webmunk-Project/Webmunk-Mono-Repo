@@ -1,5 +1,5 @@
 import { BaseStrategy } from './BaseStrategy';
-import { urlErrors } from '../../enums';
+import { ErrorMessages } from '../../ErrorMessages';
 
 export class FacebookAudienceAdStrategy extends BaseStrategy {
   public strategyKey = 'facebookAudienceAds';
@@ -12,7 +12,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         el.click();
 
         let beforeUnloadListener = () => {
-          this.sendResponseToWorker(false, urlErrors.INVALID_URL);
+          this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
         };
 
         if (!this.isUrlChecked) {
