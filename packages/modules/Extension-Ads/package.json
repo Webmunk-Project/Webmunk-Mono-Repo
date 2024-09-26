@@ -22,13 +22,17 @@
     "webpack-preprocessor-loader": "^1.3.0"
   },
   "description": "ads detection module",
-  "files": [
-    "./content.js",
-    "./worker.js",
-    "./options.js",
-    "./dist",
-    "./module.json"
-  ],
+  "exports": {
+    "./worker": "./dist/worker",
+    "./content": "./dist/content",
+    "./options": "./dist/options"
+  },
   "keywords": [],
-  "license": "GPL-3.0-only"
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@types/chrome": "^0.0.271",
+    "source-map-loader": "^5.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.2"
+  }
 }

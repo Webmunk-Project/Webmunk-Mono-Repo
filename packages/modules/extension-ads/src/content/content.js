@@ -14,7 +14,7 @@ const debugLog = {
   procedural: false
 }
 
-let adsMgr;
+export let adsMgr;
 
 if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
   vAPI.contentScript = true;
@@ -389,7 +389,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
     actionsMessageFrame: ['youAreAFrameAd','areYouAnAd','isDisplayNone'],
     frameId: null,
     initialAdContentSent: false,
-    appMgrName: "",
+    appMgrName: 'extensionAdsAppMgr',
     async initialize(){
       chrome.runtime.onMessage.addListener(this._onBackgroundMessage.bind(this));
 
@@ -532,9 +532,6 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           this.onResponseReady(response);
 
       });
-    },
-    setMainAppMgrName: function(name){
-      this.appMgrName = name;
     },
     getMainAppMgrName: function(){
       return this.appMgrName;
@@ -1102,6 +1099,4 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       }
     }
   }
-  adsMgr.initialize()
 }
-exports.contentMgr = adsMgr;
