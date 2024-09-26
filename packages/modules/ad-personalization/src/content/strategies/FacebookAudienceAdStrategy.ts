@@ -30,7 +30,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         if (openSettingsButton.ariaLabel === 'They uploaded or used a list to reach you.') {
           await new Promise((resolve) => requestAnimationFrame(resolve));
           const backButtons = await this.waitForElements('[aria-label="Back"]');
-          if (backButtons.length > 0) {
+          if (backButtons && backButtons.length > 0) {
             backButtons[backButtons.length - 1].click();
           }
           return;
@@ -40,7 +40,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const darkElements = await this.waitForElements('.__fb-dark-mode.x1n2onr6.xzkaem6');
-        darkElements.forEach((darkElement) => (darkElement.style.display = 'none'));
+        darkElements?.forEach((darkElement) => (darkElement.style.display = 'none'));
 
         await new Promise((resolve) => requestAnimationFrame(resolve));
         const toggleAdsButton = await this.waitForElement('[role="listitem"] [role="button"]');
@@ -52,18 +52,18 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
 
         await new Promise((resolve) => requestAnimationFrame(resolve));
         const backButtons = await this.waitForElements('[aria-label="Back"]');
-        if (backButtons.length > 0) {
+        if (backButtons && backButtons.length > 0) {
           backButtons[backButtons.length - 1].click();
         }
 
         await new Promise((resolve) => requestAnimationFrame(resolve));
         const secondDarkElements = await this.waitForElements('.__fb-dark-mode.x1n2onr6.xzkaem6');
-        secondDarkElements.forEach((darkElement) => (darkElement.style.display = 'none'));
+        secondDarkElements?.forEach((darkElement) => (darkElement.style.display = 'none'));
 
         if (!isFirstElement) {
           await new Promise((resolve) => requestAnimationFrame(resolve));
           const exitButtons = await this.waitForElements('[aria-label="Back"]');
-          if (exitButtons.length > 0) {
+          if (exitButtons && exitButtons.length > 0) {
             exitButtons[exitButtons.length - 1].click();
           }
         }

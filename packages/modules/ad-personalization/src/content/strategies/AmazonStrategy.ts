@@ -11,6 +11,7 @@ export class AmazonStrategy extends BaseStrategy {
     }
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
+    if(!boxes) return this.sendResponseToWorker(false, 'No valid URLs.');
     this.addBlurEffect();
     const trueBox = Array.from(boxes).find((box) => box.value === '0');
 

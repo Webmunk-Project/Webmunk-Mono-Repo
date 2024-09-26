@@ -64,24 +64,29 @@ export abstract class BaseStrategy implements IStrategy {
     document.documentElement.appendChild(overlay);
   }
 
-  protected async waitForElements<T extends Element = HTMLElement>(selector: string): Promise<NodeListOf<T>> {
+  protected async waitForElements<T extends Element = HTMLElement>(selector: string): Promise<NodeListOf<T> | null> {
     return new Promise((resolve) => {
       const elements = document.querySelectorAll(selector) as NodeListOf<T>;
 
       if (elements.length > 0) {
-        resolve(elements);
-      } else {
-        const observer = new MutationObserver((mutations) => {
-          const newElements = document.querySelectorAll(selector) as NodeListOf<T>;
-
-          if (newElements.length > 0) {
-            resolve(newElements);
-            observer.disconnect();
-          }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
+        return resolve(elements);
       }
+
+      const observer = new MutationObserver(() => {
+        const newElements = document.querySelectorAll(selector) as NodeListOf<T>;
+
+        if (newElements.length > 0) {
+          resolve(newElements);
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(null);
+      }, 5000);
     });
   }
 

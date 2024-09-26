@@ -5,9 +5,10 @@ export class FacebookCategoriesStrategy extends BaseStrategy {
 
   async execute() {
     const checkboxes = await this.waitForElements('input[type="checkbox"]');
+    if(!checkboxes) this.sendResponseToWorker(false, 'No valid URLs.');
     this.addBlurEffect();
 
-    checkboxes.forEach((box) => {
+    checkboxes?.forEach((box) => {
       if (box.getAttribute('aria-checked') === 'false') return;
       box.click();
     });
