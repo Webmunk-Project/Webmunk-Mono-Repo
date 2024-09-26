@@ -107,6 +107,22 @@ export abstract class BaseStrategy implements IStrategy {
     });
   }
 
+  protected async waitForPageReload(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const initialUrl = window.location.href;
+
+      const checkForReload = () => {
+        if (window.location.href !== initialUrl) {
+          resolve(true);
+        } else {
+          setTimeout(checkForReload, 100);
+        }
+      };
+
+      checkForReload();
+    });
+  }
+
   protected sendResponseToWorker(response: boolean, error?: string): void {
     chrome.runtime.sendMessage({
       action: 'adsPersonalization.strategies.settingsResponse',

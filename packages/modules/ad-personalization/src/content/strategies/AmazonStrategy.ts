@@ -5,11 +5,6 @@ export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
 
   async execute() {
-    const alreadyExecuted = sessionStorage.getItem('amazonAdPrefsExecuted');
-    if (alreadyExecuted) {
-      return this.sendResponseToWorker(true);
-    }
-
     const signInButton = document.querySelector('#a-autoid-0-announce') as HTMLElement;
     if (signInButton) {
       signInButton.click();
@@ -17,10 +12,13 @@ export class AmazonStrategy extends BaseStrategy {
     }
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
+
     if (!boxes) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
 
     this.addBlurEffect();
     const trueBox = Array.from(boxes).find((box) => box.value === '0');
+
+    if (trueBox?.checked) return this.sendResponseToWorker(true);
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -29,6 +27,8 @@ export class AmazonStrategy extends BaseStrategy {
     const saveButton = document.getElementById('optOutControl') as HTMLElement;
     saveButton?.click();
 
-    sessionStorage.setItem('amazonAdPrefsExecuted', 'true');
+    const pageReloaded = await this.waitForPageReload();
+
+    if (pageReloaded) return this.sendResponseToWorker(true);
   }
 }
