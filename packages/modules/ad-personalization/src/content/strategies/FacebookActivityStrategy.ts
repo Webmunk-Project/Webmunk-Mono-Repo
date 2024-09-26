@@ -1,4 +1,5 @@
 import { BaseStrategy } from './BaseStrategy';
+import { urlErrors } from '../../enums';
 
 export class FacebookActivityStrategy extends BaseStrategy {
   public strategyKey = 'facebookActivityData';
@@ -10,7 +11,7 @@ export class FacebookActivityStrategy extends BaseStrategy {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const trueBox = document.querySelector('[name="radio1"]') as HTMLInputElement;
-    if(!trueBox) this.sendResponseToWorker(false, 'No valid URLs.');
+    if(!trueBox) this.sendResponseToWorker(false, urlErrors.INVALID_URL);
 
     if (trueBox.checked) return this.sendResponseToWorker(true);
 

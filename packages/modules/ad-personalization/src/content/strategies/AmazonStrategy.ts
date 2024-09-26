@@ -1,9 +1,15 @@
 import { BaseStrategy } from './BaseStrategy';
+import { urlErrors } from '../../enums';
 
 export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
 
   async execute() {
+    const alreadyExecuted = sessionStorage.getItem('amazonAdPrefsExecuted');
+    if (alreadyExecuted) {
+      return this.sendResponseToWorker(true);
+    }
+
     const signInButton = document.querySelector('#a-autoid-0-announce') as HTMLElement;
     if (signInButton) {
       signInButton.click();
@@ -11,19 +17,18 @@ export class AmazonStrategy extends BaseStrategy {
     }
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
-    if(!boxes) return this.sendResponseToWorker(false, 'No valid URLs.');
+    if (!boxes) return this.sendResponseToWorker(false, urlErrors.INVALID_URL);
+
     this.addBlurEffect();
     const trueBox = Array.from(boxes).find((box) => box.value === '0');
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    if (trueBox?.checked) return this.sendResponseToWorker(true);
-
     trueBox?.click();
 
-    const saveButton = document.getElementById('optOutControl');
+    const saveButton = document.getElementById('optOutControl') as HTMLElement;
     saveButton?.click();
 
-    this.sendResponseToWorker(true);
+    sessionStorage.setItem('amazonAdPrefsExecuted', 'true');
   }
 }

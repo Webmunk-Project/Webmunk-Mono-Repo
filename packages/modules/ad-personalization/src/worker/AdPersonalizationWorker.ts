@@ -59,7 +59,7 @@ export class AdPersonalizationWorker {
 
         this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, value: response.value });
 
-        setTimeout(async () => await chrome.tabs.remove(tabId), 3000);
+        await chrome.tabs.remove(tabId);
 
         await this.addCheckedItem(key, response);
 
