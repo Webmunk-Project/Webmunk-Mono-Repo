@@ -1,17 +1,22 @@
 export class RateService {
   constructor() {
     this.lastNotificationTimestamp = null;
-    this.initializeLastNotificationTime();
+    this.initialTimestamp = null;
+    this.initializeNotificationTimes();
   }
 
-  async initializeLastNotificationTime() {
+  async initializeNotificationTimes() {
     this.lastNotificationTimestamp = await this.getLastAdsRateNotificationTime();
+    this.initialTimestamp = await this.getInitialNotificationTime();
   }
 
   async shouldNotify() {
     const currentTime = Date.now();
 
-    // 20 min
+    if (!this.lastNotificationTimestamp && (currentTime - this.initialTimestamp) < 1200000) {
+      return false;
+    }
+
     if (this.lastNotificationTimestamp && (currentTime - this.lastNotificationTimestamp) < 1200000) {
       return false;
     }
@@ -22,6 +27,17 @@ export class RateService {
   async getLastAdsRateNotificationTime() {
     const result = await chrome.storage.local.get('lastAdsRateNotificationTime');
     return result.lastAdsRateNotificationTime || 0;
+  }
+
+  async getInitialNotificationTime() {
+    const result = await chrome.storage.local.get('initialAdsRateNotificationTime');
+
+    if (result.initialAdsRateNotificationTime) return result.initialAdsRateNotificationTime;
+
+    const currentTime = Date.now();
+    await chrome.storage.local.set({ initialAdsRateNotificationTime: currentTime });
+
+    return currentTime;
   }
 
   async send(tabId) {
