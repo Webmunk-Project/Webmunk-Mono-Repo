@@ -686,8 +686,12 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
           }
       }
       if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document && node.getAttribute("role") !== "presentation") {
-        this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
-      }
+        const iframeSrc = node.src;
+
+        if (!iframeSrc.includes("youtube") && !iframeSrc.includes("google.com")) {
+            this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
+        }
+     }
       if (node.nodeType === Node.ELEMENT_NODE) {
         for (const selector of this.cssSelectors) {
             if (node.localName === "iframe") {
