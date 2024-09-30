@@ -11,11 +11,15 @@ export class RateService {
   async shouldNotify() {
     const currentTime = Date.now();
 
-    if (!this.lastNotificationTimestamp && currentTime < 1200000) {
+    if (!this.lastNotificationTimestamp) {
+      this.lastNotificationTimestamp = currentTime;
+      await chrome.storage.local.set({ lastAdsRateNotificationTime: currentTime });
+
       return false;
     }
 
-    if (this.lastNotificationTimestamp && (currentTime - this.lastNotificationTimestamp) < 1200000) {
+    // 20 min
+    if (currentTime - this.lastNotificationTimestamp < 1200000) {
       return false;
     }
 
