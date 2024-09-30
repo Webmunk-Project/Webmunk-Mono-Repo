@@ -1,7 +1,6 @@
 export class RateService {
   constructor() {
     this.lastNotificationTimestamp = null;
-    this.initialTimestamp = null;
     this.initializeLastNotificationTime();
   }
 
