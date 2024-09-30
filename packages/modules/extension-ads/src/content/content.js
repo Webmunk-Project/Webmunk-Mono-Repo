@@ -694,7 +694,7 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
         // Check if iframeSrc is excluded by any of the filters
         const isFiltered = filters.some((filter) => iframeSrc.includes(filter));
 
-        // We use this check to avoid tracking non-ad blocks from YouTube and Google by excluding their URLs.
+        // We use this check to avoid tracking non-ad blocks from specified URLs.
         if (!isFiltered) {
             this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
         }
