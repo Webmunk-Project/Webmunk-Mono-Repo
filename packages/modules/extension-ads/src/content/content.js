@@ -688,10 +688,11 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document && node.getAttribute("role") !== "presentation") {
         const iframeSrc = node.src;
 
+        // We use this check to avoid tracking non-ad blocks from YouTube and Google by excluding their URLs.
         if (!iframeSrc.includes("youtube") && !iframeSrc.includes("google.com")) {
             this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
         }
-     }
+      }
       if (node.nodeType === Node.ELEMENT_NODE) {
         for (const selector of this.cssSelectors) {
             if (node.localName === "iframe") {
