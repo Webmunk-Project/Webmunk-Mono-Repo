@@ -5,25 +5,15 @@ export class RateService {
   }
 
   async initializeLastNotificationTime() {
-    this.lastNotificationTimestamp = await this.getLastAdsRateNotificationTime();
+    // We use Date.now() to ensure the first 20 minutes pass after the user loads the extension before applying the logic of getLastAdsRateNotificationTime().
+    this.lastNotificationTimestamp = (await this.getLastAdsRateNotificationTime()) || Date.now();
   }
 
   async shouldNotify() {
     const currentTime = Date.now();
 
-    if (!this.lastNotificationTimestamp) {
-      this.lastNotificationTimestamp = currentTime;
-      await chrome.storage.local.set({ lastAdsRateNotificationTime: currentTime });
-
-      return false;
-    }
-
     // 20 min
-    if (currentTime - this.lastNotificationTimestamp < 1200000) {
-      return false;
-    }
-
-    return true;
+    return currentTime - this.lastNotificationTimestamp >= 1200000;
   }
 
   async getLastAdsRateNotificationTime() {
