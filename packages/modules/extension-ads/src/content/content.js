@@ -700,14 +700,31 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
             }
 
             try {
-                if (node.matches(selector) && !this.hasAnAdsParent(node)) {
-                    let parentFrameIsAnAd = false;
-                    if (isFrame()) {
-                        console.log("Checking node for ad ascendance", node);
-                    }
-                    if (!parentFrameIsAnAd) {
+              if (!node.matches("iframe") && node.matches(selector) && !this.hasAnAdsParent(node)) {
+                let parentFrameIsAnAd = false;
+
+                if (isFrame()) {
+                    console.log("Checking node for ad ascendance", node);
+                }
+
+                const observer = new MutationObserver((mutations) => {
+                  for (let mutation of mutations) {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                      const hasContent = node.childNodes.length > 0 || node.textContent.trim() !== "";
+
+                      if (hasContent && !parentFrameIsAnAd) {
                         this.highlightNodeAsAds(node, _indent, "blue", "data-webmunk-cosmetic-hit", selector);
+                      }
                     }
+                  }
+                });
+
+                observer.observe(node, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                });
+
                 } else {
                     if (this.isAd && node.localName === "iframe") {
                         node.setAttribute("data-webmunk-isad", true);
