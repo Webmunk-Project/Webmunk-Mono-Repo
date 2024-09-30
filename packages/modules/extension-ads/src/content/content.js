@@ -2,6 +2,7 @@ import PostMessageMgr from './postMessage'
 import _ from 'lodash'
 import './contentscript-extra'
 import { RateService } from './RateService';
+import iframeUrlFilter from './iframe-url-filter.json';
 
 const debugLog = {
   traverse: false,
@@ -685,14 +686,20 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
               }
           }
       }
+
       if (node.localName === "iframe" && node.contentWindow && node.ownerDocument === document && node.getAttribute("role") !== "presentation") {
         const iframeSrc = node.src;
+        const filters = iframeUrlFilter.filters;
+
+        // Check if iframeSrc is excluded by any of the filters
+        const isFiltered = filters.some((filter) => iframeSrc.includes(filter));
 
         // We use this check to avoid tracking non-ad blocks from YouTube and Google by excluding their URLs.
-        if (!iframeSrc.includes("youtube") && !iframeSrc.includes("google.com")) {
+        if (!isFiltered) {
             this.highlightNodeAsAds(node, _indent, "red", "urlIsAnAd-hit", node.src);
         }
       }
+
       if (node.nodeType === Node.ELEMENT_NODE) {
         for (const selector of this.cssSelectors) {
             if (node.localName === "iframe") {
