@@ -44,3 +44,6 @@ Description: Stores a mapping of URLs to boolean values indicating the personali
 
 2. adPersonalization.items
 Description: Stores initial configuration data related to ad personalization settings. This data is loaded from config.json.
+
+3. adPersonalization.invalidItems
+Description: Stores a list of items that encountered errors during the personalization process, including the specific error messages for each item.

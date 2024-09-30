@@ -1,4 +1,5 @@
 import { BaseStrategy } from './BaseStrategy';
+import { ErrorMessages } from '../../ErrorMessages';
 
 export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
@@ -11,18 +12,23 @@ export class AmazonStrategy extends BaseStrategy {
     }
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
+
+    if (!boxes) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+
     this.addBlurEffect();
     const trueBox = Array.from(boxes).find((box) => box.value === '0');
 
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (trueBox?.checked) return this.sendResponseToWorker(true);
 
-    if (trueBox?.checked) return this.sendResponseToService(true);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     trueBox?.click();
 
-    const saveButton = document.getElementById('optOutControl');
+    const saveButton = document.getElementById('optOutControl') as HTMLElement;
     saveButton?.click();
 
-    this.sendResponseToService(true);
+    const pageReloaded = await this.waitForPageReload();
+
+    if (pageReloaded) return this.sendResponseToWorker(true);
   }
 }

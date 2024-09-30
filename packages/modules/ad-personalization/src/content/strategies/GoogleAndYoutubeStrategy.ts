@@ -7,7 +7,7 @@ export class GoogleAndYoutubeStrategy extends BaseStrategy {
     const offButton = document.querySelector('[aria-label="Turn off"]');
     if (offButton) {
       this.addBlurEffect();
-      return this.sendResponseToService(true);
+      return this.sendResponseToWorker(true);
     }
 
     const onButton = document.querySelector('[aria-label="Turn on"]') as HTMLElement;
@@ -17,6 +17,6 @@ export class GoogleAndYoutubeStrategy extends BaseStrategy {
     const saveButton = document.querySelector('[jsname="Lnwj0b"]') as HTMLElement;
     saveButton.click();
 
-    this.sendResponseToService(true);
+    this.sendResponseToWorker(true);
   }
 }

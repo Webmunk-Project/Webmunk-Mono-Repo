@@ -1,4 +1,5 @@
 import { BaseStrategy } from './BaseStrategy';
+import { ErrorMessages } from '../../ErrorMessages';
 
 export class FacebookActivityStrategy extends BaseStrategy {
   public strategyKey = 'facebookActivityData';
@@ -11,7 +12,9 @@ export class FacebookActivityStrategy extends BaseStrategy {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const trueBox = document.querySelector('[name="radio1"]') as HTMLInputElement;
 
-    if (trueBox.checked) return this.sendResponseToService(true);
+    if (!trueBox) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+
+    if (trueBox.checked) return this.sendResponseToWorker(true);
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
     trueBox.click();
@@ -20,6 +23,6 @@ export class FacebookActivityStrategy extends BaseStrategy {
     const confirmButton = buttons[buttons.length - 1] as HTMLElement;
     confirmButton.click();
 
-    this.sendResponseToService(true);
+    this.sendResponseToWorker(true);
   }
 }

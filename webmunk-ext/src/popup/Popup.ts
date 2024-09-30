@@ -102,9 +102,8 @@ class Popup {
 
     for (const link of listItems) {
       const anchorElement = link as HTMLAnchorElement;
-      const url = anchorElement.href;
       const key = anchorElement.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  key });
     }
   }
 
@@ -112,9 +111,8 @@ class Popup {
     const target = (event.target as HTMLElement).closest('a');
 
     if (target) {
-      const url = target.href;
       const key = target.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { url, key } });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', key });
     }
   }
 
@@ -207,23 +205,38 @@ class Popup {
   private async initAdPersonalization(): Promise<HTMLUListElement> {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const invalidItemsResult = await chrome.storage.local.get('adPersonalization.invalidItems');
 
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
     const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+    const invalidItems = invalidItemsResult['adPersonalization.invalidItems'] || [];
 
     const settingsList = document.createElement('ul');
 
     adPersonalization.forEach((list) => {
       const listItem = document.createElement('li');
       const link = document.createElement('a');
-      link.href = list.url;
       link.textContent = list.name;
       link.setAttribute('key', list.key);
       listItem.appendChild(link);
 
-      if (checkedAdPersonalization[list.url]) {
+      const invalidItem = invalidItems.find((item: { key: string, error: string }) => item.key === list.key);
+      if (invalidItem) {
+        const invalidMark = document.createElement('span');
+        invalidMark.classList.add('tooltip');
+        invalidMark.textContent = '⚠️';
+        invalidMark.style.marginLeft = '8px';
+
+        const tooltipText = document.createElement('span');
+        tooltipText.classList.add('tooltiptext');
+
+        tooltipText.textContent = invalidItem.error;
+
+        invalidMark.appendChild(tooltipText);
+        listItem.appendChild(invalidMark);
+      } else if (checkedAdPersonalization[list.key]) {
         const checkmark = document.createElement('span');
-        checkmark.textContent = '✔️';
+        checkmark.textContent = '✅';
         checkmark.style.marginLeft = '8px';
         listItem.appendChild(checkmark);
       }

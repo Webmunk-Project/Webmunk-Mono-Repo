@@ -1,13 +1,10 @@
-import { IStrategy } from './strategies/BaseStrategy';
 import { StrategyFactory } from './StrategyFactory';
 
 export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
-  private strategiesMap: Map<string, IStrategy>;
 
   constructor() {
     this.strategyFactory = new StrategyFactory();
-    this.strategiesMap = this.strategyFactory.getStrategiesMap();
     this.initialize();
   };
 
@@ -22,8 +19,8 @@ export class AdPersonalizationContent {
   };
 
   private handleKey(key: string): void {
-    const strategy = this.strategiesMap.get(key);
+    const strategy = this.strategyFactory.getStrategy(key);
 
     if (strategy) strategy.execute();
-  };
+  }
 }
