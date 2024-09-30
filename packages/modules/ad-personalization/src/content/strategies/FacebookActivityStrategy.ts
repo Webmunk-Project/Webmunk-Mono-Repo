@@ -12,7 +12,7 @@ export class FacebookActivityStrategy extends BaseStrategy {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const trueBox = document.querySelector('[name="radio1"]') as HTMLInputElement;
 
-    if (!trueBox) this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+    if (!trueBox) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
 
     if (trueBox.checked) return this.sendResponseToWorker(true);
 
