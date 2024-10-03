@@ -12,16 +12,16 @@ import "@webmunk/ad-personalization/worker";
 interface Survey {
   name: string;
   url: string;
-}
+};
 
 interface SurveyData {
   name: string;
   url: string;
-}
+};
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
-}
+};
 
 export class Worker {
   private surveys: Survey[] = [];
