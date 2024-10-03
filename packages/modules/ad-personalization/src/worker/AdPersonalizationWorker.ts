@@ -161,7 +161,16 @@ export class AdPersonalizationWorker {
     }
   }
 
+  private async getSpecifiedValue(key: string): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('queryParams');
+    const specifiedItem = specifiedItemResult.queryParams || {};
+
+    return specifiedItem[key];
+  }
+
   private async send(key: string, url: string): Promise<MessageResponse> {
+    const value = await this.getSpecifiedValue(key);
+
     return new Promise((resolve, reject) => {
       let createdTabId: number | null = null;
 
@@ -182,7 +191,7 @@ export class AdPersonalizationWorker {
             if (tabId === createdTabId && changeInfo.status === 'complete') {
               chrome.tabs.sendMessage(
                 createdTabId,
-                { action: 'adsPersonalization.strategies.settingsRequest', key }
+                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value } }
               );
             }
           });

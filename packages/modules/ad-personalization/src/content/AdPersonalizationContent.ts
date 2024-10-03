@@ -1,5 +1,9 @@
 import { StrategyFactory } from './StrategyFactory';
 
+type handleData = {
+  key: string;
+  value: boolean;
+}
 export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
 
@@ -14,13 +18,13 @@ export class AdPersonalizationContent {
 
   private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
     if (message.action === 'adsPersonalization.strategies.settingsRequest') {
-      this.handleKey(message.key);
+      this.handleKey(message.data);
     }
   };
 
-  private handleKey(key: string): void {
-    const strategy = this.strategyFactory.getStrategy(key);
+  private handleKey(data: handleData): void {
+    const strategy = this.strategyFactory.getStrategy(data.key);
 
-    if (strategy) strategy.execute();
+    if (strategy) strategy.execute(data.value);
   }
 }

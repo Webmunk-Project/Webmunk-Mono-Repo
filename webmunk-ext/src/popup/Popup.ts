@@ -107,6 +107,13 @@ class Popup {
     }
   }
 
+  private async isNeedToDisplayAdPersonalizationButton(): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('queryParams');
+    const specifiedItem = specifiedItemResult.queryParams || {};
+
+    return Object.keys(specifiedItem).length > 0;
+  }
+
   private handleAdPersonalizationClick(event: Event): void {
     const target = (event.target as HTMLElement).closest('a');
 
@@ -176,11 +183,19 @@ class Popup {
     }
   }
 
-  private showStudyExtensionContainer(identifier: string): void {
+  private async showStudyExtensionContainer(identifier: string): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
     this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
     this.fullIdentifier = identifier;
+
+    const isNeedToDisplay = await this.isNeedToDisplayAdPersonalizationButton();
+
+    if (isNeedToDisplay) {
+      this.adPersonalizationButton.style.display = 'block';
+    } else {
+      this.adPersonalizationButton.style.display = 'none';
+    }
   }
 
   private showGetStartedContainer(): void {

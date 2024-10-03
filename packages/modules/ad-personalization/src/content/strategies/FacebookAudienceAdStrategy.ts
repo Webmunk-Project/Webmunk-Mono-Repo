@@ -6,7 +6,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
   private blurApplied = false;
   private isUrlChecked = false;
 
-  async execute() {
+  async execute(value: boolean) {
     const processElement = async (el: HTMLElement, isFirstElement: boolean) => {
       if (el) {
         el.click();
@@ -46,7 +46,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         await new Promise((resolve) => requestAnimationFrame(resolve));
         const toggleAdsButton = await this.waitForElement('[role="listitem"] [role="button"]');
 
-        if (toggleAdsButton && toggleAdsButton.textContent === 'Hide ads') {
+        if (toggleAdsButton && toggleAdsButton.textContent === textContent) {
           toggleAdsButton.click();
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
@@ -72,6 +72,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
     };
 
     let index = 0;
+    const textContent = value ? 'Hide ads' : 'Unhide';
 
     while (true) {
       const seeMoreButton = await this.waitForElement('[role="button"] [role="presentation"]');
