@@ -107,13 +107,6 @@ class Popup {
     }
   }
 
-  private async isNeedToDisplayAdPersonalizationButton(): Promise<boolean> {
-    const specifiedItemResult = await chrome.storage.local.get('queryParams');
-    const specifiedItem = specifiedItemResult.queryParams || {};
-
-    return Object.keys(specifiedItem).length > 0;
-  }
-
   private handleAdPersonalizationClick(event: Event): void {
     const target = (event.target as HTMLElement).closest('a');
 
@@ -183,19 +176,34 @@ class Popup {
     }
   }
 
+  private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('queryParams');
+    const specifiedItem = specifiedItemResult.queryParams || {};
+
+    return !Object.keys(specifiedItem).length;
+  }
+
+  private makeAdPersonalizationButtonDisabled(): void {
+    this.adPersonalizationButton.disabled = true;
+    this.adPersonalizationButton.classList.add('not-disabled');
+
+    const tooltipText = document.createElement('span');
+    tooltipText.classList.add('tooltiptext');
+    tooltipText.classList.add('tooltip--position');
+    tooltipText.textContent = 'You have to complete qualtrics survey';
+
+    this.adPersonalizationButton.appendChild(tooltipText);
+  }
+
   private async showStudyExtensionContainer(identifier: string): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
     this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
     this.fullIdentifier = identifier;
 
-    const isNeedToDisplay = await this.isNeedToDisplayAdPersonalizationButton();
+    const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
 
-    if (isNeedToDisplay) {
-      this.adPersonalizationButton.style.display = 'block';
-    } else {
-      this.adPersonalizationButton.style.display = 'none';
-    }
+    if (isNeedToDisabled) this.makeAdPersonalizationButtonDisabled();
   }
 
   private showGetStartedContainer(): void {
