@@ -1,4 +1,4 @@
-import { extensionAdsAppMgr } from './worker';
+import { ExtensionAdsWorker } from './ExtensionAdsWorker';
 
-const worker = extensionAdsAppMgr
+const worker = new ExtensionAdsWorker();
 worker.initialize();
