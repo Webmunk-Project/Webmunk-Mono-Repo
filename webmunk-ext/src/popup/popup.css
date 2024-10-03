@@ -141,9 +141,6 @@
 }
 
 .not-disabled {
-    position: relative;
-    display: inline-block;
-
     opacity: 0.5;
     cursor: not-allowed !important;
 }
