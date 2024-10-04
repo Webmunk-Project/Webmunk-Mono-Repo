@@ -176,11 +176,34 @@ class Popup {
     }
   }
 
-  private showStudyExtensionContainer(identifier: string): void {
+  private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
+    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
+
+    return !Object.keys(specifiedItem).length;
+  }
+
+  private makeAdPersonalizationButtonDisabled(): void {
+    this.adPersonalizationButton.disabled = true;
+    this.adPersonalizationButton.classList.add('not-disabled');
+
+    const tooltipText = document.createElement('span');
+    tooltipText.classList.add('tooltiptext');
+    tooltipText.classList.add('tooltip--correction');
+    tooltipText.textContent = 'You have to complete qualtrics survey';
+
+    this.adPersonalizationButton.appendChild(tooltipText);
+  }
+
+  private async showStudyExtensionContainer(identifier: string): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
     this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
     this.fullIdentifier = identifier;
+
+    const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
+
+    if (isNeedToDisabled) this.makeAdPersonalizationButtonDisabled();
   }
 
   private showGetStartedContainer(): void {

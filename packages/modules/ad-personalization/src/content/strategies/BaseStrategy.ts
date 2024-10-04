@@ -1,11 +1,11 @@
 export interface IStrategy {
   strategyKey: string;
-  execute(): Promise<void>;
+  execute(value: boolean): Promise<void>;
 }
 
 export abstract class BaseStrategy implements IStrategy {
   abstract strategyKey: string;
-  abstract execute(): Promise<void>;
+  abstract execute(value: boolean): Promise<void>;
 
   protected addBlurEffect(): void {
     document.body.style.filter = 'blur(20px)';

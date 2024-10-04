@@ -4,7 +4,7 @@ import { ErrorMessages } from '../../ErrorMessages';
 export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
 
-  async execute() {
+  async execute(value: boolean) {
     const signInButton = document.querySelector('#a-autoid-0-announce') as HTMLElement;
     if (signInButton) {
       signInButton.click();
@@ -16,19 +16,26 @@ export class AmazonStrategy extends BaseStrategy {
     if (!boxes) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
 
     this.addBlurEffect();
-    const trueBox = Array.from(boxes).find((box) => box.value === '0');
 
-    if (trueBox?.checked) return this.sendResponseToWorker(true);
+    let specifiedBox;
+
+    if (value) {
+      specifiedBox = Array.from(boxes).find((box) => box.value === '0');
+    } else {
+      specifiedBox = Array.from(boxes).find((box) => box.value === '1');
+    }
+
+    if (specifiedBox?.checked) return this.sendResponseToWorker(value);
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    trueBox?.click();
+    specifiedBox?.click();
 
     const saveButton = document.getElementById('optOutControl') as HTMLElement;
     saveButton?.click();
 
     const pageReloaded = await this.waitForPageReload();
 
-    if (pageReloaded) return this.sendResponseToWorker(true);
+    if (pageReloaded) return this.sendResponseToWorker(value);
   }
 }
