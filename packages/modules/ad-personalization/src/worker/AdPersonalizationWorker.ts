@@ -161,15 +161,15 @@ export class AdPersonalizationWorker {
     }
   }
 
-  private async getSpecifiedValue(key: string): Promise<boolean> {
-    const specifiedItemResult = await chrome.storage.local.get('queryParams');
-    const specifiedItem = specifiedItemResult.queryParams || {};
+  private async getConfig(key: string): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
+    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
 
-    return specifiedItem[key];
+    return specifiedItem[key] ?? false;
   }
 
   private async send(key: string, url: string): Promise<MessageResponse> {
-    const value = await this.getSpecifiedValue(key);
+    const value = await this.getConfig(key);
 
     return new Promise((resolve, reject) => {
       let createdTabId: number | null = null;

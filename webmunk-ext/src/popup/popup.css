@@ -102,9 +102,12 @@
     cursor: pointer;
 }
 
-.tooltip--position {
+.tooltip--correction {
     width: 250px !important;
     margin-left: -125px !important;
+    margin-bottom: 5px;
+
+    text-transform: none;
 }
 
 .tooltip .tooltiptext {

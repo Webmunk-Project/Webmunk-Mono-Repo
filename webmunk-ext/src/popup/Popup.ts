@@ -177,8 +177,8 @@ class Popup {
   }
 
   private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
-    const specifiedItemResult = await chrome.storage.local.get('queryParams');
-    const specifiedItem = specifiedItemResult.queryParams || {};
+    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
+    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
 
     return !Object.keys(specifiedItem).length;
   }
@@ -189,7 +189,7 @@ class Popup {
 
     const tooltipText = document.createElement('span');
     tooltipText.classList.add('tooltiptext');
-    tooltipText.classList.add('tooltip--position');
+    tooltipText.classList.add('tooltip--correction');
     tooltipText.textContent = 'You have to complete qualtrics survey';
 
     this.adPersonalizationButton.appendChild(tooltipText);

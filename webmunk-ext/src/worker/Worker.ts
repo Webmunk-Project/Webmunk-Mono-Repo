@@ -70,7 +70,7 @@ export class Worker {
   }
 
   private async saveParamsToStorage(params: Record<string, boolean>): Promise<void> {
-    await chrome.storage.local.set({ queryParams: params });
+    await chrome.storage.local.set({ personalizationConfigs: params });
   }
 
   private extractQueryParams(url: string): Record<string, boolean> {
