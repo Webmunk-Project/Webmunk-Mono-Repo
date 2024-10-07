@@ -1,4 +1,2 @@
 import { AdPersonalizationWorker } from './AdPersonalizationWorker';
-
-const adPersonalization = new AdPersonalizationWorker();
-adPersonalization.initialize();
+export const adPersonalization = new AdPersonalizationWorker();

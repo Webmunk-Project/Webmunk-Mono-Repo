@@ -125,7 +125,7 @@ class Popup {
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(inputValue);
+    const identifier = await this.login(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -172,6 +172,17 @@ class Popup {
       return data.userId;
     } catch (e) {
       this.notification.error('Error occurred while fetching identifier');
+      return null;
+    }
+  }
+
+  private async login(username: string): Promise<string | null> {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginReq',  username });
+      console.log(response);
+      return response.prolificId;
+    } catch (e) {
+      this.notification.error('Error occurred while login');
       return null;
     }
   }

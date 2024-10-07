@@ -352,7 +352,7 @@ export const extensionAdsAppMgr = {
       })
   },
   _onMessage_retrieveContentScriptParameters: function(request, _from) {
-      console.log("retrieveContentScriptParameters receiving message", request)
+      console.log("_onMessage_retrieveContentScriptParameters receiving message", request)
       const response = {
           collapseBlocked: true, //µb.userSettings.collapseBlocked,
           noGenericCosmeticFiltering: false,
