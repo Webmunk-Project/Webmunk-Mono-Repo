@@ -12,6 +12,11 @@ interface SurveyItem {
   url: string;
 }
 
+interface IdentifierItem {
+  prolificId: string;
+  uid: string;
+}
+
 class Popup {
   private continueButton: HTMLButtonElement;
   private logInInput: HTMLInputElement;
@@ -125,7 +130,7 @@ class Popup {
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(inputValue);
+    const identifier: IdentifierItem = await this.login(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -195,11 +200,27 @@ class Popup {
     this.adPersonalizationButton.appendChild(tooltipText);
   }
 
-  private async showStudyExtensionContainer(identifier: string): Promise<void> {
+  private async login(username: string): Promise<IdentifierItem> {
+    return new Promise((resolve) => {
+      const messageHandler = (response: any) => {
+        if (response.action === 'webmunkExt.popup.loginRes') {
+          resolve(response.data);
+          chrome.runtime.onMessage.removeListener(messageHandler);
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(messageHandler);
+
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginReq', username });
+    });
+   }
+
+
+  private async showStudyExtensionContainer(identifier: IdentifierItem): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
-    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
-    this.fullIdentifier = identifier;
+    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
+    this.fullIdentifier = identifier.uid;
 
     const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
 

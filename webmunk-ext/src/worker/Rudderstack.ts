@@ -45,6 +45,6 @@ export class RudderStack {
 
   async _getUserIdentifier(): Promise<string | undefined> {
     const result = await chrome.storage.local.get('identifier');
-    return result.identifier;
+    return result.identifier.uid;
   }
 }
