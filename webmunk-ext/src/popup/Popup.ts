@@ -1,4 +1,3 @@
-import { ENROLL_URL } from '../config';
 import { Notification } from './Notification';
 
 interface AdPersonalizationItem {
@@ -161,24 +160,6 @@ class Popup {
     }
 
     return true;
-  }
-
-  private async getIdentifier(email: string): Promise<string | null> {
-    try {
-      const response = await fetch(ENROLL_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: email })
-      });
-
-      const data = await response.json();
-      return data.userId;
-    } catch (e) {
-      this.notification.error('Error occurred while fetching identifier');
-      return null;
-    }
   }
 
   private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
