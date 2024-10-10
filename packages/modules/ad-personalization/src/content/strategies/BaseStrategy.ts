@@ -5,7 +5,7 @@ export interface IStrategy {
 
 interface ResponseItem {
   currentValue: boolean;
-  initialValue?: boolean;
+  initialValue: boolean;
 }
 
 export abstract class BaseStrategy implements IStrategy {
@@ -128,7 +128,7 @@ export abstract class BaseStrategy implements IStrategy {
     });
   }
 
-  protected sendResponseToWorker(response: ResponseItem, error?: string): void {
+  protected sendResponseToWorker(response: ResponseItem | null, error?: string): void {
     chrome.runtime.sendMessage({
       action: 'adsPersonalization.strategies.settingsResponse',
       response: { values: response, error },

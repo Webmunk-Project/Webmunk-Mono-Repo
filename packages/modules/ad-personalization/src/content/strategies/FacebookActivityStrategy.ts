@@ -19,7 +19,7 @@ export class FacebookActivityStrategy extends BaseStrategy {
       specifiedBox = document.querySelector('[name="radio2"]') as HTMLInputElement
     }
 
-    if (!specifiedBox) return this.sendResponseToWorker({ currentValue: false }, ErrorMessages.INVALID_URL);
+    if (!specifiedBox) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
     if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue: value, initialValue: value });
 

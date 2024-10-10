@@ -13,7 +13,7 @@ export class AmazonStrategy extends BaseStrategy {
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
 
-    if (!boxes) return this.sendResponseToWorker({ currentValue: false }, ErrorMessages.INVALID_URL);
+    if (!boxes) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
     this.addBlurEffect();
 

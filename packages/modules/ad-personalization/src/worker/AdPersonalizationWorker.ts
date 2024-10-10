@@ -9,7 +9,7 @@ interface MessageResponse {
   response: {
     values: {
       currentValue: boolean;
-      initialValue?: boolean;
+      initialValue: boolean;
     };
     error?: string;
   };

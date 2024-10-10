@@ -8,7 +8,7 @@ export class FacebookCategoriesStrategy extends BaseStrategy {
     const checkboxes = await this.waitForElements('input[type="checkbox"]');
 
     if (!checkboxes) {
-      return this.sendResponseToWorker({ currentValue: false }, ErrorMessages.INVALID_URL);
+      return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
     }
 
     this.addBlurEffect();

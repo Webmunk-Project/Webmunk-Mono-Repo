@@ -12,7 +12,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         el.click();
 
         let beforeUnloadListener = () => {
-          this.sendResponseToWorker({ currentValue: false }, ErrorMessages.INVALID_URL);
+          this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
         };
 
         if (!this.isUrlChecked) {
