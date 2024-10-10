@@ -13,7 +13,7 @@ export class AmazonStrategy extends BaseStrategy {
 
     const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
 
-    if (!boxes) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+    if (!boxes) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
     this.addBlurEffect();
 
@@ -25,7 +25,7 @@ export class AmazonStrategy extends BaseStrategy {
       specifiedBox = Array.from(boxes).find((box) => box.value === '1');
     }
 
-    if (specifiedBox?.checked) return this.sendResponseToWorker(value);
+    if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue: value, initialValue: !value });
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -36,6 +36,6 @@ export class AmazonStrategy extends BaseStrategy {
 
     const pageReloaded = await this.waitForPageReload();
 
-    if (pageReloaded) return this.sendResponseToWorker(value);
+    if (pageReloaded) return this.sendResponseToWorker({ currentValue: value, initialValue: !value });
   }
 }

@@ -3,6 +3,11 @@ export interface IStrategy {
   execute(value: boolean): Promise<void>;
 }
 
+interface ResponseItem {
+  currentValue: boolean;
+  initialValue: boolean;
+}
+
 export abstract class BaseStrategy implements IStrategy {
   abstract strategyKey: string;
   abstract execute(value: boolean): Promise<void>;
@@ -123,10 +128,10 @@ export abstract class BaseStrategy implements IStrategy {
     });
   }
 
-  protected sendResponseToWorker(response: boolean, error?: string): void {
+  protected sendResponseToWorker(response: ResponseItem | null, error?: string): void {
     chrome.runtime.sendMessage({
       action: 'adsPersonalization.strategies.settingsResponse',
-      response: { value: response, error },
+      response: { values: response, error },
     });
   }
 }

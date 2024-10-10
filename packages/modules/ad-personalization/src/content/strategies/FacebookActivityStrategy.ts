@@ -19,9 +19,9 @@ export class FacebookActivityStrategy extends BaseStrategy {
       specifiedBox = document.querySelector('[name="radio2"]') as HTMLInputElement
     }
 
-    if (!specifiedBox) return this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+    if (!specifiedBox) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
-    if (specifiedBox.checked) return this.sendResponseToWorker(value);
+    if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue: value, initialValue: value });
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
     specifiedBox.click();
@@ -30,6 +30,6 @@ export class FacebookActivityStrategy extends BaseStrategy {
     const confirmButton = buttons[buttons.length - 1] as HTMLElement;
     confirmButton.click();
 
-    this.sendResponseToWorker(value);
+    this.sendResponseToWorker({ currentValue: value, initialValue: !value });
   }
 }

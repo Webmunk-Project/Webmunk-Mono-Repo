@@ -8,7 +8,7 @@ export class GoogleAndYoutubeStrategy extends BaseStrategy {
       const offButton = document.querySelector('[aria-label="Turn off"]');
       if (offButton) {
         this.addBlurEffect();
-        return this.sendResponseToWorker(value);
+        return this.sendResponseToWorker({ currentValue: value, initialValue: value });
       }
 
       const onButton = document.querySelector('[aria-label="Turn on"]') as HTMLElement;
@@ -18,12 +18,12 @@ export class GoogleAndYoutubeStrategy extends BaseStrategy {
       const saveButton = document.querySelector('[jsname="Lnwj0b"]') as HTMLElement;
       saveButton.click();
 
-      this.sendResponseToWorker(value);
+      this.sendResponseToWorker({ currentValue: value, initialValue: !value });
     } else {
       const onButton = document.querySelector('[aria-label="Turn on"]');
       if (onButton) {
         this.addBlurEffect();
-        return this.sendResponseToWorker(value);
+        return this.sendResponseToWorker({ currentValue: value, initialValue: value });
       }
 
       const offButton = document.querySelector('[aria-label="Turn off"]') as HTMLElement;
@@ -33,7 +33,7 @@ export class GoogleAndYoutubeStrategy extends BaseStrategy {
       const saveButton = document.querySelector('[jsname="mXJpKc"]') as HTMLElement;
       saveButton.click();
 
-      this.sendResponseToWorker(value);
+      this.sendResponseToWorker({ currentValue: value, initialValue: !value });
     }
   }
 }

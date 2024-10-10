@@ -7,7 +7,10 @@ interface Message {
 
 interface MessageResponse {
   response: {
-    value: boolean;
+    values: {
+      currentValue: boolean;
+      initialValue: boolean;
+    };
     error?: string;
   };
   tabId: number;
@@ -57,7 +60,7 @@ export class AdPersonalizationWorker {
         await this.addWorkingUrl(key, url);
         await this.removeFromInvalidItems(key);
 
-        this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, value: response.value });
+        this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, values: response.values });
 
         await chrome.tabs.remove(tabId);
 
