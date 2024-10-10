@@ -1,4 +1,3 @@
-import { ENROLL_URL } from '../config';
 import { Notification } from './Notification';
 
 interface AdPersonalizationItem {
@@ -10,6 +9,11 @@ interface AdPersonalizationItem {
 interface SurveyItem {
   name: string;
   url: string;
+}
+
+interface IdentifierItem {
+  prolificId: string;
+  uid: string;
 }
 
 class Popup {
@@ -125,7 +129,7 @@ class Popup {
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(inputValue);
+    const identifier: IdentifierItem = await this.login(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -158,24 +162,6 @@ class Popup {
     return true;
   }
 
-  private async getIdentifier(email: string): Promise<string | null> {
-    try {
-      const response = await fetch(ENROLL_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: email })
-      });
-
-      const data = await response.json();
-      return data.userId;
-    } catch (e) {
-      this.notification.error('Error occurred while fetching identifier');
-      return null;
-    }
-  }
-
   private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
     const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
     const specifiedItem = specifiedItemResult.personalizationConfigs || {};
@@ -195,11 +181,27 @@ class Popup {
     this.adPersonalizationButton.appendChild(tooltipText);
   }
 
-  private async showStudyExtensionContainer(identifier: string): Promise<void> {
+  private async login(username: string): Promise<IdentifierItem> {
+    return new Promise((resolve) => {
+      const messageHandler = (response: any) => {
+        if (response.action === 'webmunkExt.popup.loginRes') {
+          resolve(response.data);
+          chrome.runtime.onMessage.removeListener(messageHandler);
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(messageHandler);
+
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginReq', username });
+    });
+   }
+
+
+  private async showStudyExtensionContainer(identifier: IdentifierItem): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
-    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
-    this.fullIdentifier = identifier;
+    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
+    this.fullIdentifier = identifier.uid;
 
     const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
 

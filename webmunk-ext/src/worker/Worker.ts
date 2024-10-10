@@ -1,8 +1,12 @@
 // dont remove next line, all webmunk modules use messenger utility
 // @ts-ignore
 import { messenger } from "@webmunk/utils";
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously } from 'firebase/auth/web-extension';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { RudderStack } from './Rudderstack';
 import { WEBMUNK_URL } from '../config';
+import { FIREBASE_CONFIG } from '../config';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -21,14 +25,16 @@ interface SurveyData {
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
-};
+}
 
 export class Worker {
   private surveys: Survey[] = [];
   private completedSurveys: string[] = [];
   private rudderStack: RudderStack;
+  private firebaseApp: any;
 
   constructor() {
+    this.firebaseApp = initializeApp(FIREBASE_CONFIG);
     this.rudderStack = new RudderStack();
   }
 
@@ -38,8 +44,30 @@ export class Worker {
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
+    chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
 
     await this.initSurveys();
+  }
+
+  private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+    if (request.action === 'webmunkExt.popup.loginReq') {
+      await this.handleLogin(request.username);
+    }
+  }
+
+  private async handleLogin(username: string): Promise<any> {
+    try {
+      const auth = getAuth();
+      const functions = getFunctions();
+
+      await signInAnonymously(auth);
+      const signIn = httpsCallable(functions, 'signIn');
+      const response = await signIn({ prolificId: username });
+
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginRes', data: response.data });
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   private async onModuleEvent(event: string, data: any): Promise<void> {
@@ -117,4 +145,4 @@ export class Worker {
       await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
   }
-};
+}
