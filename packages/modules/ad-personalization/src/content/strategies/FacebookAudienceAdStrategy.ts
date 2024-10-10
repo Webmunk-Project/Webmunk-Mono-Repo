@@ -12,7 +12,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
         el.click();
 
         let beforeUnloadListener = () => {
-          this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+          this.sendResponseToWorker({ currentValue: false }, ErrorMessages.INVALID_URL);
         };
 
         if (!this.isUrlChecked) {
@@ -96,7 +96,7 @@ export class FacebookAudienceAdStrategy extends BaseStrategy {
       await processElement(elements[index], isFirstElement);
 
       if (index === elements.length - 1) {
-        this.sendResponseToWorker(true);
+        this.sendResponseToWorker({ currentValue: value, initialValue: !value });
       }
 
       index++;
