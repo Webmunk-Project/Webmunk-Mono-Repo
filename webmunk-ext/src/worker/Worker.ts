@@ -81,8 +81,8 @@ export class Worker {
   }
 
   private async loadSurveys(): Promise<void> {
-    const result = await chrome.storage.local.get('identifier');
-    const identifier = result.identifier.prolificId;
+    const identifierResponse = await chrome.storage.local.get('identifier');
+    const identifier = identifierResponse.identifier.prolificId;
 
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
     const data: SurveyData[] = await response.json();
@@ -96,7 +96,7 @@ export class Worker {
         this.surveys.push(survey);
       }
     });
-    console.log(this.surveys);
+
     await chrome.storage.local.set({ surveys: this.surveys });
   }
 
