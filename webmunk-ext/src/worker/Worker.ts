@@ -82,13 +82,13 @@ export class Worker {
 
   private async loadSurveys(): Promise<void> {
     const identifierResponse = await chrome.storage.local.get('identifier');
-    const identifier = identifierResponse.identifier.prolificId;
+    const prolificId = identifierResponse.identifier.prolificId;
 
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
     const data: SurveyData[] = await response.json();
     const newSurveys: Survey[] = data.map((item) => ({
       name: item.name,
-      url: `${item.url}?prolific_id=${identifier}`
+      url: `${item.url}?prolific_id=${prolificId}`
     }));
 
     newSurveys.forEach((survey) => {
