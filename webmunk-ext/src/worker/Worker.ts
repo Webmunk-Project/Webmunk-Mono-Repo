@@ -45,13 +45,13 @@ export class Worker {
     messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
-
-    await this.initSurveys();
   }
 
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.loginReq') {
       await this.handleLogin(request.username);
+    } else if (request.action === 'webmunkExt.popup.successRegister') {
+      await this.initSurveys();
     }
   }
 
@@ -81,11 +81,14 @@ export class Worker {
   }
 
   private async loadSurveys(): Promise<void> {
+    const result = await chrome.storage.local.get('identifier');
+    const identifier = result.identifier.prolificId;
+
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
     const data: SurveyData[] = await response.json();
     const newSurveys: Survey[] = data.map((item) => ({
       name: item.name,
-      url: item.url
+      url: `${item.url}?prolific_id=${identifier}`
     }));
 
     newSurveys.forEach((survey) => {
@@ -93,7 +96,7 @@ export class Worker {
         this.surveys.push(survey);
       }
     });
-
+    console.log(this.surveys);
     await chrome.storage.local.set({ surveys: this.surveys });
   }
 

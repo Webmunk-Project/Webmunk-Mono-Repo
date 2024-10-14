@@ -13,7 +13,7 @@ npm run build:dev
 The module uses a message-driven architecture for communication. It listens to and emits specific events for sending and receiving information related to cookies.
 
 ## Events the Module Listens to:
-1. cookiesAppMgr.checkPrivacy
+1. webmunkExt.popup.successRegister
 Description: This event is triggered to check the privacy settings related to cookies on a website.
   Data: None
 Action: The module retrieves privacy settings and emits relevant data about cookie handling and privacy.

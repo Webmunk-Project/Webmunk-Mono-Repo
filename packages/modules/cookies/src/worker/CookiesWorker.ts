@@ -13,13 +13,22 @@ export class CookiesWorker {
 
   constructor () {
     this.eventEmitter = (self as any).messenger.registerModule('cookies-scraper');
+    chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this));
+  }
+
+  private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+    if (request.action === 'webmunkExt.popup.successRegister') {
+      await this.checkPrivacy();
+    } else if (request.action === 'cookies.recordCookies') {
+      await this.recordCookies(request.data);
+    }
   }
 
   initialize() {
     (self as any).messenger.addReceiver('cookiesAppMgr', this);
   }
 
-  public async _onMessage_checkPrivacy(): Promise<void> {
+  public async checkPrivacy(): Promise<void> {
     const websites = chrome.privacy.websites as any;
 
     const privacySettings = {
@@ -32,7 +41,7 @@ export class CookiesWorker {
     this.eventEmitter.emit(moduleEvents.PRIVACY_SETTINGS, privacySettings);
   }
 
-  public async _onMessage_recordCookies(data: RequestData): Promise<void> {
+  public async recordCookies(data: RequestData): Promise<void> {
     const { url, pageTitle } = data;
     const cookies = await chrome.cookies.getAll({ url: url });
 

@@ -58,7 +58,6 @@ class Popup {
   private init(): void {
     this.initListeners();
     this.initView();
-    this.initSurveys();
   }
 
   private initListeners(): void {
@@ -138,8 +137,8 @@ class Popup {
     }
 
     await chrome.storage.local.set({ identifier });
-    this.showStudyExtensionContainer(identifier);
-    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+    await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.successRegister' });
+    setTimeout(() => this.showStudyExtensionContainer(identifier), 100);
   }
 
   private validateInput(inputValue: string): boolean {
@@ -200,6 +199,7 @@ class Popup {
   private async showStudyExtensionContainer(identifier: IdentifierItem): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
+    this.initSurveys();
     this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
     this.fullIdentifier = identifier.uid;
 
