@@ -11,19 +11,19 @@ export class AmazonStrategy extends BaseStrategy {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]');
-
-    if (!boxes) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
+    const boxes = await this.waitForElements<HTMLInputElement>('[name="optout"]', true);
 
     this.addBlurEffect();
 
     let specifiedBox;
 
     if (value) {
-      specifiedBox = Array.from(boxes).find((box) => box.value === '0');
+      specifiedBox = Array.from(boxes!).find((box) => box.value === '0');
     } else {
-      specifiedBox = Array.from(boxes).find((box) => box.value === '1');
+      specifiedBox = Array.from(boxes!).find((box) => box.value === '1');
     }
+
+    if (!specifiedBox) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
     if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue: value, initialValue: !value });
 

@@ -69,7 +69,7 @@ export abstract class BaseStrategy implements IStrategy {
     document.documentElement.appendChild(overlay);
   }
 
-  protected async waitForElements<T extends Element = HTMLElement>(selector: string): Promise<NodeListOf<T> | null> {
+  protected async waitForElements<T extends Element = HTMLElement>(selector: string, isNeedToDisabledTimeout?: boolean): Promise<NodeListOf<T> | null> {
     return new Promise((resolve) => {
       const elements = document.querySelectorAll(selector) as NodeListOf<T>;
 
@@ -88,7 +88,7 @@ export abstract class BaseStrategy implements IStrategy {
 
       observer.observe(document.body, { childList: true, subtree: true });
 
-      setTimeout(() => {
+      !isNeedToDisabledTimeout && setTimeout(() => {
         observer.disconnect();
         resolve(null);
       }, 5000);
