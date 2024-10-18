@@ -194,7 +194,7 @@ export class AdPersonalizationWorker {
             if (tabId === createdTabId && changeInfo.status === 'complete') {
               chrome.tabs.sendMessage(
                 createdTabId,
-                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value } }
+                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value, url } }
               );
             }
           });

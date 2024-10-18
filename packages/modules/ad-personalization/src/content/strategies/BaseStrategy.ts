@@ -1,6 +1,6 @@
 export interface IStrategy {
   strategyKey: string;
-  execute(value: boolean): Promise<void>;
+  execute(value: boolean, url?: string): Promise<void>;
 }
 
 interface ResponseItem {
