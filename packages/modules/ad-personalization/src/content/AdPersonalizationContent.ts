@@ -3,6 +3,7 @@ import { StrategyFactory } from './StrategyFactory';
 type handleData = {
   key: string;
   value: boolean;
+  url?: string;
 }
 export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
@@ -25,6 +26,6 @@ export class AdPersonalizationContent {
   private handleKey(data: handleData): void {
     const strategy = this.strategyFactory.getStrategy(data.key);
 
-    if (strategy) strategy.execute(data.value);
+    if (strategy) strategy.execute(data.value, data.url);
   }
 }
