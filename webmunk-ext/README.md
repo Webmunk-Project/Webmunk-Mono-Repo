@@ -42,8 +42,8 @@ The extension utilizes an event-based system to manage interactions between diff
 Description: Sent to the ad-personalization module when checking the personalization settings for a specific ad URL.
   Data: { url: string, key: string }
 
-2. cookiesAppMgr.checkPrivacy:
-Description: Sent to check the privacy settings related to cookies.
+2. webmunkExt.popup.successRegister:
+Description: Sent to check the privacy settings related to cookies and survey downloads on the main worker.
 
 # Storage Keys
 The module uses the following keys for storing data in chrome.storage.local:

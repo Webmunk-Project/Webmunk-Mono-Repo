@@ -1,21 +1,8 @@
 [
   {
-    "key": "facebookAudienceAds",
-    "name": "Facebook Audience-based advertising",
-    "url": [
-      "https://www.facebook.com/adpreferences/ad_settings/?section=audience_based_advertising&entry_product=accounts_center",
-      "https://accountscenter.facebook.com/ad_preferences/ad_settings/audience_based_advertising"
-    ]
-  },
-  {
     "key": "facebookActivityData",
     "name": "Facebook Activity Information/Instagram",
     "url": ["https://accountscenter.facebook.com/ad_preferences/ad_settings/data_from_partners"]
-  },
-  {
-    "key": "facebookCategories",
-    "name": "Facebook Categories",
-    "url": ["https://www.facebook.com/adpreferences/ad_settings/?section=profile_information&entry_product=accounts_center"]
   },
   {
     "key": "googleYouTubeAds",

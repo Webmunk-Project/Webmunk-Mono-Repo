@@ -7,7 +7,10 @@ interface Message {
 
 interface MessageResponse {
   response: {
-    value: boolean;
+    values: {
+      currentValue: boolean;
+      initialValue: boolean;
+    };
     error?: string;
   };
   tabId: number;
@@ -57,7 +60,7 @@ export class AdPersonalizationWorker {
         await this.addWorkingUrl(key, url);
         await this.removeFromInvalidItems(key);
 
-        this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, value: response.value });
+        this.eventEmitter.emit(moduleEvents.AD_PERSONALIZATION, { key, url, values: response.values });
 
         await chrome.tabs.remove(tabId);
 
@@ -161,7 +164,16 @@ export class AdPersonalizationWorker {
     }
   }
 
+  private async getConfig(key: string): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
+    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
+
+    return specifiedItem[key] ?? false;
+  }
+
   private async send(key: string, url: string): Promise<MessageResponse> {
+    const value = await this.getConfig(key);
+
     return new Promise((resolve, reject) => {
       let createdTabId: number | null = null;
 
@@ -182,7 +194,7 @@ export class AdPersonalizationWorker {
             if (tabId === createdTabId && changeInfo.status === 'complete') {
               chrome.tabs.sendMessage(
                 createdTabId,
-                { action: 'adsPersonalization.strategies.settingsRequest', key }
+                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value, url } }
               );
             }
           });

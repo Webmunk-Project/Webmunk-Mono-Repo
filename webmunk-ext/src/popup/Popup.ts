@@ -1,4 +1,3 @@
-import { ENROLL_URL } from '../config';
 import { Notification } from './Notification';
 
 interface AdPersonalizationItem {
@@ -10,6 +9,11 @@ interface AdPersonalizationItem {
 interface SurveyItem {
   name: string;
   url: string;
+}
+
+interface IdentifierItem {
+  prolificId: string;
+  uid: string;
 }
 
 class Popup {
@@ -54,7 +58,6 @@ class Popup {
   private init(): void {
     this.initListeners();
     this.initView();
-    this.initSurveys();
   }
 
   private initListeners(): void {
@@ -125,7 +128,7 @@ class Popup {
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier = await this.getIdentifier(inputValue);
+    const identifier: IdentifierItem = await this.login(inputValue);
 
     if (!identifier) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
@@ -134,8 +137,8 @@ class Popup {
     }
 
     await chrome.storage.local.set({ identifier });
-    this.showStudyExtensionContainer(identifier);
-    chrome.runtime.sendMessage({ action: 'cookiesAppMgr.checkPrivacy' });
+    await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.successRegister' });
+    setTimeout(() => this.showStudyExtensionContainer(identifier), 100);
   }
 
   private validateInput(inputValue: string): boolean {
@@ -158,29 +161,51 @@ class Popup {
     return true;
   }
 
-  private async getIdentifier(email: string): Promise<string | null> {
-    try {
-      const response = await fetch(ENROLL_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: email })
-      });
+  private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
+    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
+    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
 
-      const data = await response.json();
-      return data.userId;
-    } catch (e) {
-      this.notification.error('Error occurred while fetching identifier');
-      return null;
-    }
+    return !Object.keys(specifiedItem).length;
   }
 
-  private showStudyExtensionContainer(identifier: string): void {
+  private makeAdPersonalizationButtonDisabled(): void {
+    this.adPersonalizationButton.disabled = true;
+    this.adPersonalizationButton.classList.add('not-disabled');
+
+    const tooltipText = document.createElement('span');
+    tooltipText.classList.add('tooltiptext');
+    tooltipText.classList.add('tooltip--correction');
+    tooltipText.textContent = 'You have to complete qualtrics survey';
+
+    this.adPersonalizationButton.appendChild(tooltipText);
+  }
+
+  private async login(username: string): Promise<IdentifierItem> {
+    return new Promise((resolve) => {
+      const messageHandler = (response: any) => {
+        if (response.action === 'webmunkExt.popup.loginRes') {
+          resolve(response.data);
+          chrome.runtime.onMessage.removeListener(messageHandler);
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(messageHandler);
+
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginReq', username });
+    });
+   }
+
+
+  private async showStudyExtensionContainer(identifier: IdentifierItem): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
-    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier);
-    this.fullIdentifier = identifier;
+    this.initSurveys();
+    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
+    this.fullIdentifier = identifier.uid;
+
+    const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
+
+    if (isNeedToDisabled) this.makeAdPersonalizationButtonDisabled();
   }
 
   private showGetStartedContainer(): void {

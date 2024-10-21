@@ -4,18 +4,32 @@ import { ErrorMessages } from '../../ErrorMessages';
 export class FacebookCategoriesStrategy extends BaseStrategy {
   public strategyKey = 'facebookCategories';
 
-  async execute() {
+  async execute(value: boolean) {
     const checkboxes = await this.waitForElements('input[type="checkbox"]');
 
-    if (!checkboxes) this.sendResponseToWorker(false, ErrorMessages.INVALID_URL);
+    if (!checkboxes) {
+      return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
+    }
 
     this.addBlurEffect();
 
-    checkboxes?.forEach((box) => {
-      if (box.getAttribute('aria-checked') === 'false') return;
+    let hasClicked = false;
+
+    checkboxes.forEach((box) => {
+      const isChecked = box.getAttribute('aria-checked') === 'true';
+
+      if (value) {
+        if (isChecked) return;
+      } else {
+        if (!isChecked) return;
+      }
+
       box.click();
+      hasClicked = true;
     });
 
-    this.sendResponseToWorker(true);
+    const initialValue = hasClicked ? !value : value;
+
+    this.sendResponseToWorker({ currentValue: value, initialValue });
   }
 }

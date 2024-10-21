@@ -11,7 +11,7 @@ export class CookiesContent {
     }
 
     chrome.runtime.sendMessage({
-      action: 'cookiesAppMgr.recordCookies',
+      action: 'cookies.recordCookies',
       data: {
         pageTitle: document.title,
         url: url
