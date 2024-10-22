@@ -29,7 +29,7 @@ enum events {
 
 export class Worker {
   private surveys: Survey[] = [];
-  private completedSurveys: string[] = [];
+  private completedSurveys: Survey[] = [];
   private rudderStack: RudderStack;
   private firebaseApp: any;
 
@@ -45,6 +45,8 @@ export class Worker {
     messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
+
+    await this.initSurveysWhenIdentifierExist();
   }
 
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
@@ -53,6 +55,14 @@ export class Worker {
     } else if (request.action === 'webmunkExt.popup.successRegister') {
       await this.initSurveys();
     }
+  }
+
+  private async initSurveysWhenIdentifierExist(): Promise<void> {
+    const { identifier } = await chrome.storage.local.get('identifier');
+
+    if (!identifier) return;
+
+    await this.initSurveys();
   }
 
   private async handleLogin(username: string): Promise<any> {
@@ -92,7 +102,7 @@ export class Worker {
     }));
 
     newSurveys.forEach((survey) => {
-      if (!this.surveys.some((existingSurvey) => existingSurvey.url === survey.url) && !this.completedSurveys.includes(survey.url)) {
+      if (!this.surveys.some((existingSurvey) => existingSurvey.url === survey.url) && !this.completedSurveys.some((completedSurvey) => completedSurvey.url === survey.url)) {
         this.surveys.push(survey);
       }
     });
@@ -135,11 +145,11 @@ export class Worker {
 
       await chrome.tabs.remove(tab.openerTabId!);
 
-      if (this.completedSurveys.includes(openerTabUrl)) {
-        return;
-      }
+      if (this.completedSurveys.some((completedSurvey) => completedSurvey.url === openerTabUrl)) return;
 
-      this.completedSurveys.push(openerTabUrl);
+      const completedSurvey = this.surveys.find((survey) => survey.url === openerTabUrl);
+      if (completedSurvey) this.completedSurveys.push(completedSurvey);
+
       this.surveys = this.surveys.filter((survey) => survey.url !== openerTabUrl);
 
       await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
