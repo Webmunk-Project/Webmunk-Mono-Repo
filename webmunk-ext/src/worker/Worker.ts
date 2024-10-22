@@ -46,7 +46,7 @@ export class Worker {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
 
-    await this.initSurveysWhenIdentifierExist();
+    await this.initSurveysIfIdentifierExists();
   }
 
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
@@ -57,7 +57,7 @@ export class Worker {
     }
   }
 
-  private async initSurveysWhenIdentifierExist(): Promise<void> {
+  private async initSurveysIfIdentifierExists(): Promise<void> {
     const { identifier } = await chrome.storage.local.get('identifier');
 
     if (!identifier) return;
