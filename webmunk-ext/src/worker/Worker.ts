@@ -7,6 +7,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { RudderStack } from './Rudderstack';
 import { WEBMUNK_URL } from '../config';
 import { FIREBASE_CONFIG } from '../config';
+import { SurveyChecker } from './SurveyChecker';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -31,11 +32,13 @@ export class Worker {
   private surveys: Survey[] = [];
   private completedSurveys: Survey[] = [];
   private rudderStack: RudderStack;
+  private surveyChecker: SurveyChecker;
   private firebaseApp: any;
 
   constructor() {
     this.firebaseApp = initializeApp(FIREBASE_CONFIG);
     this.rudderStack = new RudderStack();
+    this.surveyChecker = new SurveyChecker(168);
   }
 
   public async initialize(): Promise<void> {
@@ -81,6 +84,7 @@ export class Worker {
   }
 
   private async onModuleEvent(event: string, data: any): Promise<void> {
+    await this.surveyChecker.send();
     await this.rudderStack.track(event, data);
   }
 
