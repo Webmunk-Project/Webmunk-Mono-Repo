@@ -58,7 +58,7 @@ export class SurveyChecker {
 
     return new Promise((resolve, reject) => {
       const messageListener = (message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
-        if (message.action === 'webmunkExt.surveyChecker.removeModalResponse') {
+        if (message.action === 'webmunkExt.surveyChecker.removeExtensionNotificationResponse') {
           chrome.runtime.onMessage.removeListener(messageListener);
           chrome.tabs.onRemoved.removeListener(tabCloseListener);
         }
@@ -76,7 +76,7 @@ export class SurveyChecker {
 
       chrome.tabs.sendMessage(
         tabId,
-        { action: 'webmunkExt.surveyChecker.removeModalRequest' },
+        { action: 'webmunkExt.surveyChecker.removeExtensionNotificationRequest' },
         { frameId: 0 }
       );
     });

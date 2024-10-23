@@ -4,12 +4,12 @@ export class SurveyChecker {
   }
 
   private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
-    if (message.action === 'webmunkExt.surveyChecker.removeModalRequest') {
-      this.showRemoveModal();
+    if (message.action === 'webmunkExt.surveyChecker.removeExtensionNotificationRequest') {
+      this.showNotification();
     }
   }
 
-  private showRemoveModal(): void {
+  private showNotification(): void {
     const styles = document.createElement('style');
     styles.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
@@ -120,7 +120,7 @@ export class SurveyChecker {
 
   private sendResponseToService(): void {
     chrome.runtime.sendMessage({
-      action: 'webmunkExt.surveyChecker.removeModalResponse',
+      action: 'webmunkExt.surveyChecker.removeExtensionNotificationResponse',
     });
   }
 }
