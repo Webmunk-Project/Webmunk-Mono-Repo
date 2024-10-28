@@ -102,7 +102,7 @@ export class NotificationService {
           </path>
         </svg>
       </div>
-      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3; text-align: center;">${text}</p>
+      <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3; text-align: center;">${text}</p>
     `;
 
     notificationContainer.innerHTML = notificationContent;

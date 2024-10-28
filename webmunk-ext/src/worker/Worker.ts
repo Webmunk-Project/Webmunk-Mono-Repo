@@ -78,10 +78,10 @@ export class Worker {
     const { personalizationTime } = await chrome.storage.local.get('personalizationTime');
     if (!personalizationTime) return;
 
-    const twoDaysInMilliSeconds: number = +DELAY_BETWEEN_AD_PERSONALIZATION;
+    const delayBetweenAdPersonalization = +DELAY_BETWEEN_AD_PERSONALIZATION;
     const currentDate = Date.now();
 
-    if (currentDate < twoDaysInMilliSeconds + personalizationTime) return;
+    if (currentDate < delayBetweenAdPersonalization + personalizationTime) return;
 
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
@@ -106,9 +106,9 @@ export class Worker {
 
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
-    const tenMinutesInMilliSeconds = +DELAY_BETWEEN_SURVEY;
+    const delayBetweenRemoveNotification = +DELAY_BETWEEN_SURVEY;
 
-    if (currentDate - removeModalShowed < tenMinutesInMilliSeconds) return;
+    if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 
     await chrome.storage.local.set({ removeModalShowed: currentDate });
     await this.notificationService.showNotification(NotificationText.REMOVE);
