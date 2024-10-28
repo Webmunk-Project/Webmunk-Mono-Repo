@@ -1,15 +1,5 @@
 import { Notification } from './Notification';
-
-interface AdPersonalizationItem {
-  key: string;
-  name: string;
-  url: string;
-}
-
-interface SurveyItem {
-  name: string;
-  url: string;
-}
+import { AdPersonalizationItem, SurveyItem } from '../types';
 
 interface IdentifierItem {
   prolificId: string;
@@ -23,13 +13,9 @@ class Popup {
   private authInputLabel: HTMLElement;
   private getStartedContainer: HTMLElement;
   private studyExtensionContainer: HTMLElement;
-  private adPersonalizationContainer: HTMLElement;
   private copyButton: HTMLButtonElement;
   private adPersonalizationButton: HTMLButtonElement;
   private formattedIdentifier: HTMLElement;
-  private closeAdPersonalizationButton: HTMLButtonElement;
-  private adPersonalizationList: HTMLElement;
-  private checkAdPersonalizationButton: HTMLButtonElement;
   private fullIdentifier: string;
   private notification: Notification;
   private isEmailMode: boolean;
@@ -41,13 +27,9 @@ class Popup {
     this.authInputLabel = document.getElementById('authInputLabel') as HTMLElement;
     this.getStartedContainer = document.getElementById('getStartedContainer') as HTMLElement;
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer') as HTMLElement;
-    this.adPersonalizationContainer = document.getElementById('adPersonalizationContainer') as HTMLElement;
     this.copyButton = document.getElementById('copyButton') as HTMLButtonElement;
     this.adPersonalizationButton = document.getElementById('ad-personalization-button') as HTMLButtonElement;
     this.formattedIdentifier = document.getElementById('formattedIdentifier') as HTMLElement;
-    this.closeAdPersonalizationButton = document.getElementById('close-ad-personalization-button') as HTMLButtonElement;
-    this.adPersonalizationList = document.getElementById('adPersonalizationListContainer') as HTMLButtonElement;
-    this.checkAdPersonalizationButton = document.getElementById('check-ad-personalization-button') as HTMLButtonElement;
     this.fullIdentifier = '';
     this.notification = new Notification();
     this.isEmailMode = false;
@@ -63,17 +45,8 @@ class Popup {
   private initListeners(): void {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
-    this.adPersonalizationButton.addEventListener('click', () => this.showAdPersonalizationContainer());
-    this.closeAdPersonalizationButton.addEventListener('click', () => this.closeAdPersonalization());
-    this.checkAdPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
-    this.adPersonalizationList.addEventListener('click', (event) => this.handleAdPersonalizationClick(event));
+    this.adPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
     this.toggleInput.addEventListener('change', () => this.toggleInputMode());
-  }
-
-  private closeAdPersonalization(): void {
-    this.adPersonalizationList.innerHTML = '';
-    this.adPersonalizationContainer.style.display = 'none';
-    this.studyExtensionContainer.style.display = 'block';
   }
 
   private toggleInputMode() {
@@ -90,33 +63,15 @@ class Popup {
     }
   }
 
-  private async showAdPersonalizationContainer() {
-    this.studyExtensionContainer.style.display = 'none';
-    this.adPersonalizationContainer.style.display = 'block';
-
-    const adPersonalizationContent = await this.initAdPersonalization();
-    adPersonalizationContent.classList.add('list');
-
-    this.adPersonalizationList.appendChild(adPersonalizationContent);
-  }
-
   private async checkAdPersonalization(): Promise<void> {
-    const listItems = Array.from(this.adPersonalizationList.querySelectorAll('li a'));
+    const listItems: AdPersonalizationItem [] = await this.initAdPersonalization();
 
     for (const link of listItems) {
-      const anchorElement = link as HTMLAnchorElement;
-      const key = anchorElement.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq',  key });
+      const key = link.key;
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { key, isNeedToLogin: true } });
     }
-  }
 
-  private handleAdPersonalizationClick(event: Event): void {
-    const target = (event.target as HTMLElement).closest('a');
-
-    if (target) {
-      const key = target.getAttribute('key');
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', key });
-    }
+    await chrome.storage.local.set({ personalizationTime: Date.now() });
   }
 
   private async onContinueButtonClick() {
@@ -161,23 +116,21 @@ class Popup {
     return true;
   }
 
-  private async isNeedToDisabledAdPersonalizationButton(): Promise<boolean> {
-    const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
-    const specifiedItem = specifiedItemResult.personalizationConfigs || {};
+  private async isNeedToEnabledAdPersonalizationButton(): Promise<boolean> {
+    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
+    const completedSurveys = completedSurveysResult.completedSurveys || [];
 
-    return !Object.keys(specifiedItem).length;
+    const adPersonalization = await this.initAdPersonalization();
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || [];
+
+    if (completedSurveys.length && checkedAdPersonalization.length < adPersonalization.length) return true;
+
+    return false;
   }
 
-  private makeAdPersonalizationButtonDisabled(): void {
-    this.adPersonalizationButton.disabled = true;
-    this.adPersonalizationButton.classList.add('not-disabled');
-
-    const tooltipText = document.createElement('span');
-    tooltipText.classList.add('tooltiptext');
-    tooltipText.classList.add('tooltip--correction');
-    tooltipText.textContent = 'You have to complete qualtrics survey';
-
-    this.adPersonalizationButton.appendChild(tooltipText);
+  private makeAdPersonalizationButtonEnabled(): void {
+    this.adPersonalizationButton.style.display = 'block';
   }
 
   private async login(username: string): Promise<IdentifierItem> {
@@ -203,9 +156,9 @@ class Popup {
     this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
     this.fullIdentifier = identifier.uid;
 
-    const isNeedToDisabled = await this.isNeedToDisabledAdPersonalizationButton();
+    const isNeedToEnabled = await this.isNeedToEnabledAdPersonalizationButton();
 
-    if (isNeedToDisabled) this.makeAdPersonalizationButtonDisabled();
+    if (isNeedToEnabled) this.makeAdPersonalizationButtonEnabled();
   }
 
   private showGetStartedContainer(): void {
@@ -227,49 +180,11 @@ class Popup {
     identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
   }
 
-  private async initAdPersonalization(): Promise<HTMLUListElement> {
+  private async initAdPersonalization(): Promise<AdPersonalizationItem[]> {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
-    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
-    const invalidItemsResult = await chrome.storage.local.get('adPersonalization.invalidItems');
-
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
-    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
-    const invalidItems = invalidItemsResult['adPersonalization.invalidItems'] || [];
 
-    const settingsList = document.createElement('ul');
-
-    adPersonalization.forEach((list) => {
-      const listItem = document.createElement('li');
-      const link = document.createElement('a');
-      link.textContent = list.name;
-      link.setAttribute('key', list.key);
-      listItem.appendChild(link);
-
-      const invalidItem = invalidItems.find((item: { key: string, error: string }) => item.key === list.key);
-      if (invalidItem) {
-        const invalidMark = document.createElement('span');
-        invalidMark.classList.add('tooltip');
-        invalidMark.textContent = '⚠️';
-        invalidMark.style.marginLeft = '8px';
-
-        const tooltipText = document.createElement('span');
-        tooltipText.classList.add('tooltiptext');
-
-        tooltipText.textContent = invalidItem.error;
-
-        invalidMark.appendChild(tooltipText);
-        listItem.appendChild(invalidMark);
-      } else if (checkedAdPersonalization[list.key]) {
-        const checkmark = document.createElement('span');
-        checkmark.textContent = '✅';
-        checkmark.style.marginLeft = '8px';
-        listItem.appendChild(checkmark);
-      }
-
-      settingsList.appendChild(listItem);
-    });
-
-    return settingsList;
+    return adPersonalization;
   }
 
   private async initSurveys(): Promise<void> {

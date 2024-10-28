@@ -1,9 +1,14 @@
+import { PersonalizationData } from '../../types';
 import { BaseStrategy } from './BaseStrategy';
 
 export class GoogleAndYoutubeStrategy extends BaseStrategy {
   public strategyKey = 'googleYouTubeAds';
 
-  async execute(value: boolean) {
+  async execute(data: PersonalizationData) {
+    const { value, url, isNeedToLogin } = data;
+
+    if (!window.location.href.startsWith(url!) && !isNeedToLogin) return this.sendResponseToWorker(null);
+
     if (value) {
       const offButton = document.querySelector('[aria-label="Turn off"]');
       if (offButton) {

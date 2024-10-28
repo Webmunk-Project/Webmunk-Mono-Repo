@@ -2,7 +2,12 @@ import config from '../data/config.json';
 
 interface Message {
   action: string;
+  data: DataMessage;
+}
+
+interface DataMessage {
   key: string;
+  isNeedToLogin?: boolean;
 }
 
 interface MessageResponse {
@@ -36,17 +41,18 @@ export class AdPersonalizationWorker {
 
   private async onPopupMessage(request: Message, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.checkSettingsReq') {
-      await this.handleCheckSettingsRequest(request.key);
+      await this.handleCheckSettingsRequest(request.data);
     }
   }
 
-  private async handleCheckSettingsRequest(key: string) {
+  private async handleCheckSettingsRequest(data: DataMessage) {
+    const { key, isNeedToLogin } = data;
     let url = await this.getAccordantUrl(key);
     let hasError = false;
     let lastError: string | undefined = undefined;
 
     while (url) {
-      const { response, tabId } = await this.send(key, url);
+      const { response, tabId } = await this.send(key, url, isNeedToLogin);
 
       if (response.error) {
         await this.removeWorkingUrl(key);
@@ -171,7 +177,7 @@ export class AdPersonalizationWorker {
     return specifiedItem[key] ?? false;
   }
 
-  private async send(key: string, url: string): Promise<MessageResponse> {
+  private async send(key: string, url: string, isNeedToLogin?: boolean): Promise<MessageResponse> {
     const value = await this.getConfig(key);
 
     return new Promise((resolve, reject) => {
@@ -194,7 +200,7 @@ export class AdPersonalizationWorker {
             if (tabId === createdTabId && changeInfo.status === 'complete') {
               chrome.tabs.sendMessage(
                 createdTabId,
-                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value, url } }
+                { action: 'adsPersonalization.strategies.settingsRequest', data: { key, value, url, isNeedToLogin } }
               );
             }
           });

@@ -1,12 +1,15 @@
 import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
+import { PersonalizationData } from '../../types';
 
 export class FacebookAudienceAdStrategy extends BaseStrategy {
   public strategyKey = 'facebookAudienceAds';
   private blurApplied = false;
   private isUrlChecked = false;
 
-  async execute(value: boolean) {
+  async execute(data: PersonalizationData) {
+    const { value } = data;
+
     const processElement = async (el: HTMLElement, isFirstElement: boolean) => {
       if (el) {
         el.click();

@@ -1,10 +1,15 @@
+import { PersonalizationData } from '../../types';
 import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
 
 export class FacebookActivityStrategy extends BaseStrategy {
   public strategyKey = 'facebookActivityData';
 
-  async execute(value: boolean, url?: string) {
+  async execute(data: PersonalizationData) {
+    const { value, url, isNeedToLogin } = data;
+
+    if (!window.location.href.startsWith(url!) && !isNeedToLogin) return this.sendResponseToWorker(null);
+
     if (!window.location.href.startsWith('https://www.facebook.com/login') && !window.location.href.startsWith(url!)) {
       if (window.document.title !== 'Facebook - log in or sign up') {
         window.location.href = url!;

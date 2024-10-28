@@ -1,10 +1,13 @@
 import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
+import { PersonalizationData } from '../../types';
 
 export class FacebookCategoriesStrategy extends BaseStrategy {
   public strategyKey = 'facebookCategories';
 
-  async execute(value: boolean) {
+  async execute(data: PersonalizationData) {
+    const { value } = data;
+
     const checkboxes = await this.waitForElements('input[type="checkbox"]');
 
     if (!checkboxes) {

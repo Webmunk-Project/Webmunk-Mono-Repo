@@ -3,5 +3,5 @@ import "@webmunk/extension-ads/content";
 import "@webmunk/cookies-scraper/content";
 import "@webmunk/ad-personalization/content";
 
-import { SurveyChecker } from './SurveyChecker';
-new SurveyChecker();
+import { NotificationService } from './NotificationService';
+new NotificationService();
