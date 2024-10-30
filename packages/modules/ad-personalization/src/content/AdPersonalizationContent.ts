@@ -1,10 +1,6 @@
 import { StrategyFactory } from './StrategyFactory';
+import { PersonalizationData } from '../types';
 
-type handleData = {
-  key: string;
-  value: boolean;
-  url?: string;
-}
 export class AdPersonalizationContent {
   private strategyFactory: StrategyFactory;
 
@@ -23,9 +19,9 @@ export class AdPersonalizationContent {
     }
   };
 
-  private handleKey(data: handleData): void {
+  private handleKey(data: PersonalizationData): void {
     const strategy = this.strategyFactory.getStrategy(data.key);
 
-    if (strategy) strategy.execute(data.value, data.url);
+    if (strategy) strategy.execute(data);
   }
 }

@@ -1,6 +1,8 @@
+import { PersonalizationData } from '../../types';
+
 export interface IStrategy {
   strategyKey: string;
-  execute(value: boolean, url?: string): Promise<void>;
+  execute(data: PersonalizationData): Promise<void>;
 }
 
 interface ResponseItem {
@@ -10,7 +12,7 @@ interface ResponseItem {
 
 export abstract class BaseStrategy implements IStrategy {
   abstract strategyKey: string;
-  abstract execute(value: boolean): Promise<void>;
+  abstract execute(data: PersonalizationData): Promise<void>;
 
   protected addBlurEffect(): void {
     document.body.style.filter = 'blur(20px)';

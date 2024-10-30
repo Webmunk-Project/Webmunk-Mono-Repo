@@ -7,38 +7,35 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { RudderStack } from './Rudderstack';
 import { WEBMUNK_URL } from '../config';
 import { FIREBASE_CONFIG } from '../config';
-import { SurveyChecker } from './SurveyChecker';
+import { NotificationService } from './NotificationService';
+import { AdPersonalizationItem, SurveyItem } from '../types';
+import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
 import "@webmunk/cookies-scraper/worker";
 import "@webmunk/ad-personalization/worker";
 
-interface Survey {
-  name: string;
-  url: string;
-};
-
-interface SurveyData {
-  name: string;
-  url: string;
-};
-
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
 }
 
+enum NotificationText {
+  FILL_OUT = 'You have to fill out the survey. Go to the extension',
+  REMOVE = 'Please uninstall the Webmunk extension!'
+}
+
 export class Worker {
-  private surveys: Survey[] = [];
-  private completedSurveys: Survey[] = [];
+  private surveys: SurveyItem[] = [];
+  private completedSurveys: SurveyItem[] = [];
   private rudderStack: RudderStack;
-  private surveyChecker: SurveyChecker;
+  private notificationService: NotificationService;
   private firebaseApp: any;
 
   constructor() {
     this.firebaseApp = initializeApp(FIREBASE_CONFIG);
     this.rudderStack = new RudderStack();
-    this.surveyChecker = new SurveyChecker(168);
+    this.notificationService = new NotificationService();
   }
 
   public async initialize(): Promise<void> {
@@ -49,23 +46,94 @@ export class Worker {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
 
-    await this.initSurveysIfIdentifierExists();
+    await this.initSurveysIfNeeded();
   }
 
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.loginReq') {
       await this.handleLogin(request.username);
     } else if (request.action === 'webmunkExt.popup.successRegister') {
-      await this.initSurveys();
+      await this.startWeekTiming();
     }
   }
 
-  private async initSurveysIfIdentifierExists(): Promise<void> {
+  private async initSurveysIfNeeded(): Promise<void> {
     const { identifier } = await chrome.storage.local.get('identifier');
-
     if (!identifier) return;
 
+    const isWeekPassed = await this.isWeekPassed();
+    if (!isWeekPassed) return;
+
+    const initialSurveyCount = this.surveys.length;
+
     await this.initSurveys();
+
+    if (this.surveys.length > initialSurveyCount) {
+      await this.startWeekTiming();
+      await this.notificationService.showNotification(NotificationText.FILL_OUT);
+    }
+  }
+
+  private async checkPersonalizationIfNeeded(): Promise<void> {
+    const { personalizationTime } = await chrome.storage.local.get('personalizationTime');
+    if (!personalizationTime) return;
+
+    const delayBetweenAdPersonalization = +DELAY_BETWEEN_AD_PERSONALIZATION;
+    const currentDate = Date.now();
+
+    if (currentDate < delayBetweenAdPersonalization + personalizationTime) return;
+
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
+    const tabId = await this.notificationService.getTabId();
+
+    adPersonalization.forEach((item) => {
+      chrome.tabs.sendMessage(
+        tabId,
+        { action: 'webmunkExt.worker.notifyAdPersonalization',  data: { key: item.key }},
+        { frameId: 0 }
+      );
+    });
+
+    await chrome.storage.local.set({ personalizationTime: currentDate });
+  }
+
+  private async removeExtensionIfNeeded(): Promise<void> {
+    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
+    const completedSurveys = completedSurveysResult.completedSurveys || [];
+
+    if (completedSurveys.length !== 2) return;
+
+    const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
+    const currentDate = Date.now();
+    const delayBetweenRemoveNotification = +DELAY_BETWEEN_SURVEY;
+
+    if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
+
+    await chrome.storage.local.set({ removeModalShowed: currentDate });
+    await this.notificationService.showNotification(NotificationText.REMOVE);
+  }
+
+  private async middleware(): Promise<void> {
+    await this.checkPersonalizationIfNeeded();
+    await this.initSurveysIfNeeded();
+    await this.removeExtensionIfNeeded();
+  }
+
+  private async startWeekTiming(): Promise<void> {
+    const currentDate = Date.now();
+    const delayBetweenSurvey = +DELAY_BETWEEN_SURVEY;
+
+    const endTime = currentDate + delayBetweenSurvey;
+
+    await chrome.storage.local.set({ weekEndTime: endTime });
+  }
+
+  private async isWeekPassed(): Promise<boolean> {
+    const { weekEndTime } = await chrome.storage.local.get('weekEndTime');
+    const currentTime = Date.now();
+
+    return currentTime >= weekEndTime;
   }
 
   private async handleLogin(username: string): Promise<any> {
@@ -84,7 +152,7 @@ export class Worker {
   }
 
   private async onModuleEvent(event: string, data: any): Promise<void> {
-    await this.surveyChecker.send();
+    await this.middleware();
     await this.rudderStack.track(event, data);
   }
 
@@ -95,21 +163,28 @@ export class Worker {
   }
 
   private async loadSurveys(): Promise<void> {
-    const identifierResponse = await chrome.storage.local.get('identifier');
-    const prolificId = identifierResponse.identifier.prolificId;
+    const { identifier, lastSurveyIndex = -1 } = await chrome.storage.local.get(['identifier', 'lastSurveyIndex']);
+    const prolificId = identifier?.prolificId;
 
     const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
-    const data: SurveyData[] = await response.json();
-    const newSurveys: Survey[] = data.map((item) => ({
-      name: item.name,
-      url: `${item.url}?prolific_id=${prolificId}`
-    }));
+    const data: SurveyItem[] = await response.json();
 
-    newSurveys.forEach((survey) => {
-      if (!this.surveys.some((existingSurvey) => existingSurvey.url === survey.url) && !this.completedSurveys.some((completedSurvey) => completedSurvey.url === survey.url)) {
-        this.surveys.push(survey);
+    const nextSurveyIndex = lastSurveyIndex + 1;
+
+    if (nextSurveyIndex < data.length) {
+      const surveyData = data[nextSurveyIndex];
+      const newSurvey: SurveyItem = {
+        name: surveyData.name,
+        url: `${surveyData.url}?prolific_id=${prolificId}`,
+      };
+
+      if (!this.surveys.some((survey) => survey.url === newSurvey.url) &&
+        !this.completedSurveys.some((survey) => survey.url === newSurvey.url)) {
+        this.surveys.push(newSurvey);
       }
-    });
+
+      await chrome.storage.local.set({ lastSurveyIndex: nextSurveyIndex });
+    }
 
     await chrome.storage.local.set({ surveys: this.surveys });
   }
@@ -159,6 +234,7 @@ export class Worker {
       await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
 
       console.log(`The survey ${openerTabUrl} was completed`);
+      await this.startWeekTiming();
       await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
   }

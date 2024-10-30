@@ -1,12 +1,18 @@
+import { PersonalizationData } from '../../types';
 import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
 
 export class AmazonStrategy extends BaseStrategy {
   public strategyKey = 'amazonAdPrefs';
 
-  async execute(value: boolean) {
+  async execute(data: PersonalizationData) {
+    const { value, isNeedToLogin } = data;
+
     const signInButton = document.querySelector('#a-autoid-0-announce') as HTMLElement;
-    if (signInButton) {
+
+    if (signInButton && !isNeedToLogin) return this.sendResponseToWorker(null);
+
+    if (signInButton && isNeedToLogin) {
       signInButton.click();
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }

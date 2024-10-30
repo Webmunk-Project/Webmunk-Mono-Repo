@@ -1,15 +1,17 @@
-export class SurveyChecker {
+export class NotificationService {
   constructor() {
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
   }
 
   private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
-    if (message.action === 'webmunkExt.surveyChecker.removeExtensionNotificationRequest') {
-      this.showNotification();
+    if (message.action === 'webmunkExt.notificationService.extensionNotificationRequest') {
+      this.showNotification(message.text);
+    } else if (message.action === 'webmunkExt.worker.notifyAdPersonalization') {
+      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: message.data })
     }
   }
 
-  private showNotification(): void {
+  private showNotification(text: string): void {
     const styles = document.createElement('style');
     styles.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
@@ -92,7 +94,7 @@ export class SurveyChecker {
 
     const notificationContent = `
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <p style="font-size: 22px; font-weight: 700; color: black; margin: 0; line-height: 1.3;">Remove the extension</p>
+        <p style="font-size: 22px; font-weight: 700; color: black; margin: 0; line-height: 1.3;">Notification</p>
         <svg id="close-button" class="close-button" height="20px" viewBox="0 0 384 512">
           <path
             d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
@@ -100,8 +102,7 @@ export class SurveyChecker {
           </path>
         </svg>
       </div>
-      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3; text-align: center;">You must complete the Qualtrics survey.</p>
-      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3;">If you don't want to do this, remove the extension!</p>
+      <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3; text-align: center;">${text}</p>
     `;
 
     notificationContainer.innerHTML = notificationContent;
@@ -120,7 +121,7 @@ export class SurveyChecker {
 
   private sendResponseToService(): void {
     chrome.runtime.sendMessage({
-      action: 'webmunkExt.surveyChecker.removeExtensionNotificationResponse',
+      action: 'webmunkExt.notificationService.extensionNotificationResponse',
     });
   }
 }

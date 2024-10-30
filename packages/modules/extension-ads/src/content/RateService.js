@@ -141,7 +141,7 @@ export class RateService {
           </path>
         </svg>
       </div>
-      <p style="font-size: 18px; color: black; font-weight: 400; margin: 0; line-height: 1.3; text-align: center;">How relevant are the ads on the page to you?</p>
+      <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3; text-align: center;">How relevant are the ads on the page to you?</p>
       <div style="display: flex; justify-content: center; flex-direction: row-reverse; align-items: center; margin-top: 5px; height: 30px;">
         <input value="5" id="star5" type="radio">
         <label class="star" for="star5"></label>
