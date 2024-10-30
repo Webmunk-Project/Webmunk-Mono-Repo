@@ -1,19 +1,7 @@
 export class NotificationService {
   constructor() {}
 
-  public async getTabId(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-
-        if (tab && tab.id !== undefined) resolve(tab.id);
-      });
-    });
-  }
-
-  public async showNotification(text: string): Promise<void> {
-    const tabId = await this.getTabId();
-
+  public async showNotification(tabId: number, text: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const messageListener = (message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
         if (message.action === 'webmunkExt.notificationService.extensionNotificationResponse') {
