@@ -64,7 +64,7 @@ export class Worker {
     const isWeekPassed = await this.isWeekPassed();
     if (!isWeekPassed) return;
 
-    const tabId = await this.getTabId();
+    const tabId = await this.getActiveTabId();
     if (!tabId) return;
 
     const initialSurveyCount = this.surveys.length;
@@ -89,7 +89,7 @@ export class Worker {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
 
-    const tabId = await this.getTabId();
+    const tabId = await this.getActiveTabId();
     if (!tabId) return;
 
     adPersonalization.forEach((item) => {
@@ -115,22 +115,23 @@ export class Worker {
 
     if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 
-    const tabId = await this.getTabId();
+    const tabId = await this.getActiveTabId();
     if (!tabId) return;
 
     await chrome.storage.local.set({ removeModalShowed: currentDate });
     await this.notificationService.showNotification(tabId, NotificationText.REMOVE);
   }
 
-  private async getTabId(): Promise<number> {
+  private async getActiveTabId(): Promise<number> {
     return new Promise((resolve, reject) => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
-        if (!tab) return;
 
-        if (tab.url?.startsWith('chrome://')) resolve(0);
-
-        if (tab.id !== undefined) resolve(tab.id!);
+        if (!tab || !tab.id || tab.url?.startsWith('chrome://')) {
+          resolve(0);
+        } else {
+          resolve(tab.id);
+        }
       });
     })
   }
