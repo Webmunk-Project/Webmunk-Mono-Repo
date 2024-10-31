@@ -1,15 +1,15 @@
 // dont remove next line, all webmunk modules use messenger utility
 // @ts-ignore
-import { messenger } from "@webmunk/utils";
-import { initializeApp } from 'firebase/app';
+import { messenger } from '@webmunk/utils';
 import { getAuth, signInAnonymously } from 'firebase/auth/web-extension';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { RudderStack } from './Rudderstack';
 import { WEBMUNK_URL } from '../config';
-import { FIREBASE_CONFIG } from '../config';
 import { NotificationService } from './NotificationService';
 import { AdPersonalizationItem, SurveyItem } from '../types';
 import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
+import { RudderStack } from './Rudderstack';
+import { FirebaseAppService } from './FirebaseAppService';
+import { ConfigService } from './ConfigService';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -25,15 +25,23 @@ enum NotificationText {
   REMOVE = 'Please uninstall the Webmunk extension!'
 }
 
+if (typeof window === "undefined") {
+  // @ts-ignore
+  global.window = self;
+}
+
 export class Worker {
-  private surveys: SurveyItem[] = [];
-  private completedSurveys: SurveyItem[] = [];
+  private firebaseAppService: FirebaseAppService;
+  private configService: ConfigService;
   private rudderStack: RudderStack;
   private notificationService: NotificationService;
-  private firebaseApp: any;
+
+  private surveys: SurveyItem[] = [];
+  private completedSurveys: SurveyItem[] = [];
 
   constructor() {
-    this.firebaseApp = initializeApp(FIREBASE_CONFIG);
+    this.firebaseAppService = new FirebaseAppService();
+    this.configService = new ConfigService(this.firebaseAppService);
     this.rudderStack = new RudderStack();
     this.notificationService = new NotificationService();
   }
@@ -166,13 +174,13 @@ export class Worker {
     const { identifier, lastSurveyIndex = -1 } = await chrome.storage.local.get(['identifier', 'lastSurveyIndex']);
     const prolificId = identifier?.prolificId;
 
-    const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
-    const data: SurveyItem[] = await response.json();
+    const jsonSurveys = await this.configService.getConfigByKey('surveys');
+    const surveys: SurveyItem[] = JSON.parse(jsonSurveys);
 
     const nextSurveyIndex = lastSurveyIndex + 1;
 
-    if (nextSurveyIndex < data.length) {
-      const surveyData = data[nextSurveyIndex];
+    if (nextSurveyIndex < surveys.length) {
+      const surveyData = surveys[nextSurveyIndex];
       const newSurvey: SurveyItem = {
         name: surveyData.name,
         url: `${surveyData.url}?prolific_id=${prolificId}`,
