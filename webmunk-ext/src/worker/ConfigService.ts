@@ -2,6 +2,7 @@ import { FirebaseOptions } from '@firebase/app';
 import { getRemoteConfig, fetchAndActivate, getAll } from 'firebase/remote-config';
 import { FirebaseAppService } from './FirebaseAppService';
 import { FirebaseConfig, convertConfigValuesToPrimitives } from './FirebaseRemoteConfig';
+import { DELAY_BETWEEN_FIREBASE_REQUEST } from '../config';
 
 export type Config = FirebaseConfig & FirebaseOptions;
 
@@ -32,7 +33,7 @@ export class ConfigService {
     const fetchPromise: Promise<void> = new Promise(async (resolve, reject) => {
       try {
         const firebaseConfig = getRemoteConfig(this.firebaseAppService.getFirebaseApp());
-        firebaseConfig.settings.minimumFetchIntervalMillis = 900000;
+        firebaseConfig.settings.minimumFetchIntervalMillis = Number(DELAY_BETWEEN_FIREBASE_REQUEST);
         await fetchAndActivate(firebaseConfig);
 
         this.config = Object.assign(
@@ -44,6 +45,8 @@ export class ConfigService {
       } catch (e: any) {
         this.fetchPromise = null;
         reject(e);
+      } finally {
+        this.fetchPromise = null;
       }
     });
 
@@ -52,6 +55,6 @@ export class ConfigService {
   }
 
   private refreshNeeded() {
-    return this.fetchTimestamp ? (Date.now() - this.fetchTimestamp) > 10000 : true
+    return this.fetchTimestamp ? (Date.now() - this.fetchTimestamp) > Number(DELAY_BETWEEN_FIREBASE_REQUEST) : true
   }
 }
