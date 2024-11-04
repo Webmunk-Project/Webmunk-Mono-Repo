@@ -1,12 +1,10 @@
 // dont remove next line, all webmunk modules use messenger utility
 // @ts-ignore
 import { messenger } from '@webmunk/utils';
-import { getAuth, signInAnonymously } from 'firebase/auth/web-extension';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { NotificationService } from './NotificationService';
-import { AdPersonalizationItem } from '../types';
+import { AdPersonalizationItem, User } from '../types';
 import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
-import { RudderStack } from './Rudderstack';
+import { RudderStackService } from './RudderStackService';
 import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
 import { SurveyService } from './SurveyService';
@@ -23,16 +21,16 @@ if (typeof window === "undefined") {
 }
 
 export class Worker {
-  private firebaseAppService: FirebaseAppService;
-  private configService: ConfigService;
-  private rudderStack: RudderStack;
-  private notificationService: NotificationService;
-  private surveyService: SurveyService;
+  private readonly firebaseAppService: FirebaseAppService;
+  private readonly configService: ConfigService;
+  private readonly rudderStack: RudderStackService;
+  private readonly notificationService: NotificationService;
+  private readonly surveyService: SurveyService;
 
   constructor() {
     this.firebaseAppService = new FirebaseAppService();
     this.configService = new ConfigService(this.firebaseAppService);
-    this.rudderStack = new RudderStack();
+    this.rudderStack = new RudderStackService(this.firebaseAppService);
     this.notificationService = new NotificationService();
     this.surveyService = new SurveyService(this.configService, this.notificationService, this.rudderStack);
   }
@@ -47,9 +45,28 @@ export class Worker {
     await this.surveyService.initSurveysIfExists();
   }
 
+  private async onModuleEvent(event: string, data: any): Promise<void> {
+    await this.middleware();
+    await this.rudderStack.track(event, data);
+  }
+
+  private async middleware(): Promise<void> {
+    const user = await this.firebaseAppService.getUser();
+
+    if (!user) return
+
+    await this.showRemoveExtensionIfNeeded(user);
+
+    if (!user.active) return
+
+    await this.checkPersonalizationIfNeeded();
+    await this.surveyService.initSurveysIfNeeded();
+  }
+
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.loginReq') {
-      await this.handleLogin(request.username);
+      const userData = await this.firebaseAppService.login(request.username);
+      await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginRes', data: userData });
     } else if (request.action === 'webmunkExt.popup.successRegister') {
       await this.surveyService.startWeekTiming();
     }
@@ -81,15 +98,19 @@ export class Worker {
     await chrome.storage.local.set({ personalizationTime: currentDate });
   }
 
-  private async removeExtensionIfNeeded(): Promise<void> {
+  private async showRemoveExtensionIfNeeded(user: User): Promise<void> {
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];
 
-    if (completedSurveys.length !== 2) return;
+    if (completedSurveys.length === 2 || !user.active) {
+      await this.showRemoveExtensionNotification();
+    }
+  }
 
+  private async showRemoveExtensionNotification(): Promise<void> {
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
-    const delayBetweenRemoveNotification = +DELAY_BETWEEN_SURVEY;
+    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_SURVEY);
 
     if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 
@@ -112,31 +133,5 @@ export class Worker {
         }
       });
     })
-  }
-
-  private async middleware(): Promise<void> {
-    await this.checkPersonalizationIfNeeded();
-    await this.surveyService.initSurveysIfNeeded();
-    await this.removeExtensionIfNeeded();
-  }
-
-  private async handleLogin(username: string): Promise<any> {
-    try {
-      const auth = getAuth();
-      const functions = getFunctions();
-
-      await signInAnonymously(auth);
-      const signIn = httpsCallable(functions, 'signIn');
-      const response = await signIn({ prolificId: username });
-
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginRes', data: response.data });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  private async onModuleEvent(event: string, data: any): Promise<void> {
-    await this.middleware();
-    await this.rudderStack.track(event, data);
   }
 }

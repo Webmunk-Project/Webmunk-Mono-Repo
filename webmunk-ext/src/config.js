@@ -13,5 +13,7 @@ export const FIREBASE_CONFIG = {
 export const DELAY_BETWEEN_SURVEY = process.env?.DELAY_BETWEEN_SURVEY;
 // 2 days
 export const DELAY_BETWEEN_AD_PERSONALIZATION = process.env?.DELAY_BETWEEN_AD_PERSONALIZATION;
-// 1 hours
+// 1 hour
 export const REMOTE_CONFIG_FETCH_INTERVAL = process.env?.REMOTE_CONFIG_FETCH_INTERVAL;
+// 1 hour
+export const USER_FETCH_INTERVAL = process.env?.USER_FETCH_INTERVAL || 1000;
