@@ -34,7 +34,7 @@ export class Worker {
     this.configService = new ConfigService(this.firebaseAppService);
     this.rudderStack = new RudderStack();
     this.notificationService = new NotificationService();
-    this.surveyService = new SurveyService(this.configService);
+    this.surveyService = new SurveyService(this.configService, this.notificationService, this.rudderStack);
   }
 
   public async initialize(): Promise<void> {

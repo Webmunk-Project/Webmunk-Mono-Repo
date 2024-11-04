@@ -11,15 +11,14 @@ enum events {
 }
 
 export class SurveyService {
-  private notificationService: NotificationService;
-  private rudderStack: RudderStack;
   private surveys: SurveyItem[] = [];
   private completedSurveys: SurveyItem[] = [];
 
-  constructor(private readonly configService: ConfigService) {
-    this.notificationService = new NotificationService();
-    this.rudderStack = new RudderStack();
-
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
+    private readonly rudderStack: RudderStack
+    ) {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
   }
 
