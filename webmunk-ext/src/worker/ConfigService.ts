@@ -9,16 +9,13 @@ export type Config = FirebaseConfig & FirebaseOptions;
 export class ConfigService {
   private config: Config | null = null;
   private fetchPromise: Promise<void> | null = null;
-  private fetchTimestamp: number | null = null;
 
   constructor(private readonly firebaseAppService: FirebaseAppService) {}
 
   async getConfig(): Promise<Config> {
-    if (this.fetchPromise) {
-      await this.fetchPromise;
-    } else if (!this.config || this.refreshNeeded()) {
-      await this.loadConfig();
-    }
+    if (this.fetchPromise) await this.fetchPromise;
+
+    await this.loadConfig();
 
     return this.config!;
   }
@@ -40,10 +37,9 @@ export class ConfigService {
           convertConfigValuesToPrimitives(getAll(firebaseConfig)),
           this.firebaseAppService.getConfig(),
         );
-        this.fetchTimestamp = Date.now();
+
         resolve();
       } catch (e: any) {
-        this.fetchPromise = null;
         reject(e);
       } finally {
         this.fetchPromise = null;
@@ -52,9 +48,5 @@ export class ConfigService {
 
     this.fetchPromise = fetchPromise;
     return fetchPromise;
-  }
-
-  private refreshNeeded() {
-    return this.fetchTimestamp ? (Date.now() - this.fetchTimestamp) > Number(REMOTE_CONFIG_FETCH_INTERVAL) : true
   }
 }
