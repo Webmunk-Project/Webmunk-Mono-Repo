@@ -1,10 +1,5 @@
 import { Notification } from './Notification';
-import { AdPersonalizationItem, SurveyItem } from '../types';
-
-interface IdentifierItem {
-  prolificId: string;
-  uid: string;
-}
+import { AdPersonalizationItem, SurveyItem, User } from '../types';
 
 class Popup {
   private continueButton: HTMLButtonElement;
@@ -83,17 +78,16 @@ class Popup {
 
     this.setButtonState(true, 'Wait...');
 
-    const identifier: IdentifierItem = await this.login(inputValue);
+    const user: User = await this.login(inputValue);
 
-    if (!identifier) {
+    if (!user) {
       this.notification.warning('Enrollment hiccup!\nPlease give it another shot a bit later. We appreciate your patience!');
       this.setButtonState(false, 'Continue');
       return;
     }
 
-    await chrome.storage.local.set({ identifier });
     await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.successRegister' });
-    setTimeout(() => this.showStudyExtensionContainer(identifier), 100);
+    setTimeout(() => this.showStudyExtensionContainer(user.uid), 100);
   }
 
   private validateInput(inputValue: string): boolean {
@@ -133,7 +127,7 @@ class Popup {
     this.adPersonalizationButton.style.display = 'block';
   }
 
-  private async login(username: string): Promise<IdentifierItem> {
+  private async login(username: string): Promise<User> {
     return new Promise((resolve) => {
       const messageHandler = (response: any) => {
         if (response.action === 'webmunkExt.popup.loginRes') {
@@ -149,12 +143,12 @@ class Popup {
    }
 
 
-  private async showStudyExtensionContainer(identifier: IdentifierItem): Promise<void> {
+  private async showStudyExtensionContainer(uid: string): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
     this.initSurveys();
-    this.formattedIdentifier.innerHTML = this.formatIdentifier(identifier.uid);
-    this.fullIdentifier = identifier.uid;
+    this.formattedIdentifier.innerHTML = this.formatIdentifier(uid);
+    this.fullIdentifier = uid;
 
     const isNeedToEnabled = await this.isNeedToEnabledAdPersonalizationButton();
 
@@ -174,10 +168,10 @@ class Popup {
   }
 
   private async initView(): Promise<void> {
-    const result = await chrome.storage.local.get('identifier');
-    const identifier = result.identifier;
+    const result = await chrome.storage.local.get('user');
+    const user = result.user as User;
 
-    identifier ? this.showStudyExtensionContainer(identifier) : this.showGetStartedContainer();
+    user ? await this.showStudyExtensionContainer(user.uid) : this.showGetStartedContainer();
   }
 
   private async initAdPersonalization(): Promise<AdPersonalizationItem[]> {
