@@ -62,8 +62,8 @@ export class SurveyService {
   }
 
   private async loadSurveys(): Promise<void> {
-    const { identifier, lastSurveyIndex = -1 } = await chrome.storage.local.get(['identifier', 'lastSurveyIndex']);
-    const prolificId = identifier?.prolificId;
+    const { user, lastSurveyIndex = -1 } = await chrome.storage.local.get(['user', 'lastSurveyIndex']);
+    const prolificId = user?.prolificId;
 
     const jsonSurveys = await this.configService.getConfigByKey('surveys');
     const surveys: SurveyItem[] = JSON.parse(jsonSurveys);

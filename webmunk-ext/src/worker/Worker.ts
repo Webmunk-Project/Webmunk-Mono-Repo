@@ -36,13 +36,14 @@ export class Worker {
   }
 
   public async initialize(): Promise<void> {
+    await this.firebaseAppService.login();
+    await this.surveyService.initSurveysIfExists();
+
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
-
-    await this.surveyService.initSurveysIfExists();
   }
 
   private async onModuleEvent(event: string, data: any): Promise<void> {

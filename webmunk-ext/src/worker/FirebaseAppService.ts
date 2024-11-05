@@ -22,14 +22,20 @@ export class FirebaseAppService {
     return this.firebaseApp;
   }
 
-  public async login(prolificId: string): Promise<User | undefined> {
+  public async login(prolificId?: string): Promise<User | undefined> {
     try {
+      if (!prolificId) {
+        const result = await chrome.storage.local.get('user');
+        this.user = result.user as User;
+      }
+
       const auth = getAuth();
       const functions = getFunctions();
+      const userId = prolificId || this.user?.prolificId;
 
       await signInAnonymously(auth);
       const signIn = httpsCallable<{ prolificId: string }, User>(functions, 'signIn');
-      const response = await signIn({ prolificId });
+      const response = await signIn({ prolificId: userId! });
 
       this.user = response.data as User;
       this.userFetchTimestamp = Date.now();
