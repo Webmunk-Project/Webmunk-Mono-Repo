@@ -4,7 +4,7 @@ import { WEBMUNK_URL } from '../config';
 import { NotificationService } from './NotificationService';
 import { NotificationText } from '../enums';
 import { DELAY_BETWEEN_SURVEY } from '../config';
-import { RudderStack } from './Rudderstack';
+import { RudderStackService } from './RudderStackService';
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
@@ -17,8 +17,8 @@ export class SurveyService {
   constructor(
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
-    private readonly rudderStack: RudderStack
-    ) {
+    private readonly rudderStack: RudderStackService
+  ) {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
   }
 
@@ -37,9 +37,6 @@ export class SurveyService {
   }
 
   public async initSurveysIfNeeded(): Promise<void> {
-    const { identifier } = await chrome.storage.local.get('identifier');
-    if (!identifier) return;
-
     const isWeekPassed = await this.isWeekPassed();
     if (!isWeekPassed) return;
 
@@ -65,8 +62,8 @@ export class SurveyService {
   }
 
   private async loadSurveys(): Promise<void> {
-    const { identifier, lastSurveyIndex = -1 } = await chrome.storage.local.get(['identifier', 'lastSurveyIndex']);
-    const prolificId = identifier?.prolificId;
+    const { user, lastSurveyIndex = -1 } = await chrome.storage.local.get(['user', 'lastSurveyIndex']);
+    const prolificId = user?.prolificId;
 
     const jsonSurveys = await this.configService.getConfigByKey('surveys');
     const surveys: SurveyItem[] = JSON.parse(jsonSurveys);
