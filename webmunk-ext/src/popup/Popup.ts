@@ -4,8 +4,6 @@ import { AdPersonalizationItem, SurveyItem, User } from '../types';
 class Popup {
   private continueButton: HTMLButtonElement;
   private logInInput: HTMLInputElement;
-  private toggleInput: HTMLInputElement;
-  private authInputLabel: HTMLElement;
   private getStartedContainer: HTMLElement;
   private studyExtensionContainer: HTMLElement;
   private copyButton: HTMLButtonElement;
@@ -13,13 +11,10 @@ class Popup {
   private formattedIdentifier: HTMLElement;
   private fullIdentifier: string;
   private notification: Notification;
-  private isEmailMode: boolean;
 
   constructor() {
     this.continueButton = document.getElementById('continueButton') as HTMLButtonElement;
     this.logInInput = document.getElementById('logInInput') as HTMLInputElement;
-    this.toggleInput = document.getElementById('toggleInput') as HTMLInputElement;
-    this.authInputLabel = document.getElementById('authInputLabel') as HTMLElement;
     this.getStartedContainer = document.getElementById('getStartedContainer') as HTMLElement;
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer') as HTMLElement;
     this.copyButton = document.getElementById('copyButton') as HTMLButtonElement;
@@ -27,7 +22,6 @@ class Popup {
     this.formattedIdentifier = document.getElementById('formattedIdentifier') as HTMLElement;
     this.fullIdentifier = '';
     this.notification = new Notification();
-    this.isEmailMode = false;
 
     this.init();
   }
@@ -41,21 +35,6 @@ class Popup {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
     this.adPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
-    this.toggleInput.addEventListener('change', () => this.toggleInputMode());
-  }
-
-  private toggleInputMode() {
-    if (this.toggleInput.checked) {
-      this.logInInput.type = 'email';
-      this.logInInput.placeholder = 'Email';
-      this.authInputLabel.textContent = 'email';
-      this.isEmailMode = true;
-    } else {
-      this.logInInput.type = 'text';
-      this.logInInput.placeholder = 'Prolific Id';
-      this.authInputLabel.textContent = 'prolific id';
-      this.isEmailMode = false;
-    }
   }
 
   private async checkAdPersonalization(): Promise<void> {
@@ -92,18 +71,14 @@ class Popup {
 
   private validateInput(inputValue: string): boolean {
     if (!inputValue) {
-      this.notification.warning(this.isEmailMode ? 'Please enter an email address.' : 'Please enter a Prolific ID.');
+      this.notification.warning('Please enter a Prolific ID.');
       return false;
     }
 
-    const isValid = this.isEmailMode
-      ? this.emailValidation(inputValue)
-      : this.prolificIdValidation(inputValue);
+    const isValid = this.prolificIdValidation(inputValue);
 
     if (!isValid) {
-      this.notification.warning(this.isEmailMode
-        ? 'Please enter a valid e-mail address.'
-        : 'Please enter a valid Prolific ID (24 alphanumeric characters).');
+      this.notification.warning('Please enter a valid Prolific ID (24 alphanumeric characters).');
       return false;
     }
 
@@ -210,11 +185,6 @@ class Popup {
   private setButtonState(isDisabled: boolean, text: string): void {
     this.continueButton.disabled = isDisabled;
     this.continueButton.textContent = text;
-  }
-
-  private emailValidation(email: string): boolean {
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailPattern.test(email);
   }
 
   private prolificIdValidation(id: string): boolean {
