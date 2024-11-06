@@ -3,7 +3,7 @@
 import { messenger } from '@webmunk/utils';
 import { NotificationService } from './NotificationService';
 import { AdPersonalizationItem, User } from '../types';
-import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
+import { DELAY_BETWEEN_REMOVE_NOTIFICATION, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
 import { RudderStackService } from './RudderStackService';
 import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
@@ -111,7 +111,7 @@ export class Worker {
   private async showRemoveExtensionNotification(): Promise<void> {
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
-    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_SURVEY);
+    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
 
     if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 

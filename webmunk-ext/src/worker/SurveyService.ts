@@ -3,7 +3,7 @@ import { ConfigService } from './ConfigService';
 import { WEBMUNK_URL } from '../config';
 import { NotificationService } from './NotificationService';
 import { NotificationText } from '../enums';
-import { DELAY_BETWEEN_SURVEY } from '../config';
+import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION } from '../config';
 import { RudderStackService } from './RudderStackService';
 
 enum events {
@@ -37,20 +37,32 @@ export class SurveyService {
   }
 
   public async initSurveysIfNeeded(): Promise<void> {
+    if (this.surveys.length) {
+      await this.showFillOutNotification();
+      return;
+    }
+
     const isWeekPassed = await this.isWeekPassed();
     if (!isWeekPassed) return;
 
     const tabId = await this.getActiveTabId();
     if (!tabId) return;
 
-    const initialSurveyCount = this.surveys.length;
-
     await this.loadSurveys();
+  }
 
-    if (this.surveys.length > initialSurveyCount) {
-      await this.startWeekTiming();
-      await this.notificationService.showNotification(tabId, NotificationText.FILL_OUT);
-    }
+  private async showFillOutNotification(): Promise<void> {
+    const currentDate = Date.now();
+    const delayBetweenFillOutNotification = Number(DELAY_BETWEEN_FILL_OUT_NOTIFICATION);
+    const { fillOutModalShowed = 0 } = await chrome.storage.local.get('fillOutModalShowed');
+
+    if (currentDate < fillOutModalShowed + delayBetweenFillOutNotification) return;
+
+    const tabId = await this.getActiveTabId();
+    if (!tabId) return;
+
+    await chrome.storage.local.set({ fillOutModalShowed: currentDate });
+    await this.notificationService.showNotification(tabId, NotificationText.FILL_OUT);
   }
 
   public async initSurveysIfExists(): Promise<void> {
