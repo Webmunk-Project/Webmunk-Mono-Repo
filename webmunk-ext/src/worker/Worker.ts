@@ -3,12 +3,13 @@
 import { messenger } from '@webmunk/utils';
 import { NotificationService } from './NotificationService';
 import { AdPersonalizationItem, User } from '../types';
-import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
+import { DELAY_BETWEEN_REMOVE_NOTIFICATION, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
 import { RudderStackService } from './RudderStackService';
 import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
 import { SurveyService } from './SurveyService';
 import { NotificationText } from '../enums';
+import { getActiveTabId } from './utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -85,7 +86,7 @@ export class Worker {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     adPersonalization.forEach((item) => {
@@ -111,28 +112,14 @@ export class Worker {
   private async showRemoveExtensionNotification(): Promise<void> {
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
-    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_SURVEY);
+    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
 
     if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     await chrome.storage.local.set({ removeModalShowed: currentDate });
     await this.notificationService.showNotification(tabId, NotificationText.REMOVE);
-  }
-
-  private async getActiveTabId(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-
-        if (!tab || !tab.id || tab.url?.startsWith('chrome://')) {
-          resolve(0);
-        } else {
-          resolve(tab.id);
-        }
-      });
-    })
   }
 }
