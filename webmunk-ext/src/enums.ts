@@ -1,4 +1,4 @@
 export enum NotificationText {
-  FILL_OUT = 'You have to fill out the survey. Go to the extension',
+  FILL_OUT = 'It`s time to complete a survey. Please click on your extension to continue.',
   REMOVE = 'Please uninstall the Webmunk extension!'
 }
