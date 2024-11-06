@@ -5,6 +5,7 @@ import { NotificationService } from './NotificationService';
 import { NotificationText } from '../enums';
 import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION } from '../config';
 import { RudderStackService } from './RudderStackService';
+import { getActiveTabId } from './utils';
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
@@ -22,20 +23,6 @@ export class SurveyService {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
   }
 
-  private async getActiveTabId(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-
-        if (!tab || !tab.id || tab.url?.startsWith('chrome://')) {
-          resolve(0);
-        } else {
-          resolve(tab.id);
-        }
-      });
-    })
-  }
-
   public async initSurveysIfNeeded(): Promise<void> {
     if (this.surveys.length) {
       await this.showFillOutNotification();
@@ -45,7 +32,7 @@ export class SurveyService {
     const isWeekPassed = await this.isWeekPassed();
     if (!isWeekPassed) return;
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     await this.loadSurveys();
@@ -58,7 +45,7 @@ export class SurveyService {
 
     if (currentDate < fillOutModalShowed + delayBetweenFillOutNotification) return;
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     await chrome.storage.local.set({ fillOutModalShowed: currentDate });

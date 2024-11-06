@@ -9,6 +9,7 @@ import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
 import { SurveyService } from './SurveyService';
 import { NotificationText } from '../enums';
+import { getActiveTabId } from './utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -85,7 +86,7 @@ export class Worker {
     const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
     const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     adPersonalization.forEach((item) => {
@@ -115,24 +116,10 @@ export class Worker {
 
     if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
 
-    const tabId = await this.getActiveTabId();
+    const tabId = await getActiveTabId();
     if (!tabId) return;
 
     await chrome.storage.local.set({ removeModalShowed: currentDate });
     await this.notificationService.showNotification(tabId, NotificationText.REMOVE);
-  }
-
-  private async getActiveTabId(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-
-        if (!tab || !tab.id || tab.url?.startsWith('chrome://')) {
-          resolve(0);
-        } else {
-          resolve(tab.id);
-        }
-      });
-    })
   }
 }
