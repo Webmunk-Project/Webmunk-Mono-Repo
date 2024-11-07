@@ -235,7 +235,7 @@ export class RateService {
     });
   }
 
-  private sendResponseToService(response: any): void {
+  private sendResponseToService(response: RateResponses | string): void {
     chrome.runtime.sendMessage({
       action: 'extensionAds.rateService.adRatingResponse',
       response
