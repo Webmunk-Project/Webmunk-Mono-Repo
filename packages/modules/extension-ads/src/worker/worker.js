@@ -216,7 +216,7 @@ export const extensionAdsAppMgr = {
 
     const adIds = Array.from(this.tabData[tabId].ads.values()).map((ad) => ad.adId);
 
-    this.eventEmitter.emit(moduleEvents.ADS_RATED, { mark: response, adIds });
+    this.eventEmitter.emit(moduleEvents.ADS_RATED, { values: response, adIds });
   },
   sendAdsIfNeeded(tabId) {
     if (!this.tabData[tabId].ads.size) return;
