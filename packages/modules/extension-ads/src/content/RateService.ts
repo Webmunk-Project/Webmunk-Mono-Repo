@@ -1,15 +1,23 @@
+type RateResponses = {
+  relevance: string | null;
+  distraction: string | null;
+}
+
 export class RateService {
+  private responses: RateResponses;
+
   constructor() {
+    this.responses = { relevance: null, distraction: null };
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
   }
 
-  handleMessage(message, sender, sendResponse) {
+  private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
     if (message.action === 'extensionAds.rateService.adRatingRequest') {
       this.showAdRatingNotification();
     }
   }
 
-  showAdRatingNotification() {
+  private showAdRatingNotification(): void {
     const styles = document.createElement('style');
     styles.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
@@ -123,6 +131,34 @@ export class RateService {
           fill: black;
         }
       }
+
+      .response-btn {
+        padding: 10px 20px;
+        width: 70px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        border: 2px solid black;
+        color: black;
+        background-color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        border-radius: 5px;
+      }
+
+      .response-btn.active {
+        background-color: black;
+        color: white;
+        border-color: black;
+      }
+
+      .response-btn:hover:not(.active) {
+        background-color: #f0f0f0;
+      }
     `;
 
     document.head.appendChild(styles);
@@ -133,7 +169,7 @@ export class RateService {
 
     const notificationContent = `
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <p style="font-size: 22px; font-weight: 700; color: black; margin: 0; line-height: 1.3;">Rate the ads</p>
+        <p style="font-size: 20px; font-weight: 700; color: black; margin: 0; line-height: 1.3;">Are the ads on this website:</p>
         <svg id="close-button" class="close-button" height="20px" viewBox="0 0 384 512">
           <path
             d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
@@ -141,18 +177,25 @@ export class RateService {
           </path>
         </svg>
       </div>
-      <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3; text-align: center;">How relevant are the ads on the page to you?</p>
-      <div style="display: flex; justify-content: center; flex-direction: row-reverse; align-items: center; margin-top: 5px; height: 30px;">
-        <input value="5" id="star5" type="radio">
-        <label class="star" for="star5"></label>
-        <input value="4" id="star4" type="radio">
-        <label class="star" for="star4"></label>
-        <input value="3" id="star3" type="radio">
-        <label class="star" for="star3"></label>
-        <input value="2" id="star2" type="radio">
-        <label class="star" for="star2"></label>
-        <input value="1" id="star1" type="radio">
-        <label class="star" for="star1"></label>
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img style="width: 25px; height: 25px;" src="${chrome.runtime.getURL('images/thumb-up.svg')}" alt="thumb up">
+          <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3;">Relevant to you?</p>
+        </div>
+        <div class="response-buttons" style="display: flex; align-items: center; gap: 15px; justify-content: center;">
+          <button class="response-btn" data-question="relevance">Yes</button>
+          <button class="response-btn" data-question="relevance">No</button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img style="width: 25px; height: 25px;" src="${chrome.runtime.getURL('images/thumb-down.svg')}" alt="thumb down">
+          <p style="font-size: 18px; color: black; font-weight: 700; margin: 0; line-height: 1.3;">Distract you from browsing?</p>
+        </div>
+        <div class="response-buttons" style="display: flex; align-items: center; gap: 15px; justify-content: center;">
+          <button class="response-btn" data-question="distraction">Yes</button>
+          <button class="response-btn" data-question="distraction">No</button>
+        </div>
       </div>
     `;
 
@@ -160,7 +203,7 @@ export class RateService {
     wrapper.appendChild(notificationContainer);
     document.body.appendChild(wrapper);
 
-    document.getElementById('close-button').addEventListener('click', () => {
+    document.getElementById('close-button')!.addEventListener('click', () => {
       this.sendResponseToService('skip');
       notificationContainer.classList.add('notification-disappear');
 
@@ -169,17 +212,30 @@ export class RateService {
       }, 1000)
     });
 
-    document.querySelectorAll('input[type=radio]').forEach((button) => button.addEventListener('click', (event) => {
-      const selectedValue = event.target.value;
-      this.sendResponseToService(selectedValue);
+    document.querySelectorAll('.response-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement;
+        const question = target.dataset.question;
+        const answer = target.textContent;
 
-      setTimeout(() => {
-        notificationContainer.remove();
-      }, 1000);
-    }));
+        this.responses[question as keyof RateResponses] = answer;
+
+        document.querySelectorAll(`.response-btn[data-question="${question}"]`).forEach((btn) => {
+          btn.classList.remove('active');
+        });
+
+        target.classList.add('active');
+
+        if (this.responses?.relevance && this.responses?.distraction) {
+          this.sendResponseToService(this.responses);
+          notificationContainer.classList.add('notification-disappear');
+          setTimeout(() => notificationContainer.remove(), 2000);
+        }
+      });
+    });
   }
 
-  sendResponseToService(response) {
+  private sendResponseToService(response: RateResponses | string): void {
     chrome.runtime.sendMessage({
       action: 'extensionAds.rateService.adRatingResponse',
       response
