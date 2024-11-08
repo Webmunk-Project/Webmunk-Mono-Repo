@@ -5,7 +5,7 @@ import { NotificationService } from './NotificationService';
 import { NotificationText } from '../enums';
 import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION } from '../config';
 import { RudderStackService } from './RudderStackService';
-import { getActiveTabId } from './utils';
+import { getActiveTabId, isNeedToMakeAdBlock } from './utils';
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
@@ -24,6 +24,8 @@ export class SurveyService {
   }
 
   public async initSurveysIfNeeded(): Promise<void> {
+    if (await isNeedToMakeAdBlock()) return;
+
     if (this.surveys.length) {
       await this.showFillOutNotification();
       return;
@@ -131,7 +133,6 @@ export class SurveyService {
 
       await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
 
-      console.log(`The survey ${openerTabUrl} was completed`);
       await this.startWeekTiming();
       await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
@@ -139,14 +140,14 @@ export class SurveyService {
 
   public async startWeekTiming(): Promise<void> {
     const currentDate = Date.now();
-    const delayBetweenSurvey = +DELAY_BETWEEN_SURVEY;
+    const delayBetweenSurvey = Number(DELAY_BETWEEN_SURVEY);
 
     const endTime = currentDate + delayBetweenSurvey;
 
     await chrome.storage.local.set({ weekEndTime: endTime });
   }
 
-  private async isWeekPassed(): Promise<boolean> {
+  public async isWeekPassed(): Promise<boolean> {
     const { weekEndTime } = await chrome.storage.local.get('weekEndTime');
     const currentTime = Date.now();
 
