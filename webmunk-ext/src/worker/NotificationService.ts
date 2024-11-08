@@ -1,5 +1,13 @@
 export class NotificationService {
-  constructor() {}
+  constructor() {
+    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+  }
+
+  private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
+    if (message.action === 'webmunkExt.notificationService.openExtensionsPage') {
+      chrome.tabs.create({ url: 'chrome://extensions/' });
+    }
+  }
 
   public async showNotification(tabId: number, text: string): Promise<void> {
     return new Promise((resolve, reject) => {
