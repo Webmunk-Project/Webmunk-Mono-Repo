@@ -3,7 +3,7 @@ import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
 
 export class AmazonStrategy extends BaseStrategy {
-  public strategyKey = 'amazonAdPrefs';
+  public strategyKey = 'app';
 
   async execute(data: PersonalizationData) {
     const { value, isNeedToLogin } = data;

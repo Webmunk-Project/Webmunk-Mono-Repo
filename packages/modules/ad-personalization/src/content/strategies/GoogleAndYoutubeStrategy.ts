@@ -2,7 +2,7 @@ import { PersonalizationData } from '../../types';
 import { BaseStrategy } from './BaseStrategy';
 
 export class GoogleAndYoutubeStrategy extends BaseStrategy {
-  public strategyKey = 'googleYouTubeAds';
+  public strategyKey = 'gyta';
 
   async execute(data: PersonalizationData) {
     const { value, url, isNeedToLogin } = data;

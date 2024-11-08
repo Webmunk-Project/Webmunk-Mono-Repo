@@ -3,7 +3,7 @@ import { BaseStrategy } from './BaseStrategy';
 import { ErrorMessages } from '../../ErrorMessages';
 
 export class FacebookActivityStrategy extends BaseStrategy {
-  public strategyKey = 'facebookActivityData';
+  public strategyKey = 'fad';
 
   async execute(data: PersonalizationData) {
     const { value, url, isNeedToLogin } = data;
