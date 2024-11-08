@@ -1,5 +1,6 @@
 import { Notification } from './Notification';
 import { AdPersonalizationItem, SurveyItem, User } from '../types';
+import { UrlParameters } from '../enums';
 
 class Popup {
   private continueButton: HTMLButtonElement;
@@ -86,6 +87,10 @@ class Popup {
   }
 
   private async isNeedToEnabledAdPersonalizationButton(): Promise<boolean> {
+    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
+    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
+    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION];
+
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];
 
@@ -93,7 +98,7 @@ class Popup {
     const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
     const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || [];
 
-    if (completedSurveys.length && checkedAdPersonalization.length < adPersonalization.length) return true;
+    if (completedSurveys.length && checkedAdPersonalization.length < adPersonalization.length && specifiedItem === false) return true;
 
     return false;
   }

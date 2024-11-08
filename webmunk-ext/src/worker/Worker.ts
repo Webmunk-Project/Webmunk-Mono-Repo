@@ -8,8 +8,8 @@ import { RudderStackService } from './RudderStackService';
 import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
 import { SurveyService } from './SurveyService';
-import { NotificationText } from '../enums';
-import { getActiveTabId } from './utils';
+import { NotificationText, UrlParameters } from '../enums';
+import { getActiveTabId, isNeedToMakeAdBlock } from './utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -61,7 +61,7 @@ export class Worker {
 
     if (!user.active) return
 
-    await this.checkPersonalizationIfNeeded();
+    await this.checkAdPersonalization();
     await this.surveyService.initSurveysIfNeeded();
   }
 
@@ -74,11 +74,25 @@ export class Worker {
     }
   }
 
-  private async checkPersonalizationIfNeeded(): Promise<void> {
-    const { personalizationTime } = await chrome.storage.local.get('personalizationTime');
-    if (!personalizationTime) return;
+  private async isNeedToCheckAdPersonalization(): Promise<boolean> {
+    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
+    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
+    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION];
 
-    const delayBetweenAdPersonalization = +DELAY_BETWEEN_AD_PERSONALIZATION;
+    if (specifiedItem) return true;
+
+    const { personalizationTime } = await chrome.storage.local.get('personalizationTime');
+    if (personalizationTime && specifiedItem === false) return true;
+
+    return false;
+  }
+
+  private async checkAdPersonalization(): Promise<void> {
+    const isNeedToCheck = await this.isNeedToCheckAdPersonalization();
+    if(!isNeedToCheck) return;
+
+    const { personalizationTime = 0 } = await chrome.storage.local.get('personalizationTime');
+    const delayBetweenAdPersonalization = Number(DELAY_BETWEEN_AD_PERSONALIZATION);
     const currentDate = Date.now();
 
     if (currentDate < delayBetweenAdPersonalization + personalizationTime) return;
@@ -103,18 +117,26 @@ export class Worker {
   private async showRemoveExtensionIfNeeded(user: User): Promise<void> {
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];
+    const needToMakeAdBlock = await isNeedToMakeAdBlock();
 
-    if (completedSurveys.length === 2 || !user.active) {
+    if (needToMakeAdBlock) {
+      await this.showRemoveExtensionNotification(true);
+    } else if (completedSurveys.length === 2 || !user.active) {
       await this.showRemoveExtensionNotification();
     }
   }
 
-  private async showRemoveExtensionNotification(): Promise<void> {
+  private async showRemoveExtensionNotification(isAdBlock?: boolean): Promise<void> {
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
-    const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
 
-    if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
+    if (isAdBlock && removeModalShowed === 0) {
+      if (!await this.surveyService.isWeekPassed()) return;
+    } else {
+      const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
+
+      if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
+    }
 
     const tabId = await getActiveTabId();
     if (!tabId) return;
