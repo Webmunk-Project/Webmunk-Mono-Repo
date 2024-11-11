@@ -1,5 +1,6 @@
 import { UrlParameters } from '../enums';
 
+// if ab(ad blocker) parameter is true, then we disable the loading of all surveys except the first one
 export const isNeedToDisableSurveyLoading = async (): Promise<boolean> => {
   const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
   const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
