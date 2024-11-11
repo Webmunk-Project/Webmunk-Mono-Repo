@@ -5,7 +5,11 @@ export class NotificationService {
 
   private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
     if (message.action === 'webmunkExt.notificationService.openExtensionsPage') {
-      chrome.tabs.create({ url: 'chrome://extensions/' });
+      try {
+        chrome.management.uninstallSelf({ showConfirmDialog: true });
+      } catch (error) {
+        chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
+      }
     }
   }
 
