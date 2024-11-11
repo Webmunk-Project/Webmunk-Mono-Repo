@@ -148,7 +148,7 @@ export class RateService {
         font-weight: bold;
         cursor: pointer;
         transition: background-color 0.3s, color 0.3s;
-        border-radius: 5px;
+        border-radius: 20px;
       }
 
       .response-btn.active {

@@ -1,7 +1,7 @@
 {
     "update_url": "https://clients2.google.com/service/update2/crx",
     "manifest_version": 3,
-	"name": "webmunk extension",
+	"name": "Ad Study",
 	"version": "1.0",
     "action": {
         "default_popup": "popup/popup.html",
@@ -14,7 +14,7 @@
         "128": "images/favicon.png"
     },
 
-	"description": "A new webmunk project",
+	"description": "This extension is required to participate in the ad study",
 
     "minimum_chrome_version": "88",
     "permissions": [],
