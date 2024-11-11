@@ -132,7 +132,7 @@ export class NotificationService {
 
     document.querySelector('.open-extensions-link')?.addEventListener('click', (event) => {
       event.preventDefault();
-      chrome.runtime.sendMessage({ action: 'webmunkExt.notificationService.openExtensionsPage' });
+      chrome.runtime.sendMessage({ action: 'webmunkExt.notificationService.removeExtension' });
       wrapper.remove();
     });
   }

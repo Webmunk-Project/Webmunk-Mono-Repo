@@ -4,7 +4,7 @@ export class NotificationService {
   }
 
   private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
-    if (message.action === 'webmunkExt.notificationService.openExtensionsPage') {
+    if (message.action === 'webmunkExt.notificationService.removeExtension') {
       try {
         chrome.management.uninstallSelf({ showConfirmDialog: true });
       } catch (error) {
