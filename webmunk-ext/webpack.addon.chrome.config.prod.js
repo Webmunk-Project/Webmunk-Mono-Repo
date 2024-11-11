@@ -36,7 +36,6 @@ module.exports = mergeWithCustomize({
       config: {
         base: baseManifest,
         extend: {
-          "name":baseManifest.name+"_prod",
           "manifest_version":parseInt(manifestVersion),
         }
       }
