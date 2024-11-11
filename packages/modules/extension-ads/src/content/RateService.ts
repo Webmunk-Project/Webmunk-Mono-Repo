@@ -172,7 +172,7 @@ export class RateService {
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <img style="width: 25px; height: 25px;" src="${chrome.runtime.getURL('images/favicon.png')}" alt="logo">
-          <p style="font-size: 20px; color: black; margin: 0; line-height: 1.3;">Are the ads on this website:</p>
+          <p style="font-size: 20px; color: black; margin: 0; line-height: 1.3;">Ad Study Survey</p>
         </div>
         <svg id="close-button" class="close-button" height="20px" viewBox="0 0 384 512">
           <path
@@ -182,20 +182,14 @@ export class RateService {
         </svg>
       </div>
       <div style="display: flex; gap: 10px; flex-direction: column;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img style="width: 25px; height: 25px;" src="${chrome.runtime.getURL('images/thumb-up.svg')}" alt="thumb up">
-          <p style="font-size: 18px; color: black; margin: 0; line-height: 1.3;">Relevant to you?</p>
-        </div>
+        <p style="font-size: 18px; color: black; margin: 0; line-height: 1.3;">Are these ads on this site relevant to you?</p>
         <div class="response-buttons" style="display: flex; align-items: center; gap: 15px; justify-content: center;">
           <button class="response-btn" data-question="relevance">Yes</button>
           <button class="response-btn" data-question="relevance">No</button>
         </div>
       </div>
       <div style="display: flex; gap: 10px; flex-direction: column;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img style="width: 25px; height: 25px;" src="${chrome.runtime.getURL('images/thumb-down.svg')}" alt="thumb down">
-          <p style="font-size: 18px; color: black; margin: 0; line-height: 1.3;">Distract you from browsing?</p>
-        </div>
+        <p style="font-size: 18px; color: black; margin: 0; line-height: 1.3;"> Do the ads on this site distract you?</p>
         <div class="response-buttons" style="display: flex; align-items: center; gap: 15px; justify-content: center;">
           <button class="response-btn" data-question="distraction">Yes</button>
           <button class="response-btn" data-question="distraction">No</button>
