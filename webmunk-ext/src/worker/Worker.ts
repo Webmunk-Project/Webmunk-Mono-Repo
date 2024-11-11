@@ -31,7 +31,7 @@ export class Worker {
   constructor() {
     this.firebaseAppService = new FirebaseAppService();
     this.configService = new ConfigService(this.firebaseAppService);
-    this.rudderStack = new RudderStackService(this.firebaseAppService);
+    this.rudderStack = new RudderStackService(this.firebaseAppService, this.configService);
     this.notificationService = new NotificationService();
     this.surveyService = new SurveyService(this.configService, this.notificationService, this.rudderStack);
   }
