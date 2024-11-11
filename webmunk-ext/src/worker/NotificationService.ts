@@ -1,5 +1,17 @@
 export class NotificationService {
-  constructor() {}
+  constructor() {
+    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+  }
+
+  private handleMessage(message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): void {
+    if (message.action === 'webmunkExt.notificationService.removeExtension') {
+      try {
+        chrome.management.uninstallSelf({ showConfirmDialog: true });
+      } catch (error) {
+        chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
+      }
+    }
+  }
 
   public async showNotification(tabId: number, text: string): Promise<void> {
     return new Promise((resolve, reject) => {
