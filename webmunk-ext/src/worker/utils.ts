@@ -1,6 +1,6 @@
 import { UrlParameters } from '../enums';
 
-export const isNeedToMakeAdBlock = async (): Promise<boolean> => {
+export const isNeedToDisableSurveyLoading = async (): Promise<boolean> => {
   const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
   const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
   const specifiedItem = personalizationConfigs[UrlParameters.AD_BLOCKER];

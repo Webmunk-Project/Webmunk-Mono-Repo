@@ -5,7 +5,7 @@ import { NotificationService } from './NotificationService';
 import { NotificationText } from '../enums';
 import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION } from '../config';
 import { RudderStackService } from './RudderStackService';
-import { getActiveTabId, isNeedToMakeAdBlock } from './utils';
+import { getActiveTabId, isNeedToDisableSurveyLoading } from './utils';
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
@@ -24,7 +24,7 @@ export class SurveyService {
   }
 
   public async initSurveysIfNeeded(): Promise<void> {
-    if (await isNeedToMakeAdBlock()) return;
+    if (await isNeedToDisableSurveyLoading()) return;
 
     if (this.surveys.length) {
       await this.showFillOutNotification();

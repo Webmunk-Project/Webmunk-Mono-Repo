@@ -9,7 +9,7 @@ import { FirebaseAppService } from './FirebaseAppService';
 import { ConfigService } from './ConfigService';
 import { SurveyService } from './SurveyService';
 import { NotificationText, UrlParameters } from '../enums';
-import { getActiveTabId, isNeedToMakeAdBlock } from './utils';
+import { getActiveTabId, isNeedToDisableSurveyLoading } from './utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
@@ -117,20 +117,20 @@ export class Worker {
   private async showRemoveExtensionIfNeeded(user: User): Promise<void> {
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];
-    const needToMakeAdBlock = await isNeedToMakeAdBlock();
+    const needToDisableSurveyLoading = await isNeedToDisableSurveyLoading();
 
-    if (needToMakeAdBlock) {
+    if (needToDisableSurveyLoading) {
       await this.showRemoveExtensionNotification(true);
     } else if (completedSurveys.length === 2 || !user.active) {
       await this.showRemoveExtensionNotification();
     }
   }
 
-  private async showRemoveExtensionNotification(isAdBlock?: boolean): Promise<void> {
+  private async showRemoveExtensionNotification(isDisableSurveyLoading?: boolean): Promise<void> {
     const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
     const currentDate = Date.now();
 
-    if (isAdBlock && removeModalShowed === 0) {
+    if (isDisableSurveyLoading && removeModalShowed === 0) {
       if (!await this.surveyService.isWeekPassed()) return;
     } else {
       const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
