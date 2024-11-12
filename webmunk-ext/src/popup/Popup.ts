@@ -89,7 +89,7 @@ class Popup {
   private async isNeedToEnabledAdPersonalizationButton(): Promise<boolean> {
     const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
     const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
-    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION];
+    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION] ?? false;
 
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];

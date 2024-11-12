@@ -4,7 +4,7 @@ import { UrlParameters } from '../enums';
 export const isNeedToDisableSurveyLoading = async (): Promise<boolean> => {
   const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
   const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
-  const specifiedItem = personalizationConfigs[UrlParameters.AD_BLOCKER];
+  const specifiedItem = personalizationConfigs[UrlParameters.AD_BLOCKER] ?? false;
 
   if (specifiedItem) return true;
 

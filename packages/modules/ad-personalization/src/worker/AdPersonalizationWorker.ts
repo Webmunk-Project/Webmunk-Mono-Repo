@@ -174,7 +174,7 @@ export class AdPersonalizationWorker {
     const specifiedItemResult = await chrome.storage.local.get('personalizationConfigs');
     const specifiedItem = specifiedItemResult.personalizationConfigs || {};
 
-    return specifiedItem[key] ?? false;
+    return specifiedItem[key];
   }
 
   private async send(key: string, url: string, isNeedToLogin?: boolean): Promise<MessageResponse> {

@@ -2,10 +2,11 @@ import { SurveyItem } from '../types';
 import { ConfigService } from './ConfigService';
 import { WEBMUNK_URL } from '../config';
 import { NotificationService } from './NotificationService';
-import { NotificationText } from '../enums';
-import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION } from '../config';
+import { NotificationText, UrlParameters } from '../enums';
+import { DELAY_BETWEEN_SURVEY, DELAY_BETWEEN_FILL_OUT_NOTIFICATION, DELAY_WHILE_AD_BLOCKER } from '../config';
 import { RudderStackService } from './RudderStackService';
 import { getActiveTabId, isNeedToDisableSurveyLoading } from './utils';
+import { FirebaseAppService } from './FirebaseAppService';
 
 enum events {
   SURVEY_COMPLETED = 'survey_completed',
@@ -14,13 +15,15 @@ enum events {
 export class SurveyService {
   private surveys: SurveyItem[] = [];
   private completedSurveys: SurveyItem[] = [];
+  private readonly configService: ConfigService;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly firebaseAppService: FirebaseAppService,
     private readonly notificationService: NotificationService,
     private readonly rudderStack: RudderStackService
   ) {
     chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
+    this.configService = new ConfigService(this.firebaseAppService);
   }
 
   public async initSurveysIfNeeded(): Promise<void> {
@@ -108,10 +111,28 @@ export class SurveyService {
     return params;
   }
 
+  private async adBlockerManipulations(url: string): Promise<void> {
+    if (await isNeedToDisableSurveyLoading()) return;
+
+    const queryParams = this.extractQueryParams(url);
+    await this.saveParamsToStorage(queryParams);
+
+    await this.startWeekTiming(true);
+  }
+
   public async surveyCompleteListener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
+    const user = await this.firebaseAppService.getUser();
+
+    if (!user) return
+
     const baseUrl = new URL(WEBMUNK_URL).origin;
 
     if (changeInfo.status !== 'complete' || !tab.url?.startsWith(baseUrl)) {
+      return;
+    }
+
+    if (tab.url?.startsWith(`${WEBMUNK_URL}?${UrlParameters.AD_BLOCKER}`)) {
+      await this.adBlockerManipulations(tab.url);
       return;
     }
 
@@ -138,11 +159,17 @@ export class SurveyService {
     }
   }
 
-  public async startWeekTiming(): Promise<void> {
+  public async startWeekTiming(isAdBlockSituation?: boolean): Promise<void> {
     const currentDate = Date.now();
-    const delayBetweenSurvey = Number(DELAY_BETWEEN_SURVEY);
+    let delay: number;
 
-    const endTime = currentDate + delayBetweenSurvey;
+    if (isAdBlockSituation) {
+      delay = Number(DELAY_WHILE_AD_BLOCKER);
+    } else {
+      delay = Number(DELAY_BETWEEN_SURVEY);
+    }
+
+    const endTime = currentDate + delay;
 
     await chrome.storage.local.set({ weekEndTime: endTime });
   }

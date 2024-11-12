@@ -7,6 +7,7 @@ export class FacebookActivityStrategy extends BaseStrategy {
 
   async execute(data: PersonalizationData) {
     const { value, url, isNeedToLogin } = data;
+    let currentValue = value ?? false;
 
     if (!window.location.href.startsWith(url!) && !isNeedToLogin) return this.sendResponseToWorker(null);
 
@@ -24,15 +25,18 @@ export class FacebookActivityStrategy extends BaseStrategy {
 
     let specifiedBox;
 
-    if (value) {
-      specifiedBox = document.querySelector('[name="radio1"]') as HTMLInputElement;
+    if (value === undefined) {
+      specifiedBox = document.querySelector('[name="radio1"]:checked, [name="radio2"]:checked') as HTMLInputElement;
+      currentValue = specifiedBox.name === 'radio1';
+
+      return this.sendResponseToWorker({ currentValue });
     } else {
-      specifiedBox = document.querySelector('[name="radio2"]') as HTMLInputElement;
+      specifiedBox = document.querySelector(`[name="${value ? 'radio1' : 'radio2'}"]`) as HTMLInputElement;
     }
 
     if (!specifiedBox) return this.sendResponseToWorker(null, ErrorMessages.INVALID_URL);
 
-    if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue: value, initialValue: value });
+    if (specifiedBox?.checked) return this.sendResponseToWorker({ currentValue, initialValue: value });
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
     specifiedBox.click();
@@ -41,6 +45,6 @@ export class FacebookActivityStrategy extends BaseStrategy {
     const confirmButton = buttons[buttons.length - 1] as HTMLElement;
     confirmButton.click();
 
-    this.sendResponseToWorker({ currentValue: value, initialValue: !value });
+    this.sendResponseToWorker({ currentValue, initialValue: !value });
   }
 }
