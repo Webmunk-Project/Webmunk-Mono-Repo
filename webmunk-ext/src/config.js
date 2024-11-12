@@ -11,6 +11,8 @@ export const FIREBASE_CONFIG = {
 };
 // 1 week
 export const DELAY_BETWEEN_SURVEY = process.env?.DELAY_BETWEEN_SURVEY;
+// 2 weeks
+export const DELAY_WHILE_AD_BLOCKER = process.env?.DELAY_WHILE_AD_BLOCKER;
 // 2 days
 export const DELAY_BETWEEN_AD_PERSONALIZATION = process.env?.DELAY_BETWEEN_AD_PERSONALIZATION;
 // 1 days

@@ -1,6 +1,6 @@
 export type PersonalizationData = {
   key: string;
-  value: boolean;
+  value?: boolean;
   url: string;
   isNeedToLogin?: boolean;
 }

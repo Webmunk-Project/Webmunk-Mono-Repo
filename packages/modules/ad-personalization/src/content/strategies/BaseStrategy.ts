@@ -7,7 +7,7 @@ export interface IStrategy {
 
 interface ResponseItem {
   currentValue: boolean;
-  initialValue: boolean;
+  initialValue?: boolean;
 }
 
 export abstract class BaseStrategy implements IStrategy {

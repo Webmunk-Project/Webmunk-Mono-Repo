@@ -33,7 +33,7 @@ export class Worker {
     this.configService = new ConfigService(this.firebaseAppService);
     this.rudderStack = new RudderStackService(this.firebaseAppService, this.configService);
     this.notificationService = new NotificationService();
-    this.surveyService = new SurveyService(this.configService, this.notificationService, this.rudderStack);
+    this.surveyService = new SurveyService(this.firebaseAppService, this.notificationService, this.rudderStack);
   }
 
   public async initialize(): Promise<void> {
@@ -77,7 +77,7 @@ export class Worker {
   private async isNeedToCheckAdPersonalization(): Promise<boolean> {
     const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
     const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
-    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION];
+    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION] ?? false;
 
     if (specifiedItem) return true;
 
