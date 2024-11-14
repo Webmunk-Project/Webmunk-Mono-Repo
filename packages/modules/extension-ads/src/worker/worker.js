@@ -247,8 +247,9 @@ export const extensionAdsAppMgr = {
       }
     });
 
-    console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
-    console.log('Tab data:', this.tabData[tabId]);
+    // To see received ad, restore the lines below
+    // console.log(`%cReceiving ad from tab ${tabId} - ${tabUrl}, ads detected: ${this.tabData[tabId].ads.size}`, 'color: green; font-weight: bold');
+    // console.log('Tab data:', this.tabData[tabId]);
     this.rateAdsIfNeeded(tabId);
     this.sendAdsIfNeeded(tabId);
   },
@@ -260,11 +261,12 @@ export const extensionAdsAppMgr = {
 
     if (trackedAd) {
         const eventData = this.prepareEventData(trackedAd, tabUrl);
-        console.log(`%cUser clicked on an ad: ${eventData.adId}`, 'color: orange');
-        console.log('Event data:', eventData);
+
+        // To see clicked ad, restore the lines below
+        // console.log(`%cUser clicked on an ad: ${eventData.adId}`, 'color: orange');
+        // console.log('Event data:', eventData);
+
         this.eventEmitter.emit(moduleEvents.AD_CLICKED, eventData);
-    } else {
-        console.log("No tracked ad found for clicked URL.");
     }
   },
   findTrackedAd(tabId, clickedUrl, adData) {

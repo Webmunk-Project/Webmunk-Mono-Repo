@@ -353,7 +353,8 @@ if ( typeof vAPI === 'object' && !vAPI.contentScript ) {
       //console.log(`Node matched: ${selectorRaw} ${document.URL} ${_indent}`,node);
       // specific pattern for facebook (finally useless)
       if (node1.localName=="use") node = node1.parentElement;
-      node.style.border=`dashed 2px ${color}`
+      // To see ad units, restore the line below
+      // node.style.border=`dashed 2px ${color}`
       if (node.style.display != "none") node.style.display="block"
       node.style.margin="2px"
       node.ads = true;
