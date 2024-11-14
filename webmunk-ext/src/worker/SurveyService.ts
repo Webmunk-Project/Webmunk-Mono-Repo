@@ -78,7 +78,7 @@ export class SurveyService {
       const surveyData = surveys[nextSurveyIndex];
       const newSurvey: SurveyItem = {
         name: surveyData.name,
-        url: `${surveyData.url}?prolific_id=${prolificId}`,
+        url: `${surveyData.url}?PROLIFIC_PID=${prolificId}`,
       };
 
       if (!this.surveys.some((survey) => survey.url === newSurvey.url) &&
