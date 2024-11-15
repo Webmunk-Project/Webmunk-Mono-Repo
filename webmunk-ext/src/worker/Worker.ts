@@ -114,6 +114,16 @@ export class Worker {
     await chrome.storage.local.set({ personalizationTime: currentDate });
   }
 
+  private async isAllAdPersonalizationSettingsChecked(): Promise<boolean> {
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
+
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    return Object.keys(checkedAdPersonalization).length === adPersonalization.length;
+  }
+
   private async showRemoveExtensionIfNeeded(user: User): Promise<void> {
     const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
     const completedSurveys = completedSurveysResult.completedSurveys || [];
@@ -121,7 +131,7 @@ export class Worker {
 
     if (needToDisableSurveyLoading) {
       await this.showRemoveExtensionNotification(true);
-    } else if (completedSurveys.length === 2 || !user.active) {
+    } else if ((completedSurveys.length === 2 && await this.isAllAdPersonalizationSettingsChecked()) || !user.active) {
       await this.showRemoveExtensionNotification();
     }
   }

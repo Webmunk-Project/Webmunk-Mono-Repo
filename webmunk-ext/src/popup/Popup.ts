@@ -98,7 +98,7 @@ class Popup {
     const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
     const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || [];
 
-    if (completedSurveys.length && checkedAdPersonalization.length < adPersonalization.length && specifiedItem === false) return true;
+    if (completedSurveys.length && Object.keys(checkedAdPersonalization).length < adPersonalization.length && specifiedItem === false) return true;
 
     return false;
   }
