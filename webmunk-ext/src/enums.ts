@@ -5,5 +5,8 @@ export enum NotificationText {
 
 export enum UrlParameters {
   ONLY_INFORMATION = 'oi',
-  AD_BLOCKER = 'ab'
+  AD_BLOCKER = 'ab',
+  FACEBOOK = 'fad',
+  GOOGLE_AND_YOUTUBE = 'gyta',
+  AMAZON = 'aap'
 }

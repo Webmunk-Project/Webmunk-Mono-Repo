@@ -120,6 +120,18 @@ export class SurveyService {
     await this.startWeekTiming(true);
   }
 
+  private async configurationManipulation(url: string): Promise<void> {
+    const adPersonalizationConfiguration = [
+      UrlParameters.FACEBOOK,
+      UrlParameters.GOOGLE_AND_YOUTUBE,
+      UrlParameters.AMAZON
+    ];
+
+    const isAdPersonalizationConfiguration = adPersonalizationConfiguration.some((param) => url.includes(param));
+
+    if (isAdPersonalizationConfiguration) await this.clearCheckedAdPersonalizationIfExists();
+  }
+
   public async surveyCompleteListener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
     const user = await this.firebaseAppService.getUser();
 
@@ -153,10 +165,21 @@ export class SurveyService {
       this.surveys = this.surveys.filter((survey) => survey.url !== openerTabUrl);
 
       await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
+      await this.configurationManipulation(tab.url);
 
       await this.startWeekTiming();
       await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
     }
+  }
+
+  private async clearCheckedAdPersonalizationIfExists(): Promise<void> {
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    if (!Object.keys(checkedAdPersonalization).length) return;
+
+    await chrome.storage.local.set({ 'adPersonalization.checkedItems': {} });
+    await chrome.storage.local.set({ personalizationTime: 0 });
   }
 
   public async startWeekTiming(isAdBlockSituation?: boolean): Promise<void> {
