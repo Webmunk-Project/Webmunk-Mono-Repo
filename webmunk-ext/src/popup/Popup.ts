@@ -1,6 +1,5 @@
 import { Notification } from './Notification';
-import { AdPersonalizationItem, SurveyItem, User } from '../types';
-import { UrlParameters } from '../enums';
+import { SurveyItem, User } from '../types';
 
 class Popup {
   private continueButton: HTMLButtonElement;
@@ -8,7 +7,6 @@ class Popup {
   private getStartedContainer: HTMLElement;
   private studyExtensionContainer: HTMLElement;
   private copyButton: HTMLButtonElement;
-  private adPersonalizationButton: HTMLButtonElement;
   private formattedIdentifier: HTMLElement;
   private fullIdentifier: string;
   private notification: Notification;
@@ -19,7 +17,6 @@ class Popup {
     this.getStartedContainer = document.getElementById('getStartedContainer') as HTMLElement;
     this.studyExtensionContainer = document.getElementById('studyExtensionContainer') as HTMLElement;
     this.copyButton = document.getElementById('copyButton') as HTMLButtonElement;
-    this.adPersonalizationButton = document.getElementById('ad-personalization-button') as HTMLButtonElement;
     this.formattedIdentifier = document.getElementById('formattedIdentifier') as HTMLElement;
     this.fullIdentifier = '';
     this.notification = new Notification();
@@ -35,18 +32,6 @@ class Popup {
   private initListeners(): void {
     this.continueButton.addEventListener('click', () => this.onContinueButtonClick());
     this.copyButton.addEventListener('click', () => this.copyIdentifier());
-    this.adPersonalizationButton.addEventListener('click', () => this.checkAdPersonalization());
-  }
-
-  private async checkAdPersonalization(): Promise<void> {
-    const listItems: AdPersonalizationItem [] = await this.initAdPersonalization();
-
-    for (const link of listItems) {
-      const key = link.key;
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.checkSettingsReq', data: { key, isNeedToLogin: true } });
-    }
-
-    await chrome.storage.local.set({ personalizationTime: Date.now() });
   }
 
   private async onContinueButtonClick() {
@@ -86,27 +71,6 @@ class Popup {
     return true;
   }
 
-  private async isNeedToEnabledAdPersonalizationButton(): Promise<boolean> {
-    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
-    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
-    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION] ?? false;
-
-    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
-    const completedSurveys = completedSurveysResult.completedSurveys || [];
-
-    const adPersonalization = await this.initAdPersonalization();
-    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
-    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || [];
-
-    if (completedSurveys.length && Object.keys(checkedAdPersonalization).length < adPersonalization.length && specifiedItem === false) return true;
-
-    return false;
-  }
-
-  private makeAdPersonalizationButtonEnabled(): void {
-    this.adPersonalizationButton.style.display = 'block';
-  }
-
   private async login(username: string): Promise<User> {
     return new Promise((resolve) => {
       const messageHandler = (response: any) => {
@@ -122,17 +86,12 @@ class Popup {
     });
    }
 
-
   private async showStudyExtensionContainer(uid: string): Promise<void> {
     this.getStartedContainer.style.display = 'none';
     this.studyExtensionContainer.style.display = 'block';
     this.initSurveys();
     this.formattedIdentifier.innerHTML = this.formatIdentifier(uid);
     this.fullIdentifier = uid;
-
-    const isNeedToEnabled = await this.isNeedToEnabledAdPersonalizationButton();
-
-    if (isNeedToEnabled) this.makeAdPersonalizationButtonEnabled();
   }
 
   private showGetStartedContainer(): void {
@@ -152,13 +111,6 @@ class Popup {
     const user = result.user as User;
 
     user ? await this.showStudyExtensionContainer(user.uid) : this.showGetStartedContainer();
-  }
-
-  private async initAdPersonalization(): Promise<AdPersonalizationItem[]> {
-    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
-    const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
-
-    return adPersonalization;
   }
 
   private async initSurveys(): Promise<void> {
