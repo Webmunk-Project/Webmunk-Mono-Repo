@@ -2,7 +2,7 @@
 // @ts-ignore
 import { messenger } from '@webmunk/utils';
 import { NotificationService } from './NotificationService';
-import { AdPersonalizationItem, User } from '../types';
+import { AdPersonalizationItem, User, PersonalizationConfigItem } from '../types';
 import { DELAY_BETWEEN_REMOVE_NOTIFICATION, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
 import { RudderStackService } from './RudderStackService';
 import { FirebaseAppService } from './FirebaseAppService';
@@ -77,12 +77,36 @@ export class Worker {
   private async isNeedToCheckAdPersonalization(): Promise<boolean> {
     const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
     const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
+    const array: PersonalizationConfigItem[] = Object.entries(personalizationConfigs).map(([key, value]) => ({
+      key,
+      value: Boolean(value),
+    }));
+
+    const specifiedItem = array.find((config) => config.key === UrlParameters.ONLY_INFORMATION);
+
+    if (specifiedItem && specifiedItem.value) return true;
+
+    const adPersonalizationConfiguration = [
+      UrlParameters.FACEBOOK,
+      UrlParameters.GOOGLE_AND_YOUTUBE,
+      UrlParameters.AMAZON
+    ];
+
+    const isAdPersonalizationConfiguration = array.some((config) => adPersonalizationConfiguration.includes(config.key as UrlParameters));
+
+    return isAdPersonalizationConfiguration;
+  }
+
+  private async isNeedToForceUserLogIn(): Promise<boolean> {
+    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
+    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
     const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION] ?? false;
 
-    if (specifiedItem) return true;
+    const { personalizationTime = 0 } = await chrome.storage.local.get('personalizationTime');
+    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
+    const completedSurveys = completedSurveysResult.completedSurveys || [];
 
-    const { personalizationTime } = await chrome.storage.local.get('personalizationTime');
-    if (personalizationTime && specifiedItem === false) return true;
+    if (personalizationTime === 0 && completedSurveys.length < 2 && specifiedItem === false) return true;
 
     return false;
   }
@@ -90,6 +114,8 @@ export class Worker {
   private async checkAdPersonalization(): Promise<void> {
     const isNeedToCheck = await this.isNeedToCheckAdPersonalization();
     if(!isNeedToCheck) return;
+
+    const isNeedToLogin = await this.isNeedToForceUserLogIn();
 
     const { personalizationTime = 0 } = await chrome.storage.local.get('personalizationTime');
     const delayBetweenAdPersonalization = Number(DELAY_BETWEEN_AD_PERSONALIZATION);
@@ -106,7 +132,7 @@ export class Worker {
     adPersonalization.forEach((item) => {
       chrome.tabs.sendMessage(
         tabId,
-        { action: 'webmunkExt.worker.notifyAdPersonalization',  data: { key: item.key }},
+        { action: 'webmunkExt.worker.notifyAdPersonalization',  data: { key: item.key, isNeedToLogin }},
         { frameId: 0 }
       );
     });
