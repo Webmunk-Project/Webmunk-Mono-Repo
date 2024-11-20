@@ -14,7 +14,7 @@
         "128": "images/favicon.png"
     },
 
-	"description": "This extension is required to participate in the ad study",
+	"description": "This extension is required to participate in the ad study.",
 
     "minimum_chrome_version": "88",
     "permissions": [],
