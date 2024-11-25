@@ -1,151 +1,183 @@
 // dont remove next line, all webmunk modules use messenger utility
 // @ts-ignore
-import { messenger } from "@webmunk/utils";
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth/web-extension';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { RudderStack } from './Rudderstack';
-import { WEBMUNK_URL } from '../config';
-import { FIREBASE_CONFIG } from '../config';
+import { messenger } from '@webmunk/utils';
+import { NotificationService } from './NotificationService';
+import { AdPersonalizationItem, User, PersonalizationConfigItem } from '../types';
+import { DELAY_BETWEEN_REMOVE_NOTIFICATION, DELAY_BETWEEN_AD_PERSONALIZATION } from '../config';
+import { RudderStackService } from './RudderStackService';
+import { FirebaseAppService } from './FirebaseAppService';
+import { ConfigService } from './ConfigService';
+import { SurveyService } from './SurveyService';
+import { NotificationText, UrlParameters } from '../enums';
+import { getActiveTabId, isNeedToDisableSurveyLoading } from './utils';
 
 // this is where you could import your webmunk modules worker scripts
 import "@webmunk/extension-ads/worker";
 import "@webmunk/cookies-scraper/worker";
 import "@webmunk/ad-personalization/worker";
 
-interface Survey {
-  name: string;
-  url: string;
-};
-
-interface SurveyData {
-  name: string;
-  url: string;
-};
-
-enum events {
-  SURVEY_COMPLETED = 'survey_completed',
+if (typeof window === "undefined") {
+  // @ts-ignore
+  global.window = self;
 }
 
 export class Worker {
-  private surveys: Survey[] = [];
-  private completedSurveys: string[] = [];
-  private rudderStack: RudderStack;
-  private firebaseApp: any;
+  private readonly firebaseAppService: FirebaseAppService;
+  private readonly configService: ConfigService;
+  private readonly rudderStack: RudderStackService;
+  private readonly notificationService: NotificationService;
+  private readonly surveyService: SurveyService;
 
   constructor() {
-    this.firebaseApp = initializeApp(FIREBASE_CONFIG);
-    this.rudderStack = new RudderStack();
+    this.firebaseAppService = new FirebaseAppService();
+    this.configService = new ConfigService(this.firebaseAppService);
+    this.rudderStack = new RudderStackService(this.firebaseAppService, this.configService);
+    this.notificationService = new NotificationService();
+    this.surveyService = new SurveyService(this.firebaseAppService, this.notificationService, this.rudderStack);
   }
 
   public async initialize(): Promise<void> {
+    await this.firebaseAppService.login();
+    await this.surveyService.initSurveysIfExists();
+
     messenger.addReceiver('appMgr', this);
     messenger.addModuleListener('ads-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('cookies-scraper', this.onModuleEvent.bind(this));
     messenger.addModuleListener('ad-personalization', this.onModuleEvent.bind(this));
-    chrome.tabs.onUpdated.addListener(this.surveyCompleteListener.bind(this));
     chrome.runtime.onMessage.addListener(this.onPopupMessage.bind(this),);
+  }
+
+  private async onModuleEvent(event: string, data: any): Promise<void> {
+    await this.middleware();
+    await this.rudderStack.track(event, data);
+  }
+
+  private async middleware(): Promise<void> {
+    const user = await this.firebaseAppService.getUser();
+
+    if (!user) return
+
+    await this.showRemoveExtensionIfNeeded(user);
+
+    if (!user.active) return
+
+    await this.checkAdPersonalization();
+    await this.surveyService.initSurveysIfNeeded();
   }
 
   private async onPopupMessage(request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
     if (request.action === 'webmunkExt.popup.loginReq') {
-      await this.handleLogin(request.username);
+      const userData = await this.firebaseAppService.login(request.username);
+      await chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginRes', data: userData });
     } else if (request.action === 'webmunkExt.popup.successRegister') {
-      await this.initSurveys();
+      await this.surveyService.startWeekTiming();
     }
   }
 
-  private async handleLogin(username: string): Promise<any> {
-    try {
-      const auth = getAuth();
-      const functions = getFunctions();
-
-      await signInAnonymously(auth);
-      const signIn = httpsCallable(functions, 'signIn');
-      const response = await signIn({ prolificId: username });
-
-      chrome.runtime.sendMessage({ action: 'webmunkExt.popup.loginRes', data: response.data });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  private async onModuleEvent(event: string, data: any): Promise<void> {
-    await this.rudderStack.track(event, data);
-  }
-
-  private async initSurveys(): Promise<void> {
-    const result = await chrome.storage.local.get('completedSurveys');
-    this.completedSurveys = result.completedSurveys || [];
-    await this.loadSurveys();
-  }
-
-  private async loadSurveys(): Promise<void> {
-    const identifierResponse = await chrome.storage.local.get('identifier');
-    const prolificId = identifierResponse.identifier.prolificId;
-
-    const response = await fetch(chrome.runtime.getURL('data/surveys.json'));
-    const data: SurveyData[] = await response.json();
-    const newSurveys: Survey[] = data.map((item) => ({
-      name: item.name,
-      url: `${item.url}?prolific_id=${prolificId}`
+  private async isNeedToCheckAdPersonalization(): Promise<boolean> {
+    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
+    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
+    const array: PersonalizationConfigItem[] = Object.entries(personalizationConfigs).map(([key, value]) => ({
+      key,
+      value: Boolean(value),
     }));
 
-    newSurveys.forEach((survey) => {
-      if (!this.surveys.some((existingSurvey) => existingSurvey.url === survey.url) && !this.completedSurveys.includes(survey.url)) {
-        this.surveys.push(survey);
-      }
+    const specifiedItem = array.find((config) => config.key === UrlParameters.ONLY_INFORMATION);
+
+    if (specifiedItem && specifiedItem.value) return true;
+
+    const adPersonalizationConfiguration = [
+      UrlParameters.FACEBOOK,
+      UrlParameters.GOOGLE_AND_YOUTUBE,
+      UrlParameters.AMAZON
+    ];
+
+    const isAdPersonalizationConfiguration = array.some((config) => adPersonalizationConfiguration.includes(config.key as UrlParameters));
+
+    return isAdPersonalizationConfiguration;
+  }
+
+  private async isNeedToForceUserLogIn(): Promise<boolean> {
+    const personalizationConfigsResult = await chrome.storage.local.get('personalizationConfigs');
+    const personalizationConfigs = personalizationConfigsResult.personalizationConfigs || {};
+    const specifiedItem = personalizationConfigs[UrlParameters.ONLY_INFORMATION] ?? false;
+
+    const { personalizationTime = 0 } = await chrome.storage.local.get('personalizationTime');
+    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
+    const completedSurveys = completedSurveysResult.completedSurveys || [];
+
+    if (personalizationTime === 0 && completedSurveys.length < 2 && specifiedItem === false) return true;
+
+    return false;
+  }
+
+  private async checkAdPersonalization(): Promise<void> {
+    const isNeedToCheck = await this.isNeedToCheckAdPersonalization();
+    if(!isNeedToCheck) return;
+
+    const isNeedToLogin = await this.isNeedToForceUserLogIn();
+
+    const { personalizationTime = 0 } = await chrome.storage.local.get('personalizationTime');
+    const delayBetweenAdPersonalization = Number(DELAY_BETWEEN_AD_PERSONALIZATION);
+    const currentDate = Date.now();
+
+    if (currentDate < delayBetweenAdPersonalization + personalizationTime) return;
+
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
+
+    const tabId = await getActiveTabId();
+    if (!tabId) return;
+
+    adPersonalization.forEach((item) => {
+      chrome.tabs.sendMessage(
+        tabId,
+        { action: 'webmunkExt.worker.notifyAdPersonalization',  data: { key: item.key, isNeedToLogin }},
+        { frameId: 0 }
+      );
     });
 
-    await chrome.storage.local.set({ surveys: this.surveys });
+    await chrome.storage.local.set({ personalizationTime: currentDate });
   }
 
-  private async saveParamsToStorage(params: Record<string, boolean>): Promise<void> {
-    await chrome.storage.local.set({ personalizationConfigs: params });
+  private async isAllAdPersonalizationSettingsChecked(): Promise<boolean> {
+    const adPersonalizationResult = await chrome.storage.local.get('adPersonalization.items');
+    const adPersonalization: AdPersonalizationItem[] = adPersonalizationResult['adPersonalization.items'] || [];
+
+    const checkedAdPersonalizationResult = await chrome.storage.local.get('adPersonalization.checkedItems');
+    const checkedAdPersonalization = checkedAdPersonalizationResult['adPersonalization.checkedItems'] || {};
+
+    return Object.keys(checkedAdPersonalization).length === adPersonalization.length;
   }
 
-  private extractQueryParams(url: string): Record<string, boolean> {
-    const params: Record<string, boolean> = {};
-    const queryString = url.split('?')[1];
+  private async showRemoveExtensionIfNeeded(user: User): Promise<void> {
+    const completedSurveysResult = await chrome.storage.local.get('completedSurveys');
+    const completedSurveys = completedSurveysResult.completedSurveys || [];
+    const needToDisableSurveyLoading = await isNeedToDisableSurveyLoading();
 
-    if (queryString) {
-      const urlParams = new URLSearchParams(queryString);
-
-      urlParams.forEach((value, key) => {
-        params[key] = value.toLowerCase() === 'true';
-      });
+    if (needToDisableSurveyLoading) {
+      await this.showRemoveExtensionNotification(true);
+    } else if ((completedSurveys.length === 2 && await this.isAllAdPersonalizationSettingsChecked()) || !user.active) {
+      await this.showRemoveExtensionNotification();
     }
-
-    return params;
   }
 
-  async surveyCompleteListener(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
-    const baseUrl = new URL(WEBMUNK_URL).origin;
+  private async showRemoveExtensionNotification(isDisableSurveyLoading?: boolean): Promise<void> {
+    const { removeModalShowed = 0 } = await chrome.storage.local.get('removeModalShowed');
+    const currentDate = Date.now();
 
-    if (changeInfo.status !== 'complete' || !tab.url?.startsWith(baseUrl)) {
-      return;
+    if (isDisableSurveyLoading && removeModalShowed === 0) {
+      if (!await this.surveyService.isWeekPassed()) return;
+    } else {
+      const delayBetweenRemoveNotification = Number(DELAY_BETWEEN_REMOVE_NOTIFICATION);
+
+      if (currentDate - removeModalShowed < delayBetweenRemoveNotification) return;
     }
 
-    const openerTabId = tab.openerTabId;
-    const openerTabUrl = openerTabId ? (await chrome.tabs.get(openerTabId)).url : undefined;
+    const tabId = await getActiveTabId();
+    if (!tabId) return;
 
-    if (openerTabUrl && this.surveys.some((survey) => openerTabUrl === survey.url)) {
-      const queryParams = this.extractQueryParams(tab.url!);
-      await this.saveParamsToStorage(queryParams);
-
-      await chrome.tabs.remove(tab.openerTabId!);
-
-      if (this.completedSurveys.includes(openerTabUrl)) {
-        return;
-      }
-
-      this.completedSurveys.push(openerTabUrl);
-      this.surveys = this.surveys.filter((survey) => survey.url !== openerTabUrl);
-
-      await chrome.storage.local.set({ surveys: this.surveys, completedSurveys: this.completedSurveys });
-
-      console.log(`The survey ${openerTabUrl} was completed`);
-      await this.rudderStack.track(events.SURVEY_COMPLETED, { surveyUrl: openerTabUrl });
-    }
+    await chrome.storage.local.set({ removeModalShowed: currentDate });
+    await this.notificationService.showNotification(tabId, NotificationText.REMOVE);
   }
 }

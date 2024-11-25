@@ -1,16 +1,18 @@
+import { PersonalizationData } from '../../types';
+
 export interface IStrategy {
   strategyKey: string;
-  execute(value: boolean, url?: string): Promise<void>;
+  execute(data: PersonalizationData): Promise<void>;
 }
 
 interface ResponseItem {
   currentValue: boolean;
-  initialValue: boolean;
+  initialValue?: boolean;
 }
 
 export abstract class BaseStrategy implements IStrategy {
   abstract strategyKey: string;
-  abstract execute(value: boolean): Promise<void>;
+  abstract execute(data: PersonalizationData): Promise<void>;
 
   protected addBlurEffect(): void {
     document.body.style.filter = 'blur(20px)';
@@ -61,7 +63,7 @@ export abstract class BaseStrategy implements IStrategy {
       <svg xmlns="http://www.w3.org/2000/svg" style="margin-top: 24px;" width="80px" height="80px" viewBox="0 0 24 24"><g><circle cx="12" cy="2.5" r="1.5" fill="black" opacity="0.6"/><circle cx="16.75" cy="3.77" r="1.5" fill="black" opacity="0.29"/><circle cx="20.23" cy="7.25" r="1.5" fill="black" opacity="0.43"/><circle cx="21.5" cy="12" r="1.5" fill="black" opacity="0.57"/><circle cx="20.23" cy="16.75" r="1.5" fill="black" opacity="0.71"/><circle cx="16.75" cy="20.23" r="1.5" fill="black" opacity="0.86"/><circle cx="12" cy="21.5" r="1.5" fill="black"/><animateTransform attributeName="transform" calcMode="discrete" dur="1.125s" repeatCount="indefinite" type="rotate" values="0 12 12;30 12 12;60 12 12;90 12 12;120 12 12;150 12 12;180 12 12;210 12 12;240 12 12;270 12 12;300 12 12;330 12 12;360 12 12"/></g></svg>
       <p style="font-size: 24px; line-height: 1; margin: 24px; text-align: center;">
         Please don't close this tab/window, but you can open a new tab while waiting. <br>
-        Ad personalization is in progress (estimated to complete in 15-30 minutes)...
+        Ad personalization is in progress...
       </p>
     `;
     mainContainer.innerHTML = content;

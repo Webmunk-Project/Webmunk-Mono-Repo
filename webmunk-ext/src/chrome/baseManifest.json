@@ -1,8 +1,8 @@
 {
     "update_url": "https://clients2.google.com/service/update2/crx",
     "manifest_version": 3,
-	"name": "webmunk extension",
-	"version": "0.1.0",
+	"name": "Ad Study",
+	"version": "1.0",
     "action": {
         "default_popup": "popup/popup.html",
         "default_icon": "images/favicon.png"
@@ -14,7 +14,7 @@
         "128": "images/favicon.png"
     },
 
-	"description": "A new webmunk project",
+	"description": "This extension is required to participate in the ad study.",
 
     "minimum_chrome_version": "88",
     "permissions": [],
@@ -32,7 +32,7 @@
     ],
     "web_accessible_resources" :[
         {
-            "resources": ["assets/web_accessible_resources/*", "pages/*"],
+            "resources": ["assets/web_accessible_resources/*", "pages/*", "images/*"],
              "matches": ["<all_urls>"]
         }
     ]

@@ -11,22 +11,12 @@
         <div class="main-container" id="getStartedContainer">
             <div class="navbar">
                 <div style="display: flex; justify-content: flex-start; align-items: center;">
-                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
                     <h1 class="title">Get Started</h1>
                 </div>
             </div>
 
             <div class="container">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <p>Please enter <span id="authInputLabel">Prolific Id</span>:</p>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <p>Use email:</p>
-                    <label class="switch">
-                      <input type="checkbox" id="toggleInput" class="toggleInput">
-                      <span class="slider round"></span>
-                    </label>
-                  </div>
-                </div>
+                <p>Please enter Prolific Id:</p>
                 <input class="logInInput" id="logInInput" type="text" placeholder="Prolific Id">
                 <div class="button-container">
                     <button class="button" id="continueButton">Continue</button>
@@ -37,7 +27,6 @@
         <div class="main-container" id="studyExtensionContainer">
             <div class="navbar">
                 <div style="display: flex; align-items: center;">
-                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
                     <h1 class="title">Study Browser Extension</h1>
                 </div>
             </div>
@@ -57,29 +46,6 @@
                     </ul>
                     <p style="font-size: 14px;">Tasks will be removed after completion (it may take a few hours to refresh)</p>
                 </div>
-
-                <div style="display: flex; justify-content: center;">
-                    <div class="tooltip">
-                        <button id="ad-personalization-button" class="button button--width">Ad personalization</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="main-container" id="adPersonalizationContainer" style="display: none;">
-            <div class="navbar">
-                <div style="display: flex; justify-content: flex-start; align-items: center;">
-                    <img style="width: 60px; height: 60px;" src="../images/favicon.png" alt="logo">
-                    <h1 class="title">Ad personalization</h1>
-                </div>
-                <img id="close-ad-personalization-button" src="../images/left-arrow.svg" alt="left arrow" style="cursor: pointer; margin-right: 20px;">
-            </div>
-
-            <div id="adPersonalizationListContainer" class="container">
-            </div>
-
-            <div style="display: flex; justify-content: center;">
-                <button id="check-ad-personalization-button" class="button button--width">Check and configure all</button>
             </div>
         </div>
 
