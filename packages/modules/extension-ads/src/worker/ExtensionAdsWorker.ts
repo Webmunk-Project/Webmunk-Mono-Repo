@@ -1,6 +1,7 @@
 import TimeThrottler from './throttler.js';
 import webRequest from './traffic.js';
-import { RateService } from './RateService.js';
+// @ts-ignore
+import { RateService } from './RateService.ts';
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid';
 import filtersData from './url-filter.json';
@@ -400,56 +401,55 @@ export class ExtensionAdsWorker {
   }
 
   public async _onMessage_parentFrameIsAnAd(_request: any, from: chrome.runtime.MessageSender): Promise<{ success: boolean; isAd: boolean }> {
-      return chrome.webNavigation.getAllFrames({tabId: from.tab!.id!}).then(async frames => {
-        let result ={success: true, isAd: false};
-        let path = [from.frameId+"/false"];
-        let cont = true;
-        let myself = frames?.find(f => f.frameId==from.frameId);
-        while (cont){
-          if (myself?.parentFrameId ==0){
-              result = await (self as any).messenger?.sendToMainPage(from.tab!.id, "content", "isFrameAnAd", from.frameId, 0)
-              path.unshift("0/"+(result.success ? result.isAd:"unknown"))
-              cont = false;
-          }
-          else {
-              result = await (self as any).messenger?.sendToMainPage(from.tab!.id, "content", "areYouAnAd", {}, myself?.parentFrameId)
-              path.unshift(myself?.parentFrameId+"/"+result.isAd)
-              if (result.isAd){
-                  result =  {success: true, isAd: true};
-                  cont = false;
-              }
-              else{
-                  myself = frames?.find(f => f.frameId == myself?.parentFrameId);
-              }
+    return chrome.webNavigation.getAllFrames({tabId: from.tab!.id!}).then(async frames => {
+      let result ={success: true, isAd: false};
+      let path = [from.frameId+"/false"];
+      let cont = true;
+      let myself = frames?.find(f => f.frameId==from.frameId);
+
+      while (cont) {
+        if (myself?.parentFrameId ==0) {
+          result = await (self as any).messenger?.sendToMainPage(from.tab!.id, "content", "isFrameAnAd", from.frameId, 0)
+          path.unshift("0/"+(result.success ? result.isAd:"unknown"))
+          cont = false;
+        } else {
+          result = await (self as any).messenger?.sendToMainPage(from.tab!.id, "content", "areYouAnAd", {}, myself?.parentFrameId)
+          path.unshift(myself?.parentFrameId+"/"+result.isAd)
+
+          if (result.isAd){
+            result =  {success: true, isAd: true};
+            cont = false;
+          } else {
+            myself = frames?.find(f => f.frameId == myself?.parentFrameId);
           }
         }
+      }
         // console.log(`_onMessage_parentFrameIsAnAd ${JSON.stringify(path)} => ${result.isAd}`)
-        return result;
-      })
+      return result;
+    })
   }
 
   public _onMessage_retrieveContentScriptParameters(request: any, _from: chrome.runtime.MessageSender): void {
-      console.log("retrieveContentScriptParameters receiving message", request)
-      const response = {
-          collapseBlocked: true, //µb.userSettings.collapseBlocked,
-          noGenericCosmeticFiltering: false,
-          noSpecificCosmeticFiltering: false,
-          specificCosmeticFilters: {},
-      };
+    console.log("retrieveContentScriptParameters receiving message", request)
+    const response = {
+      collapseBlocked: true, //µb.userSettings.collapseBlocked,
+      noGenericCosmeticFiltering: false,
+      noSpecificCosmeticFiltering: false,
+      specificCosmeticFilters: {},
+    };
 
-      const tabId = _from.tab?.id;
-      const frameId = _from.frameId;
+    const tabId = _from.tab?.id;
+    const frameId = _from.frameId;
 
-      request.tabId = tabId;
-      request.frameId = frameId;
-      request.hostname = hostnameFromURI(request.url);
-      request.domain = domainFromHostname(request.hostname);
-      request.entity = entityFromDomain(request.domain);
+    request.tabId = tabId;
+    request.frameId = frameId;
+    request.hostname = hostnameFromURI(request.url);
+    request.domain = domainFromHostname(request.hostname);
+    request.entity = entityFromDomain(request.domain);
 
-      const scf = response.specificCosmeticFilters =
-        cosmeticFilteringEngine.retrieveSpecificSelectors(request, response);
+    const scf = response.specificCosmeticFilters =
+      cosmeticFilteringEngine.retrieveSpecificSelectors(request, response);
   }
-
 
   public async _onMessage_adDetected(request: { frameIds: Set<number>; main: any }, _from: chrome.runtime.MessageSender): Promise<{ success: boolean; result: { main: any; frames: any[] } }> {
     const results: any[] = [];
