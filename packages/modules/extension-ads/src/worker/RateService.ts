@@ -1,34 +1,35 @@
 export class RateService {
+  private lastNotificationTimestamp: number;
+
   constructor() {
-    this.lastNotificationTimestamp = null;
+    this.lastNotificationTimestamp = 0;
     this.initializeLastNotificationTime();
   }
 
-  async initializeLastNotificationTime() {
+  private async initializeLastNotificationTime(): Promise<void> {
     // We use Date.now() to ensure the first 20 minutes pass after the user loads the extension before applying the logic of getLastAdsRateNotificationTime().
     this.lastNotificationTimestamp = (await this.getLastAdsRateNotificationTime()) || Date.now();
   }
 
-  async shouldNotify() {
+  private async shouldNotify(): Promise<boolean> {
     const currentTime = Date.now();
 
     // 20 min
     return currentTime - this.lastNotificationTimestamp >= 1200000;
   }
 
-  async getLastAdsRateNotificationTime() {
+  private async getLastAdsRateNotificationTime(): Promise<number> {
     const result = await chrome.storage.local.get('lastAdsRateNotificationTime');
     return result.lastAdsRateNotificationTime || 0;
   }
 
-  async send(tabId) {
+  public async send(tabId: number): Promise<any> {
     if (!await this.shouldNotify()) return;
 
     this.lastNotificationTimestamp = Date.now();
     chrome.storage.local.set({ lastAdsRateNotificationTime: this.lastNotificationTimestamp });
-
     return new Promise((resolve, reject) => {
-      const messageListener = (message, sender, sendResponse) => {
+      const messageListener = (message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
         if (message.action === 'extensionAds.rateService.adRatingResponse') {
           chrome.runtime.onMessage.removeListener(messageListener);
           chrome.tabs.onRemoved.removeListener(tabCloseListener);
@@ -37,7 +38,7 @@ export class RateService {
         }
       };
 
-      const tabCloseListener = (closedTabId, removeInfo) => {
+      const tabCloseListener = (closedTabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
         if (closedTabId === tabId) {
           chrome.runtime.onMessage.removeListener(messageListener);
           reject(null);
