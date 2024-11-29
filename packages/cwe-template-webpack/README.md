@@ -20,7 +20,7 @@ The tree structure includes the following set of files/directories:
 └───📄 webpack.addon.chrome.config.prod.zip.js
 ```
 
-Regarding the src folder, 4 sub-folders are included with the appropriate ts files:
+Regarding the src folder, 5 sub-folders are included with the appropriate ts files:
 ```
 ├───📁 worker/
 │   ├───📄 index.ts
