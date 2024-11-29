@@ -3,11 +3,21 @@ const webpack = require('webpack');
 const { mergeWithCustomize } = require('webpack-merge');
 const baseConfig = require('./webpack.addon.config.base')("chrome");
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
+const ZipPlugin = require('zip-webpack-plugin');
 const manifestVersion = "3";
 const mergeManifests = require('@webmunk/utils-scripts').mergeManifests;
 const { manifest } = mergeManifests("@webmunk",__dirname,"src","src/chrome");
 const baseManifest = manifest;
 const package = require('./package.json');
+
+const getCurrentDate = () => {
+  const date = new Date();
+  const day = (`0${date.getDate()}`).slice(-2);
+  const month = (`0${date.getMonth() + 1}`).slice(-2);
+  const year = date.getFullYear();
+
+  return `${day}_${month}_${year}`;
+};
 
 module.exports = mergeWithCustomize({
   customizeArray(a, b, key) {
@@ -25,7 +35,7 @@ module.exports = mergeWithCustomize({
 
     return undefined
   }})(baseConfig, {
-  mode: 'development',
+  mode: 'production',
   devtool: 'inline-source-map',
   devServer: {},
   plugins: [
@@ -36,10 +46,13 @@ module.exports = mergeWithCustomize({
       config: {
         base: baseManifest,
         extend: {
-          "name":baseManifest.name+"_dev",
           "manifest_version":parseInt(manifestVersion),
         }
       }
+    }),
+    new ZipPlugin({
+      path: '../builds',
+      filename: `${package.name}_prod_${getCurrentDate()}.zip`,
     })
   ]
 })

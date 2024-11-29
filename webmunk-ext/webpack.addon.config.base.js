@@ -5,7 +5,7 @@ const Dotenv = require('dotenv-webpack');
 module.exports = function config(browser){
   return {
     entry: {
-      'content': ['./src/content/content.ts'],
+      'content': ['./src/content/index.ts'],
       'options': ['/src/options/options.js'],
       'background': ['./src/worker/index.ts'],
       'popup/popup': ['./src/popup/Popup.ts']
