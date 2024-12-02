@@ -25,7 +25,7 @@ module.exports = mergeWithCustomize({
 
     return undefined
   }})(baseConfig, {
-  mode: 'development',
+  mode: 'production',
   devtool: 'inline-source-map',
   devServer: {},
   plugins: [
@@ -36,7 +36,6 @@ module.exports = mergeWithCustomize({
       config: {
         base: baseManifest,
         extend: {
-          "name":baseManifest.name+"_dev",
           "manifest_version":parseInt(manifestVersion),
         }
       }
