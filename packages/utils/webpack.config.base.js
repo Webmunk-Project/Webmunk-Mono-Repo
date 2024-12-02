@@ -7,13 +7,10 @@ const { parsed } = config({ path: `./.env.${process.env.BUILD_ENV}` })
 
 module.exports = function config(browser){
   return {
-    entry: {
-      'sessionMgr': ['/src/sessionMgr.js'],
-      'messenger': ['/src/messenger.js']
-    },
+    entry: './src/index.js',
     output: {
-      path: __dirname,
-      filename: '[name].js',
+      path: path.join(__dirname, 'dist/'),
+      filename: 'main.js',
       publicPath: "."
     },
     resolve: {

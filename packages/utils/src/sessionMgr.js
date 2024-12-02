@@ -67,3 +67,4 @@ const wmSessionMgr = {
 wmSessionMgr.initialize();
 
 exports.wmSessionMgr = wmSessionMgr;
+export { wmSessionMgr };
