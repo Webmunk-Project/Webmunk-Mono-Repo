@@ -138,6 +138,17 @@ async track<T>(event: string, properties: T): Promise<void> {
 
 ---
 
+### 6. Assign Roles to the Service Account
+
+1. From the GCP dashboard, navigate to `IAM & Admin`  by searching for it in the search bar or finding it in the menu.
+
+**In the IAM UI, you need:**
+- Find and select the created Service Account.
+- Ensure it has the following roles: `BigQuery Job User`, `BigQuery Data Owner`, `Storage Object Creator`, `Storage Object Viewer`.
+- If any role is missing, click Edit and add the required roles.
+
+---
+
 ## Firebase Setup
 
 ### 1. Create an Account
