@@ -1,1 +1,0 @@
-exports.contentMgr  = require('./dist/content.bundle').contentMgr;

@@ -3,6 +3,7 @@
   "version": "1.0.8",
   "description": "webmunk",
   "workspaces": [
+    "functions/*",
     "packages/*",
     "packages/modules/*"
   ],
